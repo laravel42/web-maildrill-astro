@@ -5,11 +5,16 @@ editores visuales vendorizados: `packages/email-builder-standalone` (editor de e
 `/dashboard/templates/email`) y `packages/builder42` (editor de landings,
 `/dashboard/landings/editor`).
 
-Estado: **F1, F2a y F2b implementados y commiteados** (rama `feat/ui-polish-p1`: `feat(tour):
-add @md/product-tour package (F1)` + `feat(tour): seed data-tour anchors in both visual editors
-(F2a + F2b)`). Pendientes F3a–F7. Las fases están empaquetadas para ejecutarse con subagentes
-(dependencias y criterios de aceptación explícitos por fase). **Ninguna fase ya implementada
-debe revertirse: si un agente la percibe como fuera de alcance, lo reporta, no la borra.**
+Estado (2026-09-14): **F1, F2a, F2b, F3a, F3b, F4, F5 y F6 implementados y commiteados** en la
+rama `feat/ui-polish-p1`. Queda **F7** (docs + telemetría) y, antes, arreglar los tres defectos
+que destapó el e2e de F6: el tour arranca **dos veces** en ambos editores, `Escape` no lo cierra,
+y en el embed de landings no hay entrada alcanzable para relanzarlo. El estado vivo de la
+orquestación — baseline, gates, decisiones de contrato, incidencias y hallazgos numerados — vive
+en [`.orquestacion/bitacora.md`](../.orquestacion/bitacora.md); **léela antes de retomar**.
+
+Las fases están empaquetadas para ejecutarse con subagentes (dependencias y criterios de
+aceptación explícitos por fase). **Ninguna fase ya implementada debe revertirse: si un agente la
+percibe como fuera de alcance, lo reporta, no la borra.**
 
 ## 0. Restricción de exportabilidad (Builder42 saldrá de este repo)
 

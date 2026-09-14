@@ -9,6 +9,51 @@ Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour
 
 ---
 
+# START HERE — next session
+
+**State at hand-off (2026-09-14):** `HEAD = 89a3bce`, branch `feat/ui-polish-p1`, tree clean except
+the known untracked `.cursor/hooks/` and `.kiro/`. Nothing is half-finished: every phase below has
+its own commit, and the one task that stopped without a fix (B5) left no changes behind.
+
+**Done:** F1 (engine), F2a/F2b (anchors), F3a/F3b (steps + copy), F4 (entry points, persistence,
+host seam), F5 (popover theme), plus two blockers cleared along the way — B1 (the build had been
+red all session) and the e2e harness characterisation.
+
+**The guided tour is wired end to end and the build and every suite are green, but the tour is not
+yet correct in the browser.** F6's e2e proved it: see B7, B8, B9 below. That is the next session's
+work, in this order:
+
+1. **B7 — the tour starts twice** (two live driver.js instances, different active steps, overlapping
+   overlays). The user-visible bug; fix first. Cause confirmed for landings (two mounted call sites
+   of `useBuilder42Tour`); the email side still needs its cause proven by execution, not by reading.
+2. **B8 — Escape does not dismiss the tour.** Small, and it shares the same files as B7.
+3. **B9 — landings has no reachable relaunch entry point in the embed.** Decide *where* it belongs
+   (host `EditorHeader.tsx` is the obvious candidate, since it already does it for the email
+   channel) before delegating: that is a contract decision, not a subagent's call.
+4. **F7 — docs + telemetry** (plan §4 F7): tours section in `docs/AGENTS.md`, the `data-tour`
+   contract, the exportability note in `packages/VENDOR.md`, and marking the plan implemented.
+
+The proof that B7/B8 are fixed already exists and must be used: F6 left **two `test.fixme` tests**
+in `tests/e2e/tour.spec.ts` (full step-by-step walk to completion, and Escape closing the tour while
+the editor stays open). Turning those into passing assertions is the acceptance criterion — do not
+accept a fix that is only asserted in a unit test.
+
+**Two items need a person, not a subagent:**
+
+- **B3** — nobody has *looked* at the themed popover in light and dark, or checked stage clipping
+  over compact rails and absolute panels (plan §1.4.8). Code-level coverage is done; eyes are owed.
+- **B6** — `AUTH_SECRET` has no value in this `.env`, so **login is broken in this environment for
+  humans too**, not just for the e2e. Left untouched on purpose: it is a credential file. Auth is
+  currently bypassed in dev (`SKIP_AUTH_FOR_BUILDER_WORK=true`), which is why F6 could proceed.
+
+**Before delegating anything, re-establish the preconditions** (they are environment state, not repo
+state, so they may have changed): ports 4321/3001/5432/6379 up; an empty
+`tests/e2e/.auth/user.json` present; and run e2e as
+`npx playwright test --project=chromium --no-deps`. Re-measure the baseline rather than trusting the
+numbers below — a dev server restart or seeded-data change moves them.
+
+---
+
 ## Verification commands and what each one actually covers
 
 | Command                                   | Real coverage                                                                                                       |
