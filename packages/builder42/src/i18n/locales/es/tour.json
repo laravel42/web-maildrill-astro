@@ -1,0 +1,58 @@
+{
+  "labels": {
+    "nextBtnText": "Siguiente",
+    "prevBtnText": "Atrás",
+    "doneBtnText": "Listo",
+    "progressText": "{{current}} de {{total}}"
+  },
+  "steps": {
+    "headerIdentity": {
+      "title": "Nombre y autoguardado",
+      "description": "Define aquí el nombre de la página. Los cambios se guardan solos mientras trabajas."
+    },
+    "toolbarViews": {
+      "title": "Editar o previsualizar",
+      "description": "Cambia entre el editor y una vista previa en vivo, y revisa cómo se ve la página en cada tamaño de pantalla."
+    },
+    "toolbarHistory": {
+      "title": "Deshacer sin miedo",
+      "description": "Cualquier cambio se puede deshacer o rehacer, así que puedes probar libremente."
+    },
+    "sidebarTabs": {
+      "title": "Componentes y plantillas",
+      "description": "Empieza desde un solo elemento o desde una sección ya armada."
+    },
+    "sidebarPalette": {
+      "title": "Arrastra al lienzo",
+      "description": "Arrastra cualquier elemento o sección desde aquí directamente a la página."
+    },
+    "canvasFrame": {
+      "title": "El lienzo",
+      "description": "Haz clic en un elemento para seleccionarlo, o suelta uno desde el panel para añadirlo."
+    },
+    "canvasNodeActions": {
+      "title": "Duplicar o eliminar",
+      "description": "Una vez seleccionado un elemento, duplícalo o elimínalo desde esta franja lateral."
+    },
+    "inspectorTabs": {
+      "title": "Contenido, estilo, interactividad",
+      "description": "El contenido, el estilo y el comportamiento interactivo del elemento seleccionado viven en estas pestañas."
+    },
+    "inspectorBreakpoints": {
+      "title": "Estilo por tamaño de pantalla",
+      "description": "Ajusta cómo se ve el elemento seleccionado en cada breakpoint, de móvil a escritorio."
+    },
+    "pagesBreadcrumb": {
+      "title": "Una página es una de varias",
+      "description": "Un mismo proyecto puede tener múltiples páginas — usa esta ruta para saltar entre ellas."
+    },
+    "publish": {
+      "title": "Publicar",
+      "description": "Publica el sitio y elige su subdominio desde aquí."
+    },
+    "profileMenu": {
+      "title": "Preferencias del editor",
+      "description": "Cambia el idioma del editor, el sistema de color, el nivel de experiencia y los controles de reordenamiento."
+    }
+  }
+}

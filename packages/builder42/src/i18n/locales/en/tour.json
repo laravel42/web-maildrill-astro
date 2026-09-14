@@ -1,0 +1,58 @@
+{
+  "labels": {
+    "nextBtnText": "Next",
+    "prevBtnText": "Back",
+    "doneBtnText": "Done",
+    "progressText": "{{current}} of {{total}}"
+  },
+  "steps": {
+    "headerIdentity": {
+      "title": "Name and autosave",
+      "description": "Set the page name here. Changes save automatically as you work."
+    },
+    "toolbarViews": {
+      "title": "Edit or preview",
+      "description": "Switch between the editor and a live preview, and check how the page looks at each screen size."
+    },
+    "toolbarHistory": {
+      "title": "Undo anytime",
+      "description": "Every change can be undone or redone, so feel free to experiment."
+    },
+    "sidebarTabs": {
+      "title": "Components and templates",
+      "description": "Start from a single element or from a ready-made section layout."
+    },
+    "sidebarPalette": {
+      "title": "Drag onto the canvas",
+      "description": "Drag any element or section from here straight onto the page."
+    },
+    "canvasFrame": {
+      "title": "The canvas",
+      "description": "Click an element to select it, or drop one in from the panel to add it."
+    },
+    "canvasNodeActions": {
+      "title": "Duplicate or delete",
+      "description": "Once an element is selected, duplicate or remove it from this side rail."
+    },
+    "inspectorTabs": {
+      "title": "Content, style, interactivity",
+      "description": "The selected element's content, styling, and interactive behavior all live in these tabs."
+    },
+    "inspectorBreakpoints": {
+      "title": "Style per screen size",
+      "description": "Fine-tune how the selected element looks at each breakpoint, from mobile to desktop."
+    },
+    "pagesBreadcrumb": {
+      "title": "A page is one of many",
+      "description": "A single project can hold multiple pages — use this breadcrumb to jump between them."
+    },
+    "publish": {
+      "title": "Publish",
+      "description": "Publish the site and pick its subdomain from here."
+    },
+    "profileMenu": {
+      "title": "Editor preferences",
+      "description": "Switch the editor language, color theme, experience level, and reorder controls."
+    }
+  }
+}

@@ -26,6 +26,7 @@ import esInspector from "./locales/es/inspector.json";
 import esTokens from "./locales/es/tokens.json";
 import esCanvas from "./locales/es/canvas.json";
 import esCommon from "./locales/es/common.json";
+import esTour from "./locales/es/tour.json";
 
 // --- EN (inglés) -------------------------------------------------------------
 import enHeader from "./locales/en/header.json";
@@ -34,6 +35,7 @@ import enInspector from "./locales/en/inspector.json";
 import enTokens from "./locales/en/tokens.json";
 import enCanvas from "./locales/en/canvas.json";
 import enCommon from "./locales/en/common.json";
+import enTour from "./locales/en/tour.json";
 
 // --- IT (italiano) -----------------------------------------------------------
 import itHeader from "./locales/it/header.json";
@@ -42,17 +44,18 @@ import itInspector from "./locales/it/inspector.json";
 import itTokens from "./locales/it/tokens.json";
 import itCanvas from "./locales/it/canvas.json";
 import itCommon from "./locales/it/common.json";
+import itTour from "./locales/it/tour.json";
 
 export const SUPPORTED_LANGS = ["es", "en", "it"] as const;
 export type EditorLang = (typeof SUPPORTED_LANGS)[number];
 
 const I18N_RESOURCES = {
-  es: { header: esHeader, sidebar: esSidebar, inspector: esInspector, tokens: esTokens, canvas: esCanvas, common: esCommon },
-  en: { header: enHeader, sidebar: enSidebar, inspector: enInspector, tokens: enTokens, canvas: enCanvas, common: enCommon },
-  it: { header: itHeader, sidebar: itSidebar, inspector: itInspector, tokens: itTokens, canvas: itCanvas, common: itCommon },
+  es: { header: esHeader, sidebar: esSidebar, inspector: esInspector, tokens: esTokens, canvas: esCanvas, common: esCommon, tour: esTour },
+  en: { header: enHeader, sidebar: enSidebar, inspector: enInspector, tokens: enTokens, canvas: enCanvas, common: enCommon, tour: enTour },
+  it: { header: itHeader, sidebar: itSidebar, inspector: itInspector, tokens: itTokens, canvas: itCanvas, common: itCommon, tour: itTour },
 };
 
-const I18N_NAMESPACES = ["header", "sidebar", "inspector", "tokens", "canvas", "common"];
+const I18N_NAMESPACES = ["header", "sidebar", "inspector", "tokens", "canvas", "common", "tour"];
 
 /**
  * Crea una instancia de i18next AISLADA del singleton global — usada por
