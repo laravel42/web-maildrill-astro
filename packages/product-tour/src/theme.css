@@ -1,0 +1,97 @@
+/**
+ * theme.css — tema `.md-tour` sobre variables `--md-tour-*`.
+ *
+ * @md/product-tour no define ningún color por defecto: cada consumidor mapea sus propios
+ * tokens de marca a estas variables (ver §2 de docs/product-tour-driverjs-plan.md). Este
+ * archivo solo importa `driver.css` (carga diferida junto con el chunk del tour, nunca en el
+ * módulo top-level del consumidor) y sobreescribe las clases de driver.js para leer
+ * `--md-tour-*` en vez de sus valores hardcodeados.
+ *
+ * Variables esperadas del consumidor (sin fallback a propósito — si faltan, el popover se ve
+ * "roto" de forma obvia en vez de silenciosamente mal, lo que fuerza a cablear el tema):
+ *   --md-tour-surface       fondo del popover
+ *   --md-tour-text          texto principal
+ *   --md-tour-text-muted    texto secundario (descripción, progreso)
+ *   --md-tour-border        borde del popover
+ *   --md-tour-radius        radio de esquina
+ *   --md-tour-shadow        sombra del popover
+ *   --md-tour-accent        acento del botón primario / anillo de foco
+ *   --md-tour-accent-text   texto sobre `--md-tour-accent`
+ *   --md-tour-font          familia tipográfica
+ *   --md-tour-overlay       color del overlay (con alpha)
+ */
+
+@import 'driver.js/dist/driver.css';
+
+.driver-popover.md-tour {
+  background: var(--md-tour-surface);
+  color: var(--md-tour-text);
+  border: 1px solid var(--md-tour-border);
+  border-radius: var(--md-tour-radius);
+  box-shadow: var(--md-tour-shadow);
+  font-family: var(--md-tour-font);
+  padding: 16px;
+  max-width: 340px;
+}
+
+.driver-popover.md-tour .driver-popover-title {
+  color: var(--md-tour-text);
+  font-weight: 600;
+  font-size: 15px;
+  margin: 0 0 4px;
+}
+
+.driver-popover.md-tour .driver-popover-description {
+  color: var(--md-tour-text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.driver-popover.md-tour .driver-popover-progress-text {
+  color: var(--md-tour-accent);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.driver-popover.md-tour .driver-popover-footer-btn {
+  background: var(--md-tour-accent);
+  color: var(--md-tour-accent-text);
+  border: none;
+  border-radius: calc(var(--md-tour-radius) * 0.6);
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  text-shadow: none;
+}
+
+.driver-popover.md-tour .driver-popover-footer-btn:hover {
+  background: var(--md-tour-accent);
+  filter: brightness(1.08);
+}
+
+.driver-popover.md-tour .driver-popover-footer-btn:focus-visible {
+  outline: 2px solid var(--md-tour-accent);
+  outline-offset: 2px;
+}
+
+.driver-popover.md-tour .driver-popover-close-btn {
+  color: var(--md-tour-text-muted);
+}
+
+.driver-popover.md-tour .driver-popover-close-btn:hover {
+  color: var(--md-tour-text);
+}
+
+.driver-popover.md-tour .driver-popover-arrow {
+  border-color: var(--md-tour-surface);
+}
+
+.driver-overlay {
+  background: var(--md-tour-overlay);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --driver-animation-duration: 0s;
+  }
+}
