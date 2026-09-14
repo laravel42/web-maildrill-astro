@@ -1,0 +1,50 @@
+{
+  "labels": {
+    "nextBtnText": "Avanti",
+    "prevBtnText": "Indietro",
+    "doneBtnText": "Fine",
+    "progressText": "{{current}} di {{total}}"
+  },
+  "steps": {
+    "headerIdentity": {
+      "title": "Nome e salvataggio automatico",
+      "description": "Imposta qui il nome e la categoria del template. Le modifiche si salvano da sole mentre lavori."
+    },
+    "toolbarViews": {
+      "title": "Modifica o anteprima",
+      "description": "Passa dall'editor all'anteprima e controlla come appare su desktop o mobile."
+    },
+    "toolbarHistory": {
+      "title": "Annulla senza pensieri",
+      "description": "Ogni modifica può essere annullata o ripetuta, quindi puoi sperimentare liberamente."
+    },
+    "libraryRail": {
+      "title": "Blocchi a portata di clic",
+      "description": "I blocchi più usati sono qui — trascina uno qualsiasi sulla tela."
+    },
+    "libraryTabs": {
+      "title": "Blocchi e template",
+      "description": "Questo pannello raggruppa blocchi e template completi, per partire da zero o da un layout già pronto."
+    },
+    "canvasRoot": {
+      "title": "La tela",
+      "description": "Clicca un blocco per selezionarlo, oppure trascinane uno dalla libreria per aggiungerlo."
+    },
+    "inspectorPanel": {
+      "title": "Modifica il blocco selezionato",
+      "description": "Quando un blocco è selezionato, qui trovi le sue opzioni di contenuto e stile."
+    },
+    "imageSources": {
+      "title": "Aggiungi immagini",
+      "description": "Scegli un'immagine dalla libreria del workspace, cerca su Unsplash o caricane una tua."
+    },
+    "commandPalette": {
+      "title": "Tutto dalla tastiera",
+      "description": "Premi ⌘K (o Ctrl+K) per cercare ed eseguire qualsiasi azione dell'editor senza il mouse."
+    },
+    "headerActions": {
+      "title": "Testa e salva",
+      "description": "Invia a te stesso un'email di prova prima di salvare, per sapere esattamente cosa riceveranno gli iscritti."
+    }
+  }
+}

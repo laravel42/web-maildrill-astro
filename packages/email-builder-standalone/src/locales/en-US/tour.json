@@ -1,0 +1,50 @@
+{
+  "labels": {
+    "nextBtnText": "Next",
+    "prevBtnText": "Back",
+    "doneBtnText": "Done",
+    "progressText": "{{current}} of {{total}}"
+  },
+  "steps": {
+    "headerIdentity": {
+      "title": "Name and autosave",
+      "description": "Set the template name and category here. Your changes save automatically as you work."
+    },
+    "toolbarViews": {
+      "title": "Edit or preview",
+      "description": "Switch between the editor and a preview, and check how it looks on desktop or mobile."
+    },
+    "toolbarHistory": {
+      "title": "Undo anytime",
+      "description": "Every change can be undone or redone, so feel free to experiment."
+    },
+    "libraryRail": {
+      "title": "Blocks, one click away",
+      "description": "The most common blocks live here — drag any of them onto the canvas."
+    },
+    "libraryTabs": {
+      "title": "Blocks and templates",
+      "description": "This panel groups blocks and full templates so you can start from scratch or from a layout."
+    },
+    "canvasRoot": {
+      "title": "The canvas",
+      "description": "Click a block to select it, or drag one in from the library to add it."
+    },
+    "inspectorPanel": {
+      "title": "Edit the selected block",
+      "description": "Once a block is selected, its content and style options appear here."
+    },
+    "imageSources": {
+      "title": "Add images",
+      "description": "Pick an image from your workspace library, search Unsplash, or upload your own."
+    },
+    "commandPalette": {
+      "title": "Everything from the keyboard",
+      "description": "Press ⌘K (or Ctrl+K) to search and run any editor action without the mouse."
+    },
+    "headerActions": {
+      "title": "Test and save",
+      "description": "Send yourself a test email before saving, so you know exactly what subscribers will get."
+    }
+  }
+}

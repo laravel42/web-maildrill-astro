@@ -1,0 +1,50 @@
+{
+  "labels": {
+    "nextBtnText": "Siguiente",
+    "prevBtnText": "Atrás",
+    "doneBtnText": "Listo",
+    "progressText": "{{current}} de {{total}}"
+  },
+  "steps": {
+    "headerIdentity": {
+      "title": "Nombre y autoguardado",
+      "description": "Define aquí el nombre y la categoría de la plantilla. Los cambios se guardan solos mientras trabajas."
+    },
+    "toolbarViews": {
+      "title": "Editar o previsualizar",
+      "description": "Cambia entre el editor y la vista previa, y revisa cómo se ve en escritorio o en móvil."
+    },
+    "toolbarHistory": {
+      "title": "Deshacer sin miedo",
+      "description": "Cualquier cambio se puede deshacer o rehacer, así que puedes probar libremente."
+    },
+    "libraryRail": {
+      "title": "Bloques a un clic",
+      "description": "Los bloques más usados están aquí — arrastra cualquiera al lienzo."
+    },
+    "libraryTabs": {
+      "title": "Bloques y plantillas",
+      "description": "Este panel agrupa bloques y plantillas completas para empezar desde cero o desde un diseño ya armado."
+    },
+    "canvasRoot": {
+      "title": "El lienzo",
+      "description": "Haz clic en un bloque para seleccionarlo, o arrastra uno desde la librería para añadirlo."
+    },
+    "inspectorPanel": {
+      "title": "Edita el bloque seleccionado",
+      "description": "Al seleccionar un bloque, sus opciones de contenido y estilo aparecen aquí."
+    },
+    "imageSources": {
+      "title": "Añade imágenes",
+      "description": "Elige una imagen de la librería del workspace, busca en Unsplash o sube la tuya."
+    },
+    "commandPalette": {
+      "title": "Todo desde el teclado",
+      "description": "Pulsa ⌘K (o Ctrl+K) para buscar y ejecutar cualquier acción del editor sin usar el mouse."
+    },
+    "headerActions": {
+      "title": "Probar y guardar",
+      "description": "Envíate un correo de prueba antes de guardar, para saber exactamente qué recibirán tus suscriptores."
+    }
+  }
+}
