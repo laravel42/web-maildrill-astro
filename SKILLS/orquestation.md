@@ -79,6 +79,45 @@ moment; if you think a case deserves one, ask the person you're working with.
 
 ---
 
+## Model tiering: the orchestrator is not the subagent
+
+The orchestrator typically runs on the most capable model available — it's the
+one doing the judgment calls: decomposing, writing contracts, reading diffs,
+deciding whether something is a regression. Subagents run the tasks that
+judgment already reduced to a well-scoped, mechanical deliverable. That
+asymmetry in what each role actually does maps onto an asymmetry in what each
+role should cost.
+
+**Match the subagent's model to the task, not to the orchestrator's own tier.**
+If the platform lets you choose a model per subagent:
+
+- a small, well-scoped, mechanical task (apply a known pattern across files,
+  write a test for an already-decided contract, rename, migrate a fixed
+  shape, fix a lint rule) goes to the cheapest model that can reliably do it;
+- a task that requires real design judgment inside its own scope (an
+  algorithm with edge cases the orchestrator didn't fully spell out, a tricky
+  bug whose fix isn't obvious from the report) earns a stronger model — but
+  that is still a deliberate choice per task, not a default;
+- never spin up a top-tier subagent out of habit for something a cheap model
+  finishes correctly in one pass. If you're not sure which tier a task needs,
+  that uncertainty itself is a sign the task isn't decomposed enough yet (see
+  "A task with no verification command is not a task" below) — cut it down
+  until the tier is obvious.
+
+This is not a reason to under-specify the task to compensate for a cheaper
+model. The handoff discipline (scope, contract decisions, done-when criteria)
+is what makes a cheap model reliable in the first place — a vague handoff to
+a cheap model just fails differently than a vague handoff to an expensive one.
+
+Record the model choice in the log next to the task, the same way you record
+scope and commit. If a cheap-tier subagent fails or comes back needing a
+second round for the same task, that is itself a signal: either bump the tier
+for the retry, or the task was miscategorized as mechanical when it wasn't —
+don't just keep re-running the same cheap model hoping for a different
+result.
+
+---
+
 ## Why this exists (read before improvising)
 
 The classic failure of a multi-agent orchestration is not that a subagent does
@@ -226,6 +265,8 @@ at the end (see below):
 
 ```
 TASK: <short id> — <goal in one sentence, single deliverable>
+
+MODEL: <cheapest tier that fits this task — bump only if it needs real judgment>
 
 SCOPE (you may only modify these files/paths):
 - <path 1>
@@ -602,6 +643,7 @@ before starting:
 for each task:
     snapshot (HEAD + clean status)
     minimal handoff + contract + environment limits + baseline number
+    (pick the cheapest model tier that fits; bump only for real judgment calls)
     launch ONE subagent
     (the tree is theirs: no hook, watcher, or orchestrator touches it)
     read report

@@ -157,7 +157,7 @@ The visual editor is **vendored and compiled from source**, wrapped by
 
 If you are told you are acting as the **orchestrator** (coordinating subagents/workers over
 this repo, delegating tasks, running a multi-agent pipeline), read
-[`../SKILLS/orquestation.en.md`](../SKILLS/orquestation.en.md) **before** delegating anything.
+[`../SKILLS/orquestation.md`](../SKILLS/orquestation.md) **before** delegating anything.
 It defines the serial handoff/verification protocol (one subagent at a time, one commit per
 task, scope discipline, the verification gate) that governs how you split work and hand it off.
 
