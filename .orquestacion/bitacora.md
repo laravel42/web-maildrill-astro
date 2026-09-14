@@ -151,6 +151,13 @@ Known ignorable dirt in `git status`: `.cursor/hooks/`, `.kiro/` (untracked loca
   `Builder42Editor.tsx` alone. So B7's "two mounted call sites in the embed" is **refuted**: the
   landing editor has exactly one call site at `/dashboard/landings/editor`, and the duplicate has an
   as-yet-unproven cause there too. Nobody should re-walk that dead end.
+- **D11** (B12) — **Escape belongs to the topmost thing, not unconditionally to the tour.** D8 stands
+  for the plain case (tour open over the editor: Escape closes the tour, the host editor never sees
+  the key), but the guard must **let Escape through** when another modal surface is open on top of
+  the page — detected generically, with no host knowledge: an element matching
+  `[aria-modal="true"], dialog[open], [role="dialog"]` that is **not** driver.js's own popover. In
+  that state the tour stays open and the modal closes, which is what a user means. The engine stays
+  host-agnostic (D1): no Maildrill/MUI selectors, no per-editor lists.
 
 ---
 
@@ -200,12 +207,33 @@ F5  | popover theme                  | builder42 chrome css + EB runtime map | 2
 B1  | fix /404.html prerender        | astro.config.ts                       | 68c32ae | green
 B5  | fix e2e auth setup            | tests/e2e/**                          | —       | closed: not a harness bug (see B6)
 F6  | e2e Playwright                 | tests/e2e/tour.spec.ts                | 860212c | green (8 pass, 2 fixme, 1 skip → B7/B8/B9)
-B7  | duplicate tour instances       | engine registry + EB hook             | 4e842fd | green (1 new e2e red → B10)
+B7  | duplicate tour instances       | engine registry + EB hook             | 4e842fd | green
 B8  | Escape does not dismiss tour   | product-tour escape guard             | 4e842fd | green (same commit)
-B10 | ⌘K palette relaunch entry red  | EB CommandPalette + EB tour hook      | —       | next: closes the red B7B8 left
-B9  | landings has no relaunch entry | builder42 HostToolbar (D9)            | —       | after B10
+B10 | ⌘K palette relaunch entry red  | EB CommandPalette + EB tour hook      | 46c3a3f | green (closes B7B8's red; B11 fixed too)
+B12 | Escape vs an open host modal   | product-tour escape guard             | —       | next (see finding B12)
+B9  | landings has no relaunch entry | builder42 HostToolbar (D9)            | —       | after B12
 F7  | docs + telemetry               | docs/AGENTS.md, packages/VENDOR.md    | —       | pending
 ```
+
+Gate run for B10 (orchestrator, `b57c634..46c3a3f`): 3 files, all in scope; zero deletions; `b57c634`
+still an ancestor. The new unit test is a pure `116 0` addition and the two source files are
+`35 1` / `9 1` — nothing rewritten. Re-measured: email-builder 8 files/46 tests (was 7/45),
+`pnpm check` 337 files 0/0/3, `pnpm lint` the same 3 errors by name.
+
+Mutation-tested that the new test bites: restored `useEmailBuilderTour.ts` from `b57c634` →
+`useEmailBuilderTour.restart-before-enabled.test.tsx` failed (`Test timed out in 5000ms`, i.e. the
+restart never fired after the flag flip); restored, tree clean.
+
+**tests/e2e/tour.spec.ts is fully green:** in the orchestrator's own full-suite run (below) no test
+from that spec failed, so 12 passed / 1 skipped / 0 failed — the palette test passes **unmodified**,
+which is the outcome the handoff demanded. B11 (the swallowed restart) is fixed in the same commit,
+with the bookkeeping assignment moved below the `tourEnabled` gate and the comment corrected.
+
+Full-suite e2e re-measured by the orchestrator, `--workers=1 --retries=0`:
+**51 passed / 23 failed / 3 skipped** of 77. The 23 are the 22 baseline names **plus one**:
+`workspace-tour.spec.ts:186 › templates › the send-test dialog opens and cancels without sending`
+→ tracked as finding **B12**, and it passes in isolation (12.2 s), so it is timing-dependent, not a
+hard break.
 
 Gate run for B7B8 (orchestrator, `3588311..4e842fd`): 4 files, all inside the declared scope; **zero deletions**; `3588311` still an ancestor of `HEAD`. Re-measured by the orchestrator, not taken from the report: `pnpm check` → 337 files, 0/0/3 (identical); `pnpm lint` → the same 3 baseline errors **by name**, no new ones; `@md/product-tour` 5 files/38 tests (was 4/27 — the new file is a pure `317 0` addition), builder42 12/112, email-builder 7/45, root 43/303, `tsc -p packages/product-tour` 0.
 
@@ -264,6 +292,31 @@ auditor subagent is launched.
 ---
 
 ## Findings
+
+**B12 — with the tour active, Escape closes the tour instead of an open host modal, and that is on
+the tour's own happy path.** Surfaced as the one non-baseline e2e failure after B10:
+`workspace-tour.spec.ts:186 › the send-test dialog opens and cancels without sending` opens the
+send-test dialog and closes it with a single `Escape`. D8 gave Escape to the tour whenever a tour is
+active, so that key now dismisses the tour and the dialog stays open; the test then fails on
+`expect(dialog).not.toBeVisible()`. Measured: it **passes in isolation** (12.2 s) and fails inside the
+full run, i.e. it depends on whether the tour's lazily-imported popover has mounted yet (~5–6.5 s in
+this dev environment) by the time Escape is pressed. Not a build break — but not a test artifact
+either: the email tour's `eb.header.actions` step **highlights the very "Send test" button** that
+opens that dialog, so a real user is invited into exactly this state. Neither the old guard (which
+swallowed Escape and closed nothing) nor the new one (which closes the tour) does what a user
+pressing Escape over an open modal means. Owner: B12, per **D11** below.
+
+**B13 — the e2e suite is unstable under `fullyParallel: true`, so the F6-era "22 failures by name"
+baseline is not reproducible with the default worker count.** Measured today at `46c3a3f`, same
+`--project=chromium --no-deps` command as the F6 gate: **47 passed / 27 failed / 3 skipped**, and the
+27 include four `tour.spec.ts` tests (auto-start, header help button, command palette, popover theme)
+that pass reliably at `--workers=1` — several heavy `client:only` editor islands hydrating
+concurrently against a single dev server blow the 45 s budgets. The same commit at `--workers=1`:
+51 passed / 23 failed / 3 skipped, stable across runs. **From here on the gate's e2e configuration is
+`--project=chromium --no-deps --workers=1 --retries=0`**, and the comparison set is the 22 baseline
+names (+ B12 until it is closed). Anyone comparing against the older 48/22/5 figure must re-measure
+with `--workers=1` first; the numbers are not interchangeable.
+
 
 **B10 — the ⌘K command-palette relaunch entry is red, and the evidence says it was passing for the
 wrong reason.** `tour.spec.ts:106 › relaunches from the command palette` was green at baseline and
