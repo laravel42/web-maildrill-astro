@@ -38,15 +38,30 @@ const cacheDirSuffix = astroCommand && /^[a-z][a-z-]*$/.test(astroCommand) ? ast
 
 const RESOLVE_EXTS = ['.tsx', '.ts', '.jsx', '.js'];
 
+// Vite/Rollup treat module ids as forward-slash strings internally, and
+// Astro's compiled output (renderScript lookups against entryModules keys)
+// only ever queries with forward slashes. `path.join`/`path.resolve` return
+// backslashes on Windows, so a resolver that hands Rollup a raw Windows path
+// creates a manifest key that the forward-slash lookup can never match —
+// silently breaking prerender for any `.astro` file that reaches this
+// resolver's `@/` alias (see MarketingLayout.astro's `import '@/scripts/motion'`).
+// Normalizing here, at the single chokepoint both resolveAtImport and
+// resolveBuilder42Shared funnel through, keeps every id this plugin returns
+// aligned with what Vite/Astro expect on every OS (a no-op on POSIX, where
+// paths already use forward slashes).
+function toPosixId(id: string): string {
+  return id.split(path.sep).join('/');
+}
+
 function resolveWithExtensions(base: string): string | undefined {
-  if (fs.existsSync(base) && fs.statSync(base).isFile()) return base;
+  if (fs.existsSync(base) && fs.statSync(base).isFile()) return toPosixId(base);
   for (const ext of RESOLVE_EXTS) {
     const file = base + ext;
-    if (fs.existsSync(file)) return file;
+    if (fs.existsSync(file)) return toPosixId(file);
   }
   for (const ext of RESOLVE_EXTS) {
     const file = path.join(base, `index${ext}`);
-    if (fs.existsSync(file)) return file;
+    if (fs.existsSync(file)) return toPosixId(file);
   }
   return undefined;
 }
