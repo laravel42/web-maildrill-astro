@@ -1,6 +1,6 @@
 # Orchestration log — product tours (driver.js)
 
-Protocol: [`SKILLS/orquestation.en.md`](../SKILLS/orquestation.en.md) — serial, one subagent at a
+Protocol: [`SKILLS/orquestation.md`](../SKILLS/orquestation.md) — serial, one subagent at a
 time, one commit per task, orchestrator runs the gate.
 
 Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour-driverjs-plan.md).
