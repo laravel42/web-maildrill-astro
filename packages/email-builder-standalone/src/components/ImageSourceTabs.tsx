@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { Box, Tab, Tabs } from '@mui/material';
 
+import { dataTourAttr, EMAIL_BUILDER_TOUR_ANCHORS } from '../tour/tourAnchors';
+
 /**
  * Canonical keys for the image-source tabs.
  * - `gallery`     — built-in Unsplash picker (controlled by `unsplashEnabled`).
@@ -51,13 +53,13 @@ const ImageSourceTabs: React.FC<ImageSourceTabsProps> = ({ tabs, defaultTab }) =
   if (visible.length === 0) return null;
   if (visible.length === 1) {
     // Single-source: skip the tab strip — no point in showing a strip of one.
-    return <Box>{visible[0].render()}</Box>;
+    return <Box {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.imageSources)}>{visible[0].render()}</Box>;
   }
 
   const activeTab = visible.find((t) => t.key === active) ?? visible[0];
 
   return (
-    <Box>
+    <Box {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.imageSources)}>
       <Tabs
         value={activeTab.key}
         onChange={(_, v) => setActive(v as ImageSourceTabKey)}

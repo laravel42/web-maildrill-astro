@@ -34,6 +34,7 @@ import { useDocumentStore } from "@/builder/store/documentStore";
 import { useLocalConfig } from "@/hooks/useLocalConfig";
 import { useThemeMode } from "@/hooks/useThemeMode";
 import { fetchHealth } from "@/services/apiClient";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 function PrefHeading({
   panel,
@@ -132,6 +133,7 @@ export function ProfileMenu() {
         className="pbx-profile__trigger"
         title={t("profile.label")}
         aria-label={t("profile.label")}
+        {...dataTourAttr(BUILDER42_TOUR_ANCHORS.profileMenu)}
       >
         <Settings size={18} aria-hidden="true" />
       </button>

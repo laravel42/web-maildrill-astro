@@ -43,6 +43,7 @@ import { viewportIcon } from "@/builder/model/breakpointIcons";
 import type { BuilderNode, Breakpoint } from "@/builder/model/types";
 import { Eye, EyeOff } from "@/components";
 import { FieldHelp } from "../controls/FieldHelp";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 /** `true` si `layout.display: "none"` está declarado EN la capa del breakpoint activo (no heredado). */
 function declaredNoneInActiveLayer(node: BuilderNode, bp: Breakpoint): boolean {
@@ -133,7 +134,12 @@ export function VisibilityStrip({ node }: { node: BuilderNode }) {
         )}
       </div>
 
-      <div className="pbx-visibility-strip__breakpoints" role="group" aria-label={t("visibility.label")}>
+      <div
+        className="pbx-visibility-strip__breakpoints"
+        role="group"
+        aria-label={t("visibility.label")}
+        {...dataTourAttr(BUILDER42_TOUR_ANCHORS.inspectorBreakpoints)}
+      >
         {cfg.order.map((bp) => {
           const bpHidden = isHiddenAt(node.style, bp, cfg);
           const BpIcon = viewportIcon(bp);

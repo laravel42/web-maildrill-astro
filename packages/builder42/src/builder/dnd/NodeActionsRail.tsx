@@ -39,6 +39,7 @@ import { Copy, Trash2, IconButton, SimpleModal, CloseIcon, ToastHost, useToast }
 import { useDocumentStore } from "../store/documentStore";
 import { undo } from "../store/useTemporalStore";
 import { useReorderControlsVisible } from "@/hooks/usePointerCoarse";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 interface NodeActionsRailProps {
   /** Frame del canvas: mismo sistema de coordenadas que `SelectionHandle`. */
@@ -206,6 +207,7 @@ export function NodeActionsRail({ frameRef }: NodeActionsRailProps) {
         className="pbx-node-actions-rail"
         style={{ top: box.top, left: box.left }}
         onClick={(ev) => ev.stopPropagation()}
+        {...dataTourAttr(BUILDER42_TOUR_ANCHORS.canvasNodeActions)}
       >
         <IconButton
           icon={Copy}

@@ -54,6 +54,7 @@ import { TokensEditor } from "./TokensEditor";
 import { TemplatesPanel } from "./TemplatesPanel";
 import { SectionTemplateCard } from "./TemplateCard";
 import { TemplateHoverPreviewPortal } from "@/builder/dnd/TemplateHoverPreviewPortal";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 // ---------------------------------------------------------------------------
 // Iconos por categoría — Lucide (Fase 11.f), 16×16 vía CSS, currentColor
@@ -371,7 +372,12 @@ export function Sidebar() {
           <CompactRail />
         ) : (
           <>
-            <div className="pbx-side-tabs" role="tablist" aria-label={t("tabs.ariaLabel")}>
+            <div
+              className="pbx-side-tabs"
+              role="tablist"
+              aria-label={t("tabs.ariaLabel")}
+              {...dataTourAttr(BUILDER42_TOUR_ANCHORS.sidebarTabs)}
+            >
               {tabIds.map((id) => (
                 <button
                   key={id}
@@ -393,6 +399,7 @@ export function Sidebar() {
               role="tabpanel"
               id={`pbx-side-panel-${activeTab}`}
               aria-labelledby={`pbx-side-tab-${activeTab}`}
+              {...dataTourAttr(BUILDER42_TOUR_ANCHORS.sidebarPalette)}
             >
               {activeTab === "components" ? (
                 <ComponentsPanel />

@@ -24,6 +24,7 @@ import { slugifySiteId, isValidSubdomain } from "../../../shared/slug";
 import { ExportWarningsBanner } from "@/components/ExportWarningsBanner";
 import type { HealthResponse } from "../../../shared/api";
 import type { ApiErrorCode, ExportWarning } from "../../../shared/api";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 type PublishState =
   | { kind: "idle" }
@@ -87,7 +88,7 @@ export function PublishPanel({ onPublished }: { onPublished?: () => void } = {})
   // --- Gating: publish.enabled === false --------------------------------
   if (health !== undefined && !health.enabled) {
     return (
-      <div className="pbx-publish-panel">
+      <div className="pbx-publish-panel" {...dataTourAttr(BUILDER42_TOUR_ANCHORS.publish)}>
         <h4 className="pbx-inspector__heading">{t("publish.disabledTitle")}</h4>
         <p className="pbx-publish-panel__hint">{t("publish.disabledHint")}</p>
       </div>
@@ -100,7 +101,7 @@ export function PublishPanel({ onPublished }: { onPublished?: () => void } = {})
   const subdomainValid = subdomain.length === 0 || isValidSubdomain(subdomain);
 
   return (
-    <div className="pbx-publish-panel">
+    <div className="pbx-publish-panel" {...dataTourAttr(BUILDER42_TOUR_ANCHORS.publish)}>
       <h4 className="pbx-inspector__heading">{t("publish.title")}</h4>
 
       {state.kind !== "done" && (

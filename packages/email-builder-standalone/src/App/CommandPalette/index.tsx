@@ -47,6 +47,7 @@ import {
   undoChange,
 } from '../../documents/editor/EditorContext';
 import { BUTTONS } from '../ComponentsLibrary/builtInBlocks';
+import { dataTourAttr, EMAIL_BUILDER_TOUR_ANCHORS } from '../../tour/tourAnchors';
 
 import ShortcutKeys from './ShortcutKeys';
 
@@ -263,7 +264,7 @@ export default function CommandPalette() {
     >
       <C42CommandPalette hotkey="k" onSelect={handleSelect}>
         <div data-c42-command-overlay />
-        <div data-c42-command-dialog>
+        <div data-c42-command-dialog {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.commandPalette)}>
           <input
             data-c42-command-input
             placeholder={t('commandPalette.placeholder', 'Type a command or search…')}

@@ -76,6 +76,7 @@ import { isThumbnailPending, useThumbnailStatusVersion } from './thumbnailStatus
 import LibraryCardPrimitiveRender from './thumbnail/LibraryCardPrimitiveRender';
 import LibraryCardThumbnail from './thumbnail/LibraryCardThumbnail';
 import { resolveThumbnailUrl } from './thumbnail/thumbnailUrl';
+import { dataTourAttr, EMAIL_BUILDER_TOUR_ANCHORS } from '../../tour/tourAnchors';
 
 /**
  * Width (in px) when the drawer is open. Homologado con Builder42
@@ -925,6 +926,7 @@ export default function ComponentsLibraryDrawer() {
 
   return (
     <Box
+      {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.libraryRail)}
       sx={{
         position: 'absolute',
         top: 0,
@@ -952,7 +954,7 @@ export default function ComponentsLibraryDrawer() {
       >
         {open ? (
           <>
-            <Box className="eb-side-tabs">
+            <Box className="eb-side-tabs" {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.libraryTabs)}>
               <Tabs
                 value={activeTab}
                 onChange={(_, v: string) => setActiveTab(v)}

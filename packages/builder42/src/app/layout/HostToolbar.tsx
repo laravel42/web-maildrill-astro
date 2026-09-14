@@ -16,6 +16,7 @@ import {
 import { UndoIcon, RedoIcon } from "@/components";
 import { HOST_VIEWS_ID, HOST_HISTORY_ID } from "@/app/EmbeddedChrome";
 import { ViewportDropdown } from "./ViewportDropdown";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 function HostViews() {
   const { t } = useTranslation("header");
@@ -84,11 +85,19 @@ export function HostCanvasToolbar() {
 
   return (
     <div className="pbx-canvas-toolbar" role="toolbar" aria-label={t("canvasControls.label")}>
-      <div id={HOST_VIEWS_ID} className="pbx-canvas-toolbar__center">
+      <div
+        id={HOST_VIEWS_ID}
+        className="pbx-canvas-toolbar__center"
+        {...dataTourAttr(BUILDER42_TOUR_ANCHORS.toolbarViews)}
+      >
         <HostViews />
         <ViewportDropdown />
       </div>
-      <div id={HOST_HISTORY_ID} className="pbx-canvas-toolbar__right">
+      <div
+        id={HOST_HISTORY_ID}
+        className="pbx-canvas-toolbar__right"
+        {...dataTourAttr(BUILDER42_TOUR_ANCHORS.toolbarHistory)}
+      >
         <HostHistory />
       </div>
     </div>

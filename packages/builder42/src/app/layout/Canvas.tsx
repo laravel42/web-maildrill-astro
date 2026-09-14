@@ -34,6 +34,7 @@ import { ErrorBoundary } from "@/components";
 import { ExportWarningsBanner } from "@/components/ExportWarningsBanner";
 import type { ExportWarning } from "@/builder/export/warnings";
 import { CanvasEmptyStart } from "./CanvasEmptyStart";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 export function Canvas() {
   const view = useDocumentStore((s) => s.view);
@@ -94,6 +95,7 @@ export function Canvas() {
         style={{ width: viewportWidth(activeBreakpoint) }}
         data-breakpoint={activeBreakpoint}
         data-theme={activeThemeId ?? undefined}
+        {...dataTourAttr(BUILDER42_TOUR_ANCHORS.canvasFrame)}
       >
         <ErrorBoundary key={view} nodeId={rootId}>
           <NodeRenderer id={rootId} interactive={interactive} />

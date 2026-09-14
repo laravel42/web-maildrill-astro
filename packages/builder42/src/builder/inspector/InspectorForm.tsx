@@ -61,6 +61,7 @@ import { countEditableFields, hasEditableFields } from "./controls/propControls/
 import { StylePanel } from "./panel/StylePanel";
 import { VisibilityStrip, useIsNodeHiddenAtActiveBreakpoint } from "./panel/VisibilityStrip";
 import type { InspectorTab } from "./form/types";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 export function InspectorForm({ node }: { node: BuilderNode }) {
   const { t } = useTranslation("inspector");
@@ -120,7 +121,12 @@ export function InspectorForm({ node }: { node: BuilderNode }) {
         {/* Fila 2 (docs/41 §5.1): tabs + segmented de breakpoints. La papelera
             de borrar nodo se movió a `NodeActionsRail` (fase C, homologación
             UI/UX) — ya no vive en esta fila. */}
-        <div className="pbx-inspector-tabs" role="tablist" aria-label={t("tabs.ariaLabel")}>
+        <div
+          className="pbx-inspector-tabs"
+          role="tablist"
+          aria-label={t("tabs.ariaLabel")}
+          {...dataTourAttr(BUILDER42_TOUR_ANCHORS.inspectorTabs)}
+        >
           {tabs.map((it) => (
             <button
               key={it.id}

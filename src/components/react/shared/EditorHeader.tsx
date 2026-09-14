@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import type { ChannelType } from '@/types/app';
+import { dataTourAttr, EMAIL_BUILDER_TOUR_ANCHORS } from 'email-builder-standalone/tour';
+import { dataTourAttr as dataTourAttrPbx, BUILDER42_TOUR_ANCHORS } from 'builder42/tour';
 import Icon from '../Icon';
 import { resolveEditorIdentity, type EditorIdentity } from './channels';
 import styles from './EditorHeader.module.css';
@@ -254,7 +256,14 @@ export default function EditorHeader({
         )}
       </div>
 
-      <div className={styles.center}>
+      <div
+        className={styles.center}
+        {...(channel === 'email'
+          ? dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.headerIdentity)
+          : !channel && identity
+            ? dataTourAttrPbx(BUILDER42_TOUR_ANCHORS.headerIdentity)
+            : {})}
+      >
         <div className={styles.nameRow}>
           <div className={`${styles.nameField}${nameError ? ` ${styles.nameFieldInvalid}` : ''}`}>
             <span
@@ -301,7 +310,10 @@ export default function EditorHeader({
         </div>
       </div>
 
-      <div className={styles.right}>
+      <div
+        className={styles.right}
+        {...(channel === 'email' ? dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.headerActions) : {})}
+      >
         <span className={styles.status} role="status">
           <span
             className={`${styles.dot}${status === 'saving' ? ` ${styles.dotSaving}` : ''}${isDirty && status !== 'saving' ? ` ${styles.dotUnsaved}` : ''}`}

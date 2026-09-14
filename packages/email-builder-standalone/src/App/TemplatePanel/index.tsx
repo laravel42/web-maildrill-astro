@@ -77,6 +77,7 @@ import HtmlPanel from './HtmlPanel';
 import JsonPanel from './JsonPanel';
 import MainTabsGroup from './MainTabsGroup';
 import renderToStaticMarkup from './renderToStaticMarkup';
+import { dataTourAttr, EMAIL_BUILDER_TOUR_ANCHORS } from '../../tour/tourAnchors';
 import './history.css';
 
 const CSS_HEADER_CHAR_LIMIT = 16350;
@@ -420,7 +421,12 @@ export default function TemplatePanel({
       default:
         return (
           <>
-            <div className="pbx-history" role="group" aria-label={t('header.history')}>
+            <div
+              className="pbx-history"
+              role="group"
+              aria-label={t('header.history')}
+              {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.toolbarHistory)}
+            >
               <button
                 type="button"
                 className="pbx-history__btn"
@@ -613,6 +619,7 @@ export default function TemplatePanel({
       <Box
         className="preview-container eb-canvas"
         ref={previewContainer}
+        {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.canvasRoot)}
         onClick={(e: React.MouseEvent) => {
           if (selectedMainTab === 'editor') {
             // No deseleccionar si el click viene de un portal MUI o del toolbar de NotionText

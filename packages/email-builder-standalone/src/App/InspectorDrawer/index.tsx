@@ -25,6 +25,7 @@ import {
 import { CompactModeProvider } from './CompactModeContext';
 import ConfigurationPanel from './ConfigurationPanel';
 import StylesPanel from './StylesPanel';
+import { dataTourAttr, EMAIL_BUILDER_TOUR_ANCHORS } from '../../tour/tourAnchors';
 
 export default function InspectorDrawer({
   sticky,
@@ -137,6 +138,7 @@ export default function InspectorDrawer({
   return (
     <CompactModeProvider value={isCompact}>
       <Container
+        {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.inspectorPanel)}
         sx={(t) => ({
           width: isCompact ? COMPACT_PANEL_WIDTH : lateralPanel,
           padding: '0!important',
