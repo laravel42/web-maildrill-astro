@@ -14,34 +14,42 @@ import {
  * The guided tour (driver.js, `@md/product-tour`), end to end in both visual
  * editors (F6, docs/product-tour-driverjs-plan.md §4).
  *
- * ⚠️ KNOWN PRODUCT BUG (reported, not fixed here — out of scope per this
- * task's contract): in this environment, both `useEmailBuilderTour` and
- * `useBuilder42Tour` auto-start the tour TWICE on a single mount of the
- * editor, producing two fully independent, simultaneous `driver()`
- * instances (two `.driver-popover.md-tour` nodes, two `.driver-overlay`
- * nodes, two independent Escape guards). This was diagnosed directly (see
- * PR/task report "FINDINGS"): the two instances are not a single duplicated
- * render — clicking "Next" on one instance's popover advances only that
- * instance to its next step while the other instance's popover (a
- * completely separate step) remains on screen and blocks pointer events
- * over the first ("subtree intercepts pointer events"), and pressing
- * Escape dismisses neither. A full step-by-step walk therefore cannot be
- * driven coherently through the DOM — see the `test.fixme` at the bottom of
- * each `describe` block, which demonstrates this precisely instead of
- * papering over it with `.first()`/`force: true` tricks that would assert
- * nothing real about user-facing behavior.
+ * Product bug fixed under B7B8 (see the task's FINAL REPORT for the full diagnosis):
+ * on a single mount of each editor, TWO independent `driver()` instances used to end
+ * up active simultaneously (two `.driver-popover.md-tour` nodes, two `.driver-overlay`
+ * nodes, on different steps, one physically intercepting pointer events over the
+ * other's "Next" button — Playwright's "subtree intercepts pointer events" — and
+ * Escape dismissing neither). The fix has two lines of defense:
  *
- * The tests that DO run below only assert things that remain true and
- * meaningful despite the duplication: the popover's content/theme/anchor
- * resolution is correct (both instances render identical, correct content
- * for their respective step), persistence and auto-start gating work, and
- * the relaunch entry points fire. Each of those would still fail loudly if
- * the underlying feature broke — they are not defeated by the duplication
- * bug, they coexist with it.
+ * 1. ENGINE (`@md/product-tour/src/createTour.ts`, D7): a module-level registry keyed
+ *    by `tourId` guarantees at most one active driver.js instance process-wide, even
+ *    if a second `start()` for the same `tourId` arrives while the first is still
+ *    awaiting its lazy `import('driver.js')` — LAST START WINS, the previous instance
+ *    is destroyed synchronously before the new one drives.
+ * 2. CALL SITE (`useEmailBuilderTour.ts`, proven cause): the restart-nonce effect's
+ *    dependency array included `tourEnabled`, so it re-ran — treating it as a restart
+ *    request — on the `tourEnabled` false→true transition that happens on every mount
+ *    (the tour flag starts `false` in the editor's store and flips to `true` from a
+ *    separate `useEffect`), firing a second `start()` while the auto-start effect's own
+ *    `start()` was still awaiting its import. Fixed by only reacting to genuine
+ *    `restartNonce` changes. The landing editor (`useBuilder42Tour.ts`) has no matching
+ *    call-site pattern — its auto-start effect depends on `onboardingResolved` alone —
+ *    and the duplicate could not be reproduced there by direct execution either; its
+ *    correctness now rests on the engine-level guard alone (line of defense 1).
  *
- * Both editors are heavy React islands mounted with `client:only="react"`;
- * 45s timeouts here match what the other specs already budget for these
- * same routes (`smoke.spec.ts`, `workspace-tour.spec.ts`).
+ * Escape now dismisses the tour itself (D8): the capture-phase guard in `createTour.ts`
+ * still stops propagation/default so the host editor never sees the key (existing F4
+ * host tests depend on that), but the guard itself now destroys the active driver.js
+ * instance (routed through `driverInstance.destroy()`, never a manual DOM teardown) and
+ * emits `tour_dismissed` itself — driver.js's own public `destroy()` skips its
+ * `onDestroyStarted` hook (verified by reading `driver.js@1.8.0`'s source: that hook only
+ * fires on closes driver.js initiates itself, e.g. its popover's own close button), and
+ * this package intentionally never relies on driver.js's own (bubble-phase, unreachable)
+ * Escape handler.
+ *
+ * Both editors are heavy React islands mounted with `client:only="react"`; 45s timeouts
+ * here match what the other specs already budget for these same routes
+ * (`smoke.spec.ts`, `workspace-tour.spec.ts`).
  *
  * Never sends anything live: `blockOutbound` + the `afterEach` assertion are
  * mandatory here too, even though no test clicks "Send test" — the tour's
@@ -151,23 +159,61 @@ test.describe('email editor tour (/dashboard/templates/email)', () => {
     expect(overlayColor).not.toBe('rgba(0, 0, 0, 1)');
   });
 
-  test.fixme(
-    'BUG: the tour auto-starts twice on a single mount, so a full step walk and Escape cannot be driven coherently — ' +
-      'see the file-level doc comment above and the task report FINDINGS for the full diagnosis. ' +
-      'This is a real product defect in useEmailBuilderTour.ts (out of scope to fix per this task\'s ' +
-      'contract — packages/** is off-limits): two independent driver() instances end up mounted ' +
-      'simultaneously (two `.driver-popover.md-tour`, two `.driver-overlay`), each on its own step ' +
-      'once advanced, and the second instance\'s overlay physically intercepts pointer events over ' +
-      'the first\'s "Next" button (Playwright: "subtree intercepts pointer events"). Escape dismisses ' +
-      'neither instance. A test that force-clicks through this or asserts only `.first()` throughout ' +
-      'a full walk would be green without ever exercising the real single-tour user journey — that is ' +
-      'exactly the "test verde que no mordería si el tour se rompiera" this task\'s contract forbids.',
-    async ({ page }) => {
-      await resetEmailTourState(page);
-      await gotoApp(page, '/dashboard/templates/email');
-      await expect(tourPopover(page)).toHaveCount(1, { timeout: 45_000 });
-    },
-  );
+  test('exactly one instance is ever active, and a full step walk finishes via the real Next button', async ({ page }) => {
+    test.setTimeout(120_000);
+    await resetEmailTourState(page);
+    // driver.js animates each highlight transition by default (`animate: true` unless
+    // `prefers-reduced-motion`, see `createTour.ts`). Emulating reduced motion — an already
+    // supported, tested product behavior, not a test-only shortcut — keeps every step
+    // transition's popover reposition instantaneous, so Playwright's real (non-`force`)
+    // click/visibility actionability checks never have to straddle an in-flight CSS
+    // transition across a 20-step walk.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoApp(page, '/dashboard/templates/email');
+
+    const popover = tourPopover(page);
+    const overlay = page.locator('.driver-overlay');
+    await expect(popover, 'exactly one popover on first visit').toHaveCount(1, { timeout: 45_000 });
+    await expect(overlay, 'exactly one overlay on first visit').toHaveCount(1);
+    await expect(popover).toHaveClass(/md-tour/);
+
+    // Walk every step by clicking the real "Next"/"Done" button — never `.first()`, never
+    // `force: true`. Re-asserting the single-instance invariant after each click is what
+    // would have caught the original bug: a second, independently-driven instance left the
+    // popover count at 2 (or its overlay intercepting pointer events on the "real" click).
+    const nextBtn = tourNextButton(page);
+    for (let i = 0; i < 20; i++) {
+      await expect(popover, `exactly one popover mid-walk (step ${i})`).toHaveCount(1);
+      await expect(overlay, `exactly one overlay mid-walk (step ${i})`).toHaveCount(1);
+      await expect(nextBtn).toBeVisible();
+      const isDone = await nextBtn.evaluate((el) => el.classList.contains('driver-popover-done-btn'));
+      await nextBtn.click({ timeout: 60_000 });
+      if (isDone) break;
+    }
+
+    // The tour finished (Done clicked) — no popover/overlay left, and no test in this loop
+    // ever needed `force: true` or hit a pointer-interception error, which is the real
+    // proof there is only ever one live instance to click through.
+    await expect(popover, 'tour finished, no popover left').toHaveCount(0);
+    await expect(overlay, 'tour finished, no overlay left').toHaveCount(0);
+  });
+
+  test('Escape dismisses the tour while the editor itself stays open', async ({ page }) => {
+    await resetEmailTourState(page);
+    await gotoApp(page, '/dashboard/templates/email');
+
+    const popover = tourPopover(page);
+    await expect(popover).toHaveCount(1, { timeout: 45_000 });
+
+    await page.keyboard.press('Escape');
+
+    await expect(popover, 'Escape dismisses the tour').toHaveCount(0);
+    await expect(page.locator('.driver-overlay'), 'the overlay is gone too').toHaveCount(0);
+
+    // The editor itself stays open: same route, canvas anchor still visible.
+    await expect(page).toHaveURL(/\/dashboard\/templates\/email/);
+    await expect(page.getByRole('button', { name: 'Save template' })).toBeVisible();
+  });
 });
 
 test.describe('landing editor tour (/dashboard/landings/editor)', () => {
@@ -175,8 +221,8 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
     await resetLandingTourState(page);
     await gotoApp(page, '/dashboard/landings/editor');
 
-    const popover = tourPopover(page).first();
-    await expect(popover, 'tour popover appears on first visit').toBeVisible({ timeout: 45_000 });
+    const popover = tourPopover(page);
+    await expect(popover, 'tour popover appears on first visit').toHaveCount(1, { timeout: 45_000 });
     await expect(popover).toHaveClass(/md-tour/);
 
     // §1.4.2 / §3.2 step 2 (`pbx.toolbar.views`): the tour forces `view === "edit"`
@@ -214,17 +260,17 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
       const profileTrigger = page.locator('[data-tour="pbx.profileMenu"]');
       await profileTrigger.click();
       await page.getByRole('button', { name: 'View the guided tour' }).click();
-      await expect(tourPopover(page).first()).toBeVisible({ timeout: 10_000 });
+      await expect(tourPopover(page)).toHaveCount(1, { timeout: 10_000 });
     },
   );
 
   test('the popover theme resolves to the indigo accent over a translucent overlay', async ({ page }) => {
     await resetLandingTourState(page);
     await gotoApp(page, '/dashboard/landings/editor');
-    const popover = tourPopover(page).first();
-    await expect(popover).toBeVisible({ timeout: 45_000 });
+    const popover = tourPopover(page);
+    await expect(popover).toHaveCount(1, { timeout: 45_000 });
 
-    const nextBtn = tourNextButton(page).first();
+    const nextBtn = tourNextButton(page);
     await expect(nextBtn).toBeVisible();
     const primaryBg = await nextBtn.evaluate((el) => getComputedStyle(el).backgroundColor);
     // `builder42/src/styles/chrome/tour.css` maps `--md-tour-accent` from
@@ -242,18 +288,50 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
     expect(overlayColor).not.toBe('rgba(0, 0, 0, 1)');
   });
 
-  test.fixme(
-    'BUG: the tour auto-starts twice on a single mount, so a full step walk and Escape cannot be driven ' +
-      "coherently — see tests\\e2e\\tour.spec.ts's file-level doc comment and the task report FINDINGS. " +
-      'Same defect family as the email editor\'s (useBuilder42Tour.ts, also out of scope: packages/** is ' +
-      'off-limits), confirmed independently here: after auto-start, the two `.driver-active-element`s carry ' +
-      'DIFFERENT anchors (`pbx.header.identity` and `pbx.toolbar.views` were observed simultaneously active ' +
-      'in the same diagnosis run), proving two independently-driven `driver()` instances rather than one ' +
-      'duplicated render.',
-    async ({ page }) => {
-      await resetLandingTourState(page);
-      await gotoApp(page, '/dashboard/landings/editor');
-      await expect(tourPopover(page)).toHaveCount(1, { timeout: 45_000 });
-    },
-  );
+  test('exactly one instance is ever active, and a full step walk finishes via the real Next button', async ({ page }) => {
+    test.setTimeout(120_000);
+    await resetLandingTourState(page);
+    // See the matching email-editor test above for why: driver.js's default step-transition
+    // animation is disabled by emulating reduced motion, so every "Next" click's popover
+    // reposition is instantaneous and Playwright's real actionability checks never straddle
+    // an in-flight CSS transition across a full step walk.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoApp(page, '/dashboard/landings/editor');
+
+    const popover = tourPopover(page);
+    const overlay = page.locator('.driver-overlay');
+    await expect(popover, 'exactly one popover on first visit').toHaveCount(1, { timeout: 45_000 });
+    await expect(overlay, 'exactly one overlay on first visit').toHaveCount(1);
+    await expect(popover).toHaveClass(/md-tour/);
+
+    const nextBtn = tourNextButton(page);
+    for (let i = 0; i < 20; i++) {
+      await expect(popover, `exactly one popover mid-walk (step ${i})`).toHaveCount(1);
+      await expect(overlay, `exactly one overlay mid-walk (step ${i})`).toHaveCount(1);
+      await expect(nextBtn).toBeVisible();
+      const isDone = await nextBtn.evaluate((el) => el.classList.contains('driver-popover-done-btn'));
+      await nextBtn.click({ timeout: 60_000 });
+      if (isDone) break;
+    }
+
+    await expect(popover, 'tour finished, no popover left').toHaveCount(0);
+    await expect(overlay, 'tour finished, no overlay left').toHaveCount(0);
+  });
+
+  test('Escape dismisses the tour while the editor itself stays open', async ({ page }) => {
+    await resetLandingTourState(page);
+    await gotoApp(page, '/dashboard/landings/editor');
+
+    const popover = tourPopover(page);
+    await expect(popover).toHaveCount(1, { timeout: 45_000 });
+
+    await page.keyboard.press('Escape');
+
+    await expect(popover, 'Escape dismisses the tour').toHaveCount(0);
+    await expect(page.locator('.driver-overlay'), 'the overlay is gone too').toHaveCount(0);
+
+    // The editor itself stays open: same route, canvas anchor still visible.
+    await expect(page).toHaveURL(/\/dashboard\/landings\/editor/);
+    await expect(page.locator('[data-tour="pbx.canvas.frame"]')).toBeVisible();
+  });
 });

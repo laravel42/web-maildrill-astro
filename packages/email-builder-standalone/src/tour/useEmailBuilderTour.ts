@@ -240,12 +240,29 @@ export function useEmailBuilderTour({ config, onTourEvent }: UseEmailBuilderTour
 
   // `requestTourRestart()` bumps this nonce — rebuild fresh steps (state may have
   // changed since mount: selected block, drawer open, document contents) and start.
-  const isFirstRestartRender = useRef(true);
+  //
+  // Tracks the last `restartNonce` THIS effect actually reacted to, rather than a plain
+  // "is this the first render" flag: the effect's own dependency array also includes
+  // `tourEnabled` (so a relaunch requested before the tour was enabled still fires once
+  // it becomes enabled), but that means this effect re-runs on ANY `tourEnabled` flip too
+  // — including the false→true transition on mount that the auto-start effect above reacts
+  // to for the very same reason. Guarding on "was this a real restartNonce bump" (not just
+  // "not the first render") is what keeps a `tourEnabled` mount-time flip from being
+  // mistaken for a restart request and firing a second, redundant `start()` while the
+  // auto-start's own `start()` may still be awaiting its lazy `import('driver.js')` — PROVEN
+  // by execution (see the task report FINDINGS): with the OLD "skip only the very first
+  // render" guard, `markEmailTourSeen()` + a plain mount (no click, no restart requested at
+  // all) still auto-started the tour after ~2-3s, because `isFirstRestartRender` only
+  // protects render 1 — the SECOND render (the mount's own `tourEnabled` false→true flip)
+  // sailed straight through and called `start()` unconditionally, regardless of whether the
+  // tour had already been marked "seen". `@md/product-tour`'s per-tourId generation guard
+  // (D7) already prevents that spurious start from ever producing a SECOND live instance
+  // once the real auto-start (or a real restart) is in flight, but the call site should not
+  // even attempt a bogus start in the first place.
+  const lastHandledRestartNonce = useRef(restartNonce);
   useEffect(() => {
-    if (isFirstRestartRender.current) {
-      isFirstRestartRender.current = false;
-      return;
-    }
+    if (restartNonce === lastHandledRestartNonce.current) return;
+    lastHandledRestartNonce.current = restartNonce;
     if (!tourEnabled) return;
     tourRef.current?.stop();
     const tour = createTour({
