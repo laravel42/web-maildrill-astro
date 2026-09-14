@@ -24,9 +24,21 @@
  *   `onTourEvent` (new optional `EmailBuilderProps`) — this package never imports
  *   PostHog or any analytics SDK (§0.2); the host (`VisualEmailBuilder.tsx`) maps
  *   these events to `window.posthog?.capture(...)`.
+ * - F5 (docs/product-tour-driverjs-plan.md §2, §4): stamps `--md-tour-*` onto the
+ *   popover wrapper **in runtime**, read from the active MUI theme (`useTheme()`).
+ *   The popover portals to `document.body` (driver.js), outside `.dark-email-builder`
+ *   and outside emotion's scope — a class-based mapping like builder42's `tour.css`
+ *   cannot reach it, so this hook watches for the wrapper's insertion instead (see
+ *   `useTourThemeVars`/`applyTourThemeVars` below). `@md/product-tour`'s `createTour`
+ *   does not expose a driver.js `onPopoverRender` passthrough (checked against its
+ *   public `CreateTourOptions` — intentionally not modified, out of scope for F5), so
+ *   the wrapper is located via a `MutationObserver` on `document.body` instead of that
+ *   hook; the effect is equivalent (variables land on `popover.wrapper` before paint)
+ *   without touching the engine's API surface.
  */
 
 import { useEffect, useRef } from 'react';
+import { useTheme, type Theme } from '@mui/material/styles';
 
 import { createTour, createLocalStoragePersistence, type Tour, type TourAnalyticsEvent } from '@md/product-tour';
 
@@ -57,6 +69,99 @@ function ensureTourThemeCss(): void {
   void import('@md/product-tour/style.css');
 }
 
+/**
+ * F5 — maps the active MUI theme to every `--md-tour-*` variable consumed by
+ * `@md/product-tour`'s `theme.css` (`.md-tour` rules). Exported as a pure function so
+ * it is unit-testable without mounting the popover or a `MutationObserver`.
+ *
+ * Brand rules (`docs/AGENTS.md`): the primary button / focus ring use the indigo
+ * interactive accent — here that's `theme.palette.primary.main`, which is already the
+ * email channel's indigo (`EMAIL_CHANNEL_COLOR`/`primaryColor`, see `theme.ts`), never
+ * `--brand` orange (this package's theme never wires `--brand` into MUI `primary` —
+ * that's an app-level, not editor-level, token). The overlay uses the theme's own ink
+ * (`palette.text.primary`) at low opacity via `alpha()` (never pure black), mirroring
+ * builder42's `color-mix`-based `--pb-chrome-bg` overlay in `chrome/tour.css`.
+ */
+export function buildEmailBuilderTourCssVars(theme: Theme): Record<string, string> {
+  return {
+    '--md-tour-surface': theme.palette.background.paper,
+    '--md-tour-text': theme.palette.text.primary,
+    '--md-tour-text-muted': theme.palette.text.secondary,
+    '--md-tour-border': theme.palette.divider,
+    '--md-tour-radius': `${typeof theme.shape.borderRadius === 'number' ? theme.shape.borderRadius : 10}px`,
+    '--md-tour-shadow': theme.shadows[8],
+    '--md-tour-accent': theme.palette.primary.main,
+    '--md-tour-accent-text': theme.palette.primary.contrastText,
+    '--md-tour-font': theme.typography.fontFamily,
+    '--md-tour-overlay': alphaHex(theme.palette.text.primary, 0.55),
+  };
+}
+
+/**
+ * Minimal, dependency-free `alpha()` for a `#rrggbb`/`#rgb` color — used only for
+ * `--md-tour-overlay`. Avoids importing `@mui/material/styles`' own `alpha()` here to
+ * keep this helper trivially testable with plain hex fixtures; falls back to the input
+ * color unchanged if it isn't a hex string (e.g. a theme customized to `rgb(...)`).
+ */
+function alphaHex(color: string, opacity: number): string {
+  const match = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.exec(color.trim());
+  if (!match) return color;
+  const hex = match[1];
+  const full = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
+/** Applies every `--md-tour-*` variable from {@link buildEmailBuilderTourCssVars} onto a popover wrapper. */
+function applyTourThemeVars(wrapper: HTMLElement, vars: Record<string, string>): void {
+  for (const [name, value] of Object.entries(vars)) {
+    wrapper.style.setProperty(name, value);
+  }
+}
+
+/**
+ * Watches `document.body` for the driver.js popover wrapper (`.driver-popover.md-tour`,
+ * `popoverClass: 'md-tour'` set by `createTour`) and stamps the current theme's
+ * `--md-tour-*` variables onto it as soon as it's inserted — driver.js portals the
+ * popover to `document.body` on every highlight, outside this package's own DOM subtree
+ * and outside emotion's `.dark-email-builder` scope, so a CSS class mapping (builder42's
+ * approach) cannot reach it here (§2 of the plan). Re-applies on every theme change
+ * (e.g. dark mode toggle) while the tour is mounted.
+ */
+function useTourThemeVars(theme: Theme): void {
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
+
+  useEffect(() => {
+    if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') return;
+
+    function paintWrapper(wrapper: HTMLElement): void {
+      applyTourThemeVars(wrapper, buildEmailBuilderTourCssVars(themeRef.current));
+    }
+
+    // Cover a wrapper already present when this effect (re-)runs, e.g. right after a
+    // theme change while the tour is mid-step.
+    document.querySelectorAll<HTMLElement>('.driver-popover.md-tour').forEach(paintWrapper);
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        mutation.addedNodes.forEach((node) => {
+          if (!(node instanceof HTMLElement)) return;
+          if (node.matches('.driver-popover.md-tour')) {
+            paintWrapper(node);
+            return;
+          }
+          node.querySelectorAll?.('.driver-popover.md-tour').forEach(paintWrapper);
+        });
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [theme]);
+}
+
 export interface UseEmailBuilderTourOptions {
   /** Subset of `EmailBuilderProps` used to filter steps by host flags (F3a). */
   config: EmailBuilderTourStepsConfig;
@@ -83,6 +188,12 @@ export function useEmailBuilderTour({ config, onTourEvent }: UseEmailBuilderTour
   configRef.current = config;
   const onTourEventRef = useRef(onTourEvent);
   onTourEventRef.current = onTourEvent;
+  // F5: `App/index.tsx` already mounts this hook inside MUI's `ThemeProvider`
+  // (`src/index.tsx`) — reading `useTheme()` here (rather than threading it through a
+  // new option on `UseEmailBuilderTourOptions`) keeps the entire theme mapping inside
+  // this file, within F5's scope (`packages/email-builder-standalone/src/tour/**`).
+  const theme = useTheme();
+  useTourThemeVars(theme);
 
   useEffect(() => {
     if (!tourEnabled) return;
