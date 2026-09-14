@@ -3,6 +3,7 @@
     "undo": "Deshacer (CTRL + Z)",
     "redo": "Rehacer (CTRL + Y)",
     "history": "Historial",
+    "helpTour": "Ver el recorrido guiado",
     "copy_html": "Copiar HTML",
     "copy_json": "Copiar JSON",
     "edit": "Editar",

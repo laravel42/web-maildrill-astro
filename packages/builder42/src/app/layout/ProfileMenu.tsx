@@ -26,7 +26,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { Dropdown, LanguageSelect, Settings, Rocket } from "@/components";
+import { Dropdown, LanguageSelect, Settings, Rocket, HelpCircle } from "@/components";
 import { ThemeToggle } from "./ThemeToggle";
 import { ReorderControlsToggle } from "./ReorderControlsToggle";
 import { ExperienceLevelToggle } from "./ExperienceLevelToggle";
@@ -35,6 +35,7 @@ import { useLocalConfig } from "@/hooks/useLocalConfig";
 import { useThemeMode } from "@/hooks/useThemeMode";
 import { fetchHealth } from "@/services/apiClient";
 import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
+import { requestBuilder42TourRestart } from "@/app/tour/useBuilder42Tour";
 
 function PrefHeading({
   panel,
@@ -101,6 +102,18 @@ export function EditorPreferences({
       <div className="pbx-profile__section">
         <PrefHeading panel={panel}>{t("experienceLevel.label")}</PrefHeading>
         <ExperienceLevelToggle />
+      </div>
+      {divider}
+      <div className="pbx-profile__section">
+        <button
+          type="button"
+          className="pbx-profile__action"
+          data-c42-dropdown-item
+          onClick={() => requestBuilder42TourRestart()}
+        >
+          <HelpCircle size={15} aria-hidden="true" />
+          {t("restartTour.label")}
+        </button>
       </div>
       {showPublishLink && publishEnabled && (
         <>

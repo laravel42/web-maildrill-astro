@@ -92,6 +92,23 @@ export interface ConfigMap {
    * confundirse con una elección explícita de "simple".
    */
   experienceLevelChosen: boolean;
+  /**
+   * Product tour (F4, docs/product-tour-driverjs-plan.md §4). Cableadas a la
+   * persistencia por defecto de `@md/product-tour`
+   * (`createLocalStoragePersistence`) a través del prefijo `pb:` que YA
+   * inyecta este hook — el paquete `@md/product-tour` en sí no sabe nada de
+   * `useLocalConfig` ni de este prefijo (§0.4): estas dos claves son solo el
+   * espejo local que le permite a `app/tour/useBuilder42Tour.ts` decidir
+   * cuándo auto-arrancar sin depender de un import cruzado.
+   *
+   * `tourSeen`: si el tour ya se ofreció (arrancó) al menos una vez, a la
+   * versión persistida en `tourVersion`. `tourVersion`: versión bajo la que
+   * se marcó `tourSeen` — un bump de la versión real del tour (constante en
+   * `useBuilder42Tour.ts`) hace que `tourSeen` se trate como no visto de
+   * nuevo (mismo criterio que `TourPersistenceState.version` del paquete).
+   */
+  tourSeen: boolean;
+  tourVersion: number;
 }
 
 const DEFAULTS: ConfigMap = {
@@ -107,6 +124,8 @@ const DEFAULTS: ConfigMap = {
   inspectorCollapsed: false,
   experienceLevel: "advanced",
   experienceLevelChosen: false,
+  tourSeen: false,
+  tourVersion: 0,
 };
 
 // ---------------------------------------------------------------------------
@@ -126,6 +145,14 @@ export function readConfig<K extends keyof ConfigMap>(key: K): ConfigMap[K] {
   // Valores booleanos: se persisten como "true"/"false" (via String()).
   if (typeof fallback === "boolean") {
     return (raw === "true") as ConfigMap[K];
+  }
+  // Valores numéricos (p. ej. `tourVersion`): `writeConfig` los persiste con
+  // `String()` como cualquier escalar no-objeto — sin este branch se leerían
+  // de vuelta como string, rompiendo comparaciones `=== number` en quien
+  // consume la clave (ver `createConfigBackedTourPersistence`, F4).
+  if (typeof fallback === "number") {
+    const parsed = Number(raw);
+    return (Number.isNaN(parsed) ? fallback : parsed) as ConfigMap[K];
   }
   // Valores objeto: se persisten como JSON; se parsean con fallback seguro.
   if (typeof fallback === "object" && fallback !== null) {

@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
 import { Reader, TReaderDocument } from '@eb/email-builder';
-import { ContentCopyOutlined } from '@mui/icons-material';
+import { ContentCopyOutlined, HelpOutlineOutlined } from '@mui/icons-material';
 import { Redo2, Undo2 } from 'lucide-react';
 import {
   Alert,
@@ -36,6 +36,7 @@ import {
   editorStateStore,
   lateralPanel,
   redoChange,
+  requestTourRestart,
   setComponentsLibraryDrawerOpen,
   setDocument,
   setInspectorDrawerMode,
@@ -448,6 +449,15 @@ export default function TemplatePanel({
                 <Redo2 size={16} aria-hidden="true" />
               </button>
             </div>
+            <button
+              type="button"
+              className="pbx-history__btn"
+              title={t('header.helpTour')}
+              aria-label={t('header.helpTour')}
+              onClick={() => requestTourRestart()}
+            >
+              <HelpOutlineOutlined fontSize="small" aria-hidden="true" />
+            </button>
             {enableComponentTree && <ToggleComponentTreeButton />}
           </>
         );

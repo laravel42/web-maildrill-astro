@@ -158,6 +158,12 @@ type TValue = {
     isLocked: boolean;
   };
   tour: boolean;
+  /**
+   * Bumped by `requestTourRestart()` to ask the mounted tour controller to
+   * relaunch the guided tour on demand (CommandPalette entry, header help
+   * button). See `useTourRestartNonce`.
+   */
+  tourRestartNonce: number;
   stickyHeader: boolean;
   heightContent: string;
   containerGrow: boolean;
@@ -222,6 +228,7 @@ const createInitialState = (): TValue => ({
     isLocked: false,
   },
   tour: false,
+  tourRestartNonce: 0,
   stickyHeader: true,
   heightContent: 'calc(100dvh - 4px)',
   containerGrow: true,
@@ -344,6 +351,31 @@ export function useThemeSaving() {
 
 export function setThemeSaving(enabled: boolean) {
   return editorStateStore.setState({ themeSaving: enabled });
+}
+
+/**
+ * Product tour (F4, docs/product-tour-driverjs-plan.md §4). `tour` is the
+ * flag the host passes to enable/disable the guided tour entirely (default
+ * `false` — see `createInitialState`); it existed since F1 with no
+ * consumer. `tourRestartNonce` is bumped by `requestTourRestart()` to ask
+ * the mounted tour controller (`src/tour/useEmailBuilderTour.ts`) to relaunch
+ * the tour on demand — from the CommandPalette entry or the header help
+ * button — without adding a second parallel "is the tour open" flag.
+ */
+export function useTour() {
+  return editorStateStore((s) => s.tour);
+}
+
+export function setTour(enabled: boolean) {
+  return editorStateStore.setState({ tour: enabled });
+}
+
+export function useTourRestartNonce() {
+  return editorStateStore((s) => s.tourRestartNonce);
+}
+
+export function requestTourRestart() {
+  editorStateStore.setState((s) => ({ tourRestartNonce: s.tourRestartNonce + 1 }));
 }
 
 /** Non-React accessor used by the Components Library storage helpers. */

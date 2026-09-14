@@ -152,4 +152,6 @@ export {
   Columns3,
   Grid3x3,
   StretchHorizontal,
+  // ---- Product tour (F4, docs/product-tour-driverjs-plan.md §4) --------
+  HelpCircle,
 } from "lucide-react";

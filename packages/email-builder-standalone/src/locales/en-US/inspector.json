@@ -3,6 +3,7 @@
     "undo": "Undo (CTRL + Z)",
     "redo": "Redo (CTRL + Y)",
     "history": "History",
+    "helpTour": "View the guided tour",
     "copy_html": "Copy HTML",
     "copy_json": "Copy JSON",
     "edit": "Edit",

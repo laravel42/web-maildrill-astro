@@ -25,6 +25,7 @@ import { CommandPalette as C42CommandPalette } from '@josecortez1/c42-react';
 import CodeOutlined from '@mui/icons-material/CodeOutlined';
 import DataObjectOutlined from '@mui/icons-material/DataObjectOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
+import HelpOutlineOutlined from '@mui/icons-material/HelpOutlineOutlined';
 import LibraryAddOutlined from '@mui/icons-material/LibraryAddOutlined';
 import MonitorOutlined from '@mui/icons-material/MonitorOutlined';
 import PhoneIphoneOutlined from '@mui/icons-material/PhoneIphoneOutlined';
@@ -39,6 +40,7 @@ import {
   appendBuiltInBlockToParent,
   editorStateStore,
   redoChange,
+  requestTourRestart,
   setComponentsLibraryDrawerOpen,
   setInspectorDrawerMode,
   setSelectedBlockId,
@@ -116,6 +118,20 @@ const EDIT_ACTIONS: ActionDef[] = [
   },
 ];
 
+/**
+ * Help entry that relaunches the product tour (F4,
+ * docs/product-tour-driverjs-plan.md §4). Kept in its own group instead of
+ * `EDIT_ACTIONS` — it's not an editing action, and a dedicated "Help" group
+ * reads clearly even with a single entry today.
+ */
+const HELP_ACTIONS: ActionDef[] = [
+  {
+    value: 'tour:restart',
+    icon: <HelpOutlineOutlined />,
+    labelKey: 'commandPalette.action.tour',
+  },
+];
+
 /** Parse and dispatch a selected command's `data-value`. */
 function runCommand(value: string) {
   if (value.startsWith('insert:')) {
@@ -152,6 +168,9 @@ function runCommand(value: string) {
       break;
     case 'redo':
       redoChange();
+      break;
+    case 'tour:restart':
+      requestTourRestart();
       break;
   }
 }
@@ -331,6 +350,15 @@ export default function CommandPalette() {
                       <ShortcutKeys shortcut={a.shortcut} />
                     </span>
                   )}
+                </button>
+              ))}
+            </div>
+
+            <div data-c42-command-group data-label={t('commandPalette.group.help', 'Help')}>
+              {HELP_ACTIONS.map((a) => (
+                <button key={a.value} type="button" data-c42-command-item data-value={a.value}>
+                  {a.icon}
+                  <span>{t(a.labelKey)}</span>
                 </button>
               ))}
             </div>

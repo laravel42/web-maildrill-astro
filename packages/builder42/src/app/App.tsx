@@ -3,6 +3,7 @@
  * Inspector debajo. Cada panel es una proyección del store (P1).
  */
 
+import { useEffect, useState } from "react";
 import { MotionConfig } from "framer-motion";
 import { Header } from "./layout/Header";
 import { Sidebar } from "./layout/Sidebar";
@@ -15,6 +16,9 @@ import { OnboardingExperienceModal } from "./layout/OnboardingExperienceModal";
 import { useUndoRedoShortcuts } from "@/builder/store/useTemporalStore";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { useLocalConfig } from "@/hooks/useLocalConfig";
+import { fetchHealth } from "@/services/apiClient";
+import i18n from "@/i18n";
+import { useBuilder42Tour } from "./tour/useBuilder42Tour";
 
 export function App() {
   useUndoRedoShortcuts();
@@ -22,6 +26,24 @@ export function App() {
   const [sidebarMode] = useLocalConfig("sidebarMode");
   const [inspectorCollapsed] = useLocalConfig("inspectorCollapsed");
   const [experienceLevelChosen] = useLocalConfig("experienceLevelChosen");
+  const [experienceLevel] = useLocalConfig("experienceLevel");
+
+  // Standalone (docs/36 F3): the publish adapter is the real dev server, so
+  // this checks the same `fetchHealth().publish.enabled` PublishPanel/
+  // EditorPreferences already query, gating the `pbx.publish` tour step
+  // exactly like it gates the panel itself (§3.2 precondition).
+  const [publishAvailable, setPublishAvailable] = useState(false);
+  useEffect(() => {
+    fetchHealth()
+      .then((h) => setPublishAvailable(h.publish.enabled))
+      .catch(() => setPublishAvailable(false));
+  }, []);
+
+  useBuilder42Tour({
+    config: { experienceLevel, publishAvailable },
+    onboardingResolved: experienceLevelChosen,
+    i18nInstance: i18n,
+  });
 
   const bodyClasses = ["pbx-body"];
   if (isPreview) bodyClasses.push("pbx-body--preview");

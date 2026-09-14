@@ -5,6 +5,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { I18nextProvider } from 'react-i18next';
+import type { TourAnalyticsEvent } from '@md/product-tour';
 
 import {
   ALL_GOOGLE_FONTS_HREF,
@@ -225,6 +226,21 @@ export interface EmailBuilderProps {
   templateLibrary?: boolean;
   /** When true, shows the "Save as theme" button in the root inspector panel. Defaults to false. */
   themeSaving?: boolean;
+  /**
+   * Enables the guided product tour (F4, docs/product-tour-driverjs-plan.md §4).
+   * Defaults to `false` — the current behavior when this prop isn't passed is
+   * unchanged. When `true`, the tour auto-starts once (persisted "seen" state
+   * under `eb:tour:*` in `localStorage`); it can also be relaunched from the
+   * CommandPalette entry or the header help button.
+   */
+  tour?: boolean;
+  /**
+   * Receives the tour's domain-agnostic analytics events
+   * (`tour_started`/`tour_step_viewed`/`tour_completed`/`tour_dismissed`, see
+   * `@md/product-tour`). This package never imports any analytics SDK — the
+   * host maps these events to its own telemetry (e.g. `window.posthog?.capture`).
+   */
+  onTourEvent?: (event: TourAnalyticsEvent) => void;
 }
 
 export interface EmailBuilderRef {
@@ -272,6 +288,8 @@ const EmailBuilder = forwardRef<EmailBuilderRef, EmailBuilderProps>(
       templateSaving,
       templateLibrary,
       themeSaving,
+      tour,
+      onTourEvent,
     },
     ref,
   ) => {
@@ -664,6 +682,8 @@ const EmailBuilder = forwardRef<EmailBuilderRef, EmailBuilderProps>(
                 templateSaving={templateSaving}
                 templateLibrary={templateLibrary}
                 themeSaving={themeSaving}
+                tour={tour}
+                onTourEvent={onTourEvent}
               />
             </I18nextProvider>
           </ThemeProvider>
@@ -765,3 +785,12 @@ export type {
   BlockType,
   ValidationResult,
 } from '@eb/document-core';
+
+// ---------------------------------------------------------------------------
+// Product tour (F4, docs/product-tour-driverjs-plan.md §4) — re-exported so
+// the host (`src/components/react/VisualEmailBuilder.tsx`) can type its
+// `onTourEvent` callback without taking a direct dependency on
+// `@md/product-tour` (which isn't declared at the repo root — only the
+// editor packages depend on it).
+// ---------------------------------------------------------------------------
+export type { TourAnalyticsEvent, TourAnalyticsEventName } from '@md/product-tour';
