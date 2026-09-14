@@ -91,8 +91,8 @@ F3a | steps + copy EmailBuilder      | email-builder-standalone/src/tour     | 4
 F3b | steps + copy Builder42         | builder42/src/app/tour                | 0bc74b1 | green
 F4  | entry points + persistence     | both packages + 2 host wrappers       | 9ce4192 | green
 F5  | popover theme                  | builder42 chrome css + EB runtime map | 267adbc | green
-F6  | e2e Playwright                 | tests/e2e                             | —       | BLOCKED by B1
-B1  | fix /404.html prerender        | TBD by diagnosis                      | —       | next
+B1  | fix /404.html prerender        | astro.config.ts                       | 68c32ae | green
+F6  | e2e Playwright                 | tests/e2e                             | —       | next
 F7  | docs + telemetry               | docs/AGENTS.md, packages/VENDOR.md    | —       | pending
 ```
 
@@ -127,15 +127,31 @@ auditor subagent is launched.
 
 ## Findings
 
-**B1 — `pnpm build` fails prerendering `/404.html`.** `renderScript` cannot resolve the built path
-for the inline `<script>` in `src/layouts/MarketingLayout.astro`
-(`.../MarketingLayout.astro?astro&type=script&index=0&lang.ts`), followed by a libuv assertion
-crash on Windows (`exit 3221226505`). Astro 7.2.10, Node 24.16.0.
+**B1 — RESOLVED (`68c32ae`).** `pnpm build` failed prerendering `/404.html`: `renderScript` could
+not resolve the built path for the inline `<script>` in `src/layouts/MarketingLayout.astro`,
+followed by a libuv assertion on Windows (`exit 3221226505`).
 
-Not caused by the tour work: that layout has not changed since 2026-09-06 (`460effd`), the
-lockfile did not move `astro`, and the failure reproduces on a clean tree at `3fe09f3` with
-`dist/`, `.astro/` and `node_modules/.vite` wiped. **Blocks F6**, since the Playwright e2e needs a
-build. Needs its own task before F6.
+Root cause was ours, not Astro's config surface: the `@/` alias is resolved by our own Vite plugin
+`waTemplateStudioAlias` in `astro.config.ts`, which returned `path.join(root, subpath)` — backslashes
+on Windows. Astro builds the `entryModules` manifest key from that raw id, but its compiled output
+always queries `renderScript()` with forward slashes, and the lookup is an exact string comparison.
+`MarketingLayout.astro` was the only casualty because it is the only `.astro` file that both declares
+a `<script>` and arrives through this resolver — pages under `src/pages/**` come from Astro's route
+scanner, already normalized. Measured in the failing build: 1 backslash script key vs 7
+forward-slash ones. Fixed by normalizing at the single chokepoint both resolver paths funnel
+through; a no-op on POSIX.
+
+Two dead ends ruled out empirically before finding it, worth not repeating: the `<script>`'s position
+relative to `</BaseLayout>` is irrelevant (moving it inside changes nothing), and
+`experimental.incrementalBuild` is not enabled. It was also not a dirty cache: it reproduced at
+`3fe09f3` with `dist/`, `.astro/` and `node_modules/.vite` wiped.
+
+**B4 — verification greps must never recurse into `node_modules`.** A handoff's boundary checks were
+written as `Get-ChildItem -Path packages\builder42 -Recurse -Include *.ts,*.tsx | Select-String ...`.
+On Windows that walks each package's `node_modules` and effectively hangs the session; it had to be
+cancelled mid-task (the B1 retry), leaving work uncommitted. Use `git grep` (tracked files only) or a
+path-scoped search instead, and keep `-Recurse` off any directory that can contain `node_modules`.
+Applies to every future handoff, not just tour work.
 
 **B2 — `@md/product-tour`'s `createTour` has no `onPopoverRender` passthrough.** Verified: the
 engine only accepts `popoverClass` (`packages/product-tour/src/createTour.ts:53,128`). Plan §2
