@@ -122,6 +122,35 @@ Known ignorable dirt in `git status`: `.cursor/hooks/`, `.kiro/` (untracked loca
   editor's initial chunk. Plan §1.3.
 - **D6** — Already-implemented phases are never reverted by an agent that reads them as
   out-of-scope. It reports. (Learned the hard way — see incident I1.)
+- **D7** (B7) — **The "at most one live tour" invariant belongs to the engine, not to the call
+  sites.** `@md/product-tour` must guarantee that at most one driver.js instance is active per
+  `tourId` process-wide (module-level registry), and that a second `start()` while the first is
+  still awaiting its lazy `import('driver.js')` cannot produce a second instance. Semantics:
+  **last start wins** — a relaunch destroys the previous instance before driving, so an explicit
+  restart always shows freshly built steps. Reason: the defect showed up in *both* editors with
+  *different* call-site shapes; a per-hook fix leaves the invariant unenforced and unfalsifiable by
+  unit test. Call-site fixes are still required where a cause is proven, but they are the second
+  line, not the first.
+- **D8** (B8) — **While a tour is active, Escape closes the tour and nothing else.** The
+  capture-phase guard keeps `stopPropagation()`/`preventDefault()` (the host editor must not act on
+  that key — the F4 host tests stay valid) but must now perform the dismissal itself instead of
+  hoping driver.js's own bubble-phase handler is reached, because a window-capture
+  `stopPropagation()` makes that impossible by construction. `tour_dismissed` must still be emitted
+  through the existing `onDestroyStarted` path.
+- **D9** (B9) — **The landings relaunch entry point stays inside `packages/builder42`, in the
+  chrome the embed actually mounts (`app/layout/HostToolbar.tsx` → `HostCanvasToolbar`), not in the
+  host's `EditorHeader.tsx`.** Verified while deciding: `EditorHeader.tsx` has **no** tour-restart
+  button for any channel — it only stamps `data-tour` anchors — so the email side is not the
+  precedent B9 assumed. Email's relaunch lives in its *own* package chrome
+  (`App/TemplatePanel/index.tsx` help button + `App/CommandPalette`). Mirroring that keeps D3
+  (builder42 stays extractable, its tour reachable in the standalone too) and keeps the host free of
+  editor-specific tour wiring. The B9 `test.skip` reason text must be rewritten accordingly — it
+  currently repeats the wrong premise about `EditorHeader.tsx`.
+- **D10** — Also corrected while deciding B7's handoff: `packages/builder42/src/app/App.tsx` is
+  **standalone-only** (`git grep "app/App"` → imported solely by `src/main.tsx`). The embed mounts
+  `Builder42Editor.tsx` alone. So B7's "two mounted call sites in the embed" is **refuted**: the
+  landing editor has exactly one call site at `/dashboard/landings/editor`, and the duplicate has an
+  as-yet-unproven cause there too. Nobody should re-walk that dead end.
 
 ---
 
