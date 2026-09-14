@@ -18,7 +18,7 @@
  * `theme.blocks.*.title` keys used by the Blocks tab tiles).
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { CommandPalette as C42CommandPalette } from '@josecortez1/c42-react';
@@ -182,6 +182,40 @@ export default function CommandPalette() {
   const handleSelect = useCallback((detail: unknown) => {
     const value = (detail as { value?: string })?.value;
     if (typeof value === 'string') runCommand(value);
+  }, []);
+
+  /**
+   * The host Astro shell (`src/components/react/AppShell.tsx`, out of this
+   * package's scope) also binds its own, unrelated "Search or jump to…"
+   * command palette to the very same Ctrl/Cmd+K hotkey, on a plain bubble-phase
+   * `window` keydown listener. `@josecortez1/c42-react`'s controller (mounted
+   * by `<C42CommandPalette>` below) already wins the race to actually *open*
+   * (it listens on `document` in the CAPTURE phase, which always runs before
+   * any `window` bubble-phase listener — capture descends window → document →
+   * … before bubbling back up), and it synchronously focuses its own
+   * `[data-c42-command-input]`. But nothing stops the event from continuing on
+   * to reach the shell's handler afterwards: the shell then also opens *its*
+   * palette, whose `<input autoFocus>` mounts a beat later and steals focus
+   * right back — a real keyboard user landing on Ctrl+K would find focus
+   * bounced onto the wrong palette, unable to type into or arrow through this
+   * one. Since this package cannot touch `AppShell.tsx`, the fix has to be a
+   * capture-phase `document` listener of our own that runs the moment this
+   * component is mounted: React flushes child effects before parent effects on
+   * mount, so this `useEffect` (in the `CommandPalette` parent) registers
+   * after `<C42CommandPalette>`'s own listener already has — meaning ours
+   * fires second on the SAME node/phase, which does not stop the controller's
+   * own handler (`stopPropagation` never un-invokes listeners that already ran
+   * on the same node) but does stop the event before it ever reaches `window`'s
+   * bubble phase, where the shell's competing palette lives.
+   */
+  useEffect(() => {
+    function onHotkeyCapture(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.stopPropagation();
+      }
+    }
+    document.addEventListener('keydown', onHotkeyCapture, true);
+    return () => document.removeEventListener('keydown', onHotkeyCapture, true);
   }, []);
 
   return (

@@ -259,11 +259,19 @@ export function useEmailBuilderTour({ config, onTourEvent }: UseEmailBuilderTour
   // (D7) already prevents that spurious start from ever producing a SECOND live instance
   // once the real auto-start (or a real restart) is in flight, but the call site should not
   // even attempt a bogus start in the first place.
+  //
+  // `lastHandledRestartNonce.current` is only written AFTER the `tourEnabled` gate below,
+  // not before it: a restart requested while `tourEnabled` is still `false` must stay
+  // unhandled so that when the flag later flips to `true` (and this effect re-runs, since
+  // `tourEnabled` is in its dependency array), it still sees `restartNonce !== lastHandled`
+  // and fires. Marking the nonce handled before the gate would silently swallow that
+  // request — the effect would re-run on the `tourEnabled` flip, find the nonce already
+  // "handled", and return without ever starting the tour.
   const lastHandledRestartNonce = useRef(restartNonce);
   useEffect(() => {
     if (restartNonce === lastHandledRestartNonce.current) return;
-    lastHandledRestartNonce.current = restartNonce;
     if (!tourEnabled) return;
+    lastHandledRestartNonce.current = restartNonce;
     tourRef.current?.stop();
     const tour = createTour({
       tourId: TOUR_ID,
