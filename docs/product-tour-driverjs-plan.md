@@ -5,8 +5,11 @@ editores visuales vendorizados: `packages/email-builder-standalone` (editor de e
 `/dashboard/templates/email`) y `packages/builder42` (editor de landings,
 `/dashboard/landings/editor`).
 
-Estado: **plan**. Nada implementado todavía. Las fases F1–F7 están empaquetadas para
-ejecutarse con subagentes (dependencias y criterios de aceptación explícitos por fase).
+Estado: **F1, F2a y F2b implementados y commiteados** (rama `feat/ui-polish-p1`: `feat(tour):
+add @md/product-tour package (F1)` + `feat(tour): seed data-tour anchors in both visual editors
+(F2a + F2b)`). Pendientes F3a–F7. Las fases están empaquetadas para ejecutarse con subagentes
+(dependencias y criterios de aceptación explícitos por fase). **Ninguna fase ya implementada
+debe revertirse: si un agente la percibe como fuera de alcance, lo reporta, no la borra.**
 
 ## 0. Restricción de exportabilidad (Builder42 saldrá de este repo)
 
