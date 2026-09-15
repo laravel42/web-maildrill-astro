@@ -11,6 +11,15 @@ Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour
 
 # START HERE — next session
 
+**The tour chain is CLOSED at `a31a1ef` (2026-09-14).** Read "Chain closed" below for the final
+measurements and for the three items that need a person (B3 visual review, B6 `AUTH_SECRET`,
+B13 e2e parallelism). Everything F1–F7 plus the B-series fixes is implemented, committed and gated.
+The section that follows was the previous session's hand-off and is kept for context.
+
+---
+
+# Previous hand-off (superseded)
+
 **State at hand-off (2026-09-14):** `HEAD = 89a3bce`, branch `feat/ui-polish-p1`, tree clean except
 the known untracked `.cursor/hooks/` and `.kiro/`. Nothing is half-finished: every phase below has
 its own commit, and the one task that stopped without a fix (B5) left no changes behind.
@@ -232,9 +241,67 @@ B12 | Escape vs an open host modal   | product-tour escape guard             | a
 B14 | modal detection counts hidden  | product-tour escape guard             | 46d9557 | green
 B9  | landings has no relaunch entry | builder42 HostToolbar (D9)            | eb9b7bf | WIP/red: my contract was contradictory — see I2
 B9b | drop the anchor, keep the button| same files, minus the registry        | f229159 | green (chain back to green)
-B9c | button sits inside the history anchor | HostToolbar only               | —       | next (see finding B15)
-F7  | docs + telemetry               | docs/AGENTS.md, packages/VENDOR.md    | —       | pending
+B9c | button sits inside the history anchor | HostToolbar only                | 22fc29e | green
+F7  | docs + telemetry               | AGENTS.md, VENDOR.md, plan, engine doc | a31a1ef | green — **plan implemented**
 ```
+
+Gate run for B9c (orchestrator, `1223782..22fc29e`): 2 files, `5 11` and `32 0`. The anchor moved onto
+a new inner wrapper so `pbx.toolbar.history` now contains only undo/redo, and the redundant
+`role="group"`/`aria-label` around the single button is gone. Re-measured: builder42 13 files/**119**
+tests, `tsc` 0, `tour.spec.ts` **14 passed / 0 skipped / 0 failed**, check 0/0/3, lint the same 3 by
+name. No CSS touched. Its two new static cases were mutation-checked by the implementer against the
+pre-fix source (2 failed → 7 passed).
+
+Gate run for F7 (orchestrator, `22fc29e..a31a1ef`): 4 files, all in scope. `createTour.ts` is
+`10 8` and **every changed line is a comment** — verified mechanically by filtering the diff for
+non-comment `+`/`-` lines (empty result). Docs read for accuracy against the code, and the one claim
+the orchestrator had not personally confirmed — the PostHog property names — checked directly:
+`LandingPageBuilder.tsx:118` does `window.posthog?.capture(event.event, { tour_id: event.tourId, … })`.
+Suites identical to baseline (45 / 119 / 46 / 303, check 0/0/3, lint 3 by name); this task added no
+tests, as required.
+
+---
+
+## Chain closed (2026-09-14)
+
+`HEAD = a31a1ef` on `feat/ui-polish-p1`. **Nothing is half-finished and nothing is red that was not
+red before this work started.**
+
+Final measurements taken by the orchestrator at that commit:
+
+| Gate                                              | Result                                                |
+| ------------------------------------------------- | ----------------------------------------------------- |
+| `pnpm build`                                      | **Complete!** (server built in 2m 2s) — first full build since B1 fixed it |
+| `pnpm check`                                      | 337 files, 0 errors, 0 warnings, 3 hints              |
+| `pnpm lint`                                       | 3 errors, the same pre-existing names                 |
+| `pnpm test` (root)                                | 43 files / 303 tests                                  |
+| `@md/product-tour`                                | 5 files / 45 tests (was 4/27 at F4)                   |
+| `builder42`                                       | 13 files / 119 tests (was 12/112)                     |
+| `email-builder-standalone`                        | 8 files / 46 tests (was 7/45)                         |
+| e2e `tour.spec.ts`                                | **14 passed / 0 skipped / 0 failed**                   |
+| e2e full suite (`--workers=1 --retries=0`)        | **54 passed / 22 failed / 2 skipped** of 78 — the 22 are exactly the pre-existing names |
+
+The tour contributes **zero** e2e failures and **zero** skips. What the chain actually fixed, beyond
+the three defects F6 found: a "Done" button that never closed the tour (B7B8), a ⌘K palette entry that
+was broken for keyboard users and only appeared to work because of the duplicate-start race (B10), a
+restart request silently swallowed when the tour flag was still false (B11), Escape stealing a host
+modal's key (B12), and two latent traps caught by reading diffs rather than by tests (B11, B14).
+
+**Still owed to a person, not to a subagent:**
+
+- **B3** — the light/dark visual review of the popover, plus stage clipping over compact rails and
+  absolute panels (plan §1.4.8). Nobody has looked at it in a browser. B9c's claim that the moved
+  button is pixel-identical is also reasoning + green tests, not eyes.
+- **B6** — `AUTH_SECRET` is empty in this `.env`, so real login 500s here for humans too. Auth is
+  bypassed in dev (`SKIP_AUTH_FOR_BUILDER_WORK=true`), which is the only reason the e2e can run.
+- **B13** — the e2e suite is unstable under `fullyParallel: true`; `--workers=1` is the reliable
+  gate configuration. Worth deciding whether to fix the config or record the constraint permanently.
+
+**Optional follow-ups, deliberately not done:** a tour step + copy (en/es/it) teaching the landings
+relaunch button (D14 corollary), the `onPopoverRender` passthrough that would delete
+`useEmailBuilderTour`'s `MutationObserver` (B2), and unifying the host `AppShell`'s ⌘K palette with
+the editor-scoped ones (B10's finding — two global palettes on the same hotkey, worked around from
+the editor side only).
 
 Gate run for B9+B9b (orchestrator, net `2cbef01..f229159`): the **net** effect is exactly the intended
 one — `tourAnchors.ts` and `tour-anchors-coverage.test.ts` show an **empty** diff against pre-B9 (the
