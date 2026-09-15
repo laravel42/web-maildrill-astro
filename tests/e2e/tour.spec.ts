@@ -290,27 +290,22 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
     await expect(tourPopover(page)).toHaveCount(0);
   });
 
-  test.skip(
-    'relaunches from the profile menu — SKIPPED: unreachable in this embed. ' +
-      '`packages/builder42/src/Builder42Editor.tsx` (the chrome Maildrill actually mounts at ' +
-      '/dashboard/landings/editor) never imports `app/layout/Header.tsx`/`ProfileMenu.tsx` — only ' +
-      '`Sidebar`, `Canvas`, `Inspector`, and `HostCanvasToolbar` (`app/layout/HostToolbar.tsx`). ' +
-      'The `pbx.profileMenu` anchor and its "View the guided tour" action only exist in the ' +
-      'standalone `app/App.tsx` tree, confirmed by `LandingPageBuilder.tsx`\'s own doc comment: ' +
-      '"Builder42\'s own document header is not mounted in embed." The host\'s `EditorHeader.tsx` ' +
-      'wires a tour-restart entry point for the email channel only (`EMAIL_BUILDER_TOUR_ANCHORS.' +
-      'headerActions`); it wires no equivalent for `builder42`/landings. So there is no on-demand ' +
-      'relaunch entry point reachable at this route today — item 4 of the task\'s coverage list ' +
-      '("desde el menú de perfil") does not apply to the landing editor as actually wired.',
-    async ({ page }) => {
-      await markLandingTourSeen(page);
-      await gotoApp(page, '/dashboard/landings/editor');
-      const profileTrigger = page.locator('[data-tour="pbx.profileMenu"]');
-      await profileTrigger.click();
-      await page.getByRole('button', { name: 'View the guided tour' }).click();
-      await expect(tourPopover(page)).toHaveCount(1, { timeout: 10_000 });
-    },
-  );
+  test('relaunches from the toolbar tour-restart button', async ({ page }) => {
+    await markLandingTourSeen(page);
+    await gotoApp(page, '/dashboard/landings/editor');
+    await expect(page.locator('[data-tour="pbx.canvas.frame"]')).toBeVisible({ timeout: 45_000 });
+    await expect(tourPopover(page)).toHaveCount(0);
+
+    // `app/layout/HostToolbar.tsx` — the toolbar the embed actually mounts
+    // (`HostCanvasToolbar`). `title`/`aria-label` resolve to header.json's
+    // `restartTour.label` ("View the guided tour"), the same copy ProfileMenu's
+    // standalone-only entry uses, next to undo/redo in the canvas toolbar.
+    await page.getByRole('button', { name: 'View the guided tour' }).click();
+    await expect(
+      tourPopover(page),
+      'toolbar button relaunches the tour',
+    ).toHaveCount(1, { timeout: 10_000 });
+  });
 
   test('the popover theme resolves to the indigo accent over a translucent overlay', async ({ page }) => {
     await resetLandingTourState(page);

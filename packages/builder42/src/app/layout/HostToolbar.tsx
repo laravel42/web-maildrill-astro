@@ -13,10 +13,11 @@ import {
   undo,
   redo,
 } from "@/builder/store/useTemporalStore";
-import { UndoIcon, RedoIcon } from "@/components";
+import { UndoIcon, RedoIcon, HelpCircle } from "@/components";
 import { HOST_VIEWS_ID, HOST_HISTORY_ID } from "@/app/EmbeddedChrome";
 import { ViewportDropdown } from "./ViewportDropdown";
 import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
+import { requestBuilder42TourRestart } from "@/app/tour/useBuilder42Tour";
 
 function HostViews() {
   const { t } = useTranslation("header");
@@ -80,6 +81,29 @@ function HostHistory() {
   );
 }
 
+function HostTourRestart() {
+  const { t } = useTranslation("header");
+
+  return (
+    <div
+      className="pbx-history"
+      role="group"
+      aria-label={t("restartTour.label")}
+      {...dataTourAttr(BUILDER42_TOUR_ANCHORS.toolbarTourRestart)}
+    >
+      <button
+        type="button"
+        className="pbx-history__btn"
+        title={t("restartTour.label")}
+        aria-label={t("restartTour.label")}
+        onClick={() => requestBuilder42TourRestart()}
+      >
+        <HelpCircle size={16} aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
 export function HostCanvasToolbar() {
   const { t } = useTranslation("header");
 
@@ -99,6 +123,7 @@ export function HostCanvasToolbar() {
         {...dataTourAttr(BUILDER42_TOUR_ANCHORS.toolbarHistory)}
       >
         <HostHistory />
+        <HostTourRestart />
       </div>
     </div>
   );
