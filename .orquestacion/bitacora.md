@@ -11,6 +11,88 @@ Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour
 
 # START HERE — next session
 
+**State at hand-off (2026-09-15, third session): `HEAD = 63c26f4`, branch `feat/ui-polish-p1`,
+tree clean** except the known untracked `.cursor/hooks/` and `.kiro/`. Nothing is half-finished:
+every task has its own commit and the chain is green end to end. **Not pushed** — the branch stays
+local by the user's choice.
+
+**Plan executed this session:** [`docs/email-tour-steps-and-dark-mode-plan.md`](../docs/email-tour-steps-and-dark-mode-plan.md)
+(Parte A dark mode + Parte B six new tour steps), T1–T7, one subagent per task, orchestrator gate
+between each. The plan is now marked implemented in its own file.
+
+| Task | What                                                        | Scope                                                                 | Commit    | Gate  |
+| ---- | ----------------------------------------------------------- | --------------------------------------------------------------------- | --------- | ----- |
+| T1   | host theme hook + `darkMode` to the vendored editor          | `src/components/react/hooks/useHostTheme.ts` (new), `VisualEmailBuilder.tsx`, `tests/unit/host-theme.test.ts` (new) | `8e4a79e` | green |
+| T2   | library drawer's active tab moves into the editor store      | `ComponentsLibraryDrawer.tsx`, `EditorContext.tsx` (1 line), new test  | `11c3baf` | green |
+| T3   | Blocks tab grouped Basics/Structure + 2 group anchors        | `BlocksCategoryContent.tsx`, `tourAnchors.ts`, `inspector.json` ×3, 2 tests | `4953ce1` | green |
+| T4   | steps + copy for basics / structure / template gallery       | `tourSteps.ts`, `tourAnchors.ts`, drawer wrapper, `tour.json` ×3, 3 tests | `1b24bcc` | green |
+| T4b  | the 3 new step titles had shipped in English in es-419/it-IT | `tour.json` es-419 + it-IT (6 strings)                                 | `3ebfea1` | green |
+| T5   | the command palette step actually opens (and restores) it    | `tour/commandPaletteControl.ts` (new), `tourSteps.ts`, new test        | `c9e389a` | green |
+| T6   | `eb.canvas.textBlock` + `eb.inspector.tabs` steps & anchors  | `tour/textBlockStepControl.ts` (new), `tourAnchors.ts`, `tourSteps.ts`, `InspectorDrawer/index.tsx`, `block-notion-text/src/index.tsx`, `tour.json` ×3, 3 tests | `a799e03` | green |
+| T7   | docs: tour contracts in `AGENTS.md` + plan marked implemented | `docs/AGENTS.md`, `docs/email-tour-steps-and-dark-mode-plan.md`        | `63c26f4` | green |
+
+**The email tour is now 18 steps**, in this order: header identity, header save, header status,
+toolbar views, viewport screen size, toolbar history, library rail, library tabs, **blocks basics**,
+**blocks structure**, **templates gallery**, canvas root, **canvas text block**, inspector panel,
+**inspector tabs**, image sources, command palette (now really opens), header actions.
+
+**Measured by the orchestrator at `63c26f4`** (re-run, not taken from any report):
+`email-builder-standalone` **13 files / 123 tests** (baseline was 8/47) · root `pnpm test` **44/313**
+(was 43/303) · `builder42` 13/119 · `@md/product-tour` 8/68 · `pnpm check` **339 files, 0 errors /
+0 warnings / 3 hints** · `pnpm lint` the same **3 pre-existing errors by name** (CampaignsBoard.tsx
+199:5 rule-not-found, AutomationBuilder.tsx 91:10 `past`, 92:10 `future`) · **`pnpm build` Complete!
+(server built in 56.67 s)**, log `.orquestacion/build-T7.log`. Every task's new tests were
+mutation-tested twice by the orchestrator (product code broken on purpose, the new tests went red,
+tree restored clean each time).
+
+**New contract decisions this session — D31 to D34** (D25–D30 were fixed in the plan itself):
+
+- **D31 — a host hook that must observe the DOM exposes a DOM-free, injectable core.** The root
+  Vitest environment is `node` with no jsdom/happy-dom/`@testing-library`, so `useHostTheme` ships
+  `normalizeHostTheme` / `readHostTheme` / `observeHostTheme(target, onChange, createObserver?)`
+  and the React hook is a thin wrapper. Without the injection point the observer logic would have
+  had zero coverage.
+- **D32 — block grouping returns ORIGINAL `BUTTONS` indices and never re-indexes.** The drag
+  payload (`buttonIndex`) and click-to-insert both resolve against that array, so a grouped UI that
+  renumbered tiles would insert the wrong block. `groupBuiltInBlockIndices` also sends unknown
+  labels to *Basics*, so a future 9th block cannot silently vanish from the drawer.
+- **D33 — the four consecutive library steps share ONE deferred-restore drawer guard.** Per-step
+  snapshot/restore (the old `eb.library.tabs` pattern) would close and reopen the drawer between
+  every step; instead `enterLibraryStep` / `leaveLibraryStep` snapshot once and restore on a
+  `setTimeout(0)` that the next library step cancels. The engine calls the leaving step's `after()`
+  before the entering step's `before()`, which is what makes the cancellation deterministic.
+- **D34 — a tour hook never persists a user preference.** `setInspectorDrawerMode` sets
+  `inspectorModeUserOverride` **and** writes localStorage, so the inspector-tabs step writes its
+  transient state with `editorStateStore.setState(...)` and restores it on the way out. A tour must
+  not leave behind a setting the user never chose.
+
+**What is left, in this order:**
+
+- **Owed to a person, not a subagent: look at the editor in dark mode.** T1 is proven only at the
+  unit level (finding **B23**). The §A.3 risks of the plan are still unverified by eyes: the email
+  canvas must not go dark (`.dark-email-builder .preview-container` in `global.css` has never been
+  checked), switching theme must not lose an unsaved document (the MUI theme is memoised on
+  `darkMode`, so it should not remount — confirm in a browser), and the inspector's contrast in dark
+  is MUI's, not Maildrill's warm ramp.
+- **The e2e suite was NOT run this round, by the user's decision.** `tests/e2e/tour.spec.ts` walks
+  the tour with a 20-iteration cap and asserts concrete step titles; 18 steps still fit, but the
+  spec needs a read before that suite is trusted again — and it now has to survive steps that open
+  the drawer, the palette and the inspector. **B21** (how the e2e suite is served) is still the
+  blocking decision, and **B22** (no browser coverage for arrow keys) is still open.
+- Optional, recorded and deliberately not done: the third `eb.library.sections` anchor for saved
+  composed blocks (plan §B.3, marked optional), a third inspector step that switches to *Styles*
+  (Q5 was answered "one step"), and the older optional items below (B2's `onPopoverRender`
+  passthrough, unifying the host `AppShell` ⌘K palette with the editor-scoped ones).
+
+**Re-establish the preconditions before delegating anything** — they are environment state, not repo
+state: ports 4321/3001/5432/6379 up; `tests/e2e/.auth/user.json` present; e2e as
+`npx playwright test --project=chromium --no-deps <spec> --workers=1 --retries=0`. Astro dev binds
+`[::1]:4321` only, so probe it over HTTP, not with an IPv4 port check.
+
+---
+
+# Older hand-off (2026-09-15, second session — superseded, kept for context)
+
 **State at hand-off (2026-09-15, second session): `HEAD = 7c96b7a` + this log commit, branch
 `feat/ui-polish-p1`, tree clean** except the known untracked `.cursor/hooks/` and `.kiro/`. Nothing is
 half-finished; every task has its own commit and the chain is green end to end. **Not pushed** — the
@@ -726,6 +808,31 @@ names alone and should have been in the contract, not discovered by the implemen
 **D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
 
 ## Findings
+
+**B24 — the tour i18n parity test cannot tell a translated string from an untranslated one, and it
+let three English titles through into Spanish and Italian.** Found by the orchestrator reading T4's
+diff. `tests/tourSteps.i18n-parity.test.ts` checks that every key exists in all three catalogues and
+that each value is a non-empty string (`value.trim().length === 0`) — nothing more. T4 shipped
+`steps.blocksBasics.title`, `steps.blocksLayout.title` and `steps.libraryTemplates.title` as
+`"Basics"`, `"Structure"` and `"Templates"` in `es-419` and `it-IT` while their descriptions WERE
+translated, and the suite stayed green; the drawer's own headings right next to those popovers already
+said "Básicos"/"Estructura". Closed for those six strings by **T4b** (`3ebfea1`), but the hole in the
+test remains: any future step can do the same. Cheap partial guard if wanted: assert that a step's
+title differs from the `en-US` one for locales where the English word is not a legitimate loanword —
+which is exactly why it was not done blind (some values, like Italian "Template", *are* correct as-is).
+Owner: unassigned. Meanwhile it is a diff-reading duty, and it is now written into `docs/AGENTS.md`.
+
+**B23 — the host side of dark mode has no automated coverage at all, by construction.** Found by the
+orchestrator gating T1. The wiring that actually matters to a user — `VisualEmailBuilder.tsx` passing
+`darkMode={hostTheme === 'dark'}` into the vendored editor — is a React island, and this repo has no
+way to mount one in tests: the root Vitest environment is `node`, with no jsdom, no happy-dom and no
+`@testing-library` in devDependencies (`vitest.config.ts`, `package.json`). `tests/unit/host-theme.test.ts`
+covers the hook's DOM-free core (10 cases, mutation-tested) and nothing else, so "the editor turns dark
+when the host does" rests on reading the code. Two ways to close it, neither taken: an e2e that toggles
+the theme on `/dashboard/templates/email` and asserts a computed style inside the editor (cheapest,
+but the e2e suite is the subject of **B21**), or adding happy-dom + a host-island test lane at the root
+(a build-infrastructure change, not a task inside this chain). Related to **B3**, which is the same
+debt for the tour popover. Owner: unassigned; the visual check is owed to a person.
 
 **B22 — arrow-key navigation has no browser-level coverage, and nothing asserts that a *consumed*
 arrow is contained.** Found by the orchestrator reading B18's tests. The 12 new unit cases prove
