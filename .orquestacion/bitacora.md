@@ -158,6 +158,14 @@ Known ignorable dirt in `git status`: `.cursor/hooks/`, `.kiro/` (untracked loca
   `[aria-modal="true"], dialog[open], [role="dialog"]` that is **not** driver.js's own popover. In
   that state the tour stays open and the modal closes, which is what a user means. The engine stays
   host-agnostic (D1): no Maildrill/MUI selectors, no per-editor lists.
+- **D12** (B14) — **A competing modal only counts if it is actually visible.** D11's detection must
+  skip candidates that are in the DOM but not rendered (`display:none`, `visibility:hidden`, the
+  `hidden` attribute, zero-size). Use the platform check where available
+  (`Element.checkVisibility({ checkVisibilityCSS: true, checkOpacity: false })`) with a conservative
+  fallback for environments that lack it — and the fallback must fail **towards** the D8 plain case
+  (treat an undecidable candidate as *not* competing), because "Escape does nothing" is the worse
+  failure for a user than "Escape closed the tour". Still host-agnostic (D1): no class or component
+  names.
 
 ---
 
@@ -210,10 +218,28 @@ F6  | e2e Playwright                 | tests/e2e/tour.spec.ts                | 8
 B7  | duplicate tour instances       | engine registry + EB hook             | 4e842fd | green
 B8  | Escape does not dismiss tour   | product-tour escape guard             | 4e842fd | green (same commit)
 B10 | ⌘K palette relaunch entry red  | EB CommandPalette + EB tour hook      | 46c3a3f | green (closes B7B8's red; B11 fixed too)
-B12 | Escape vs an open host modal   | product-tour escape guard             | —       | next (see finding B12)
-B9  | landings has no relaunch entry | builder42 HostToolbar (D9)            | —       | after B12
+B12 | Escape vs an open host modal   | product-tour escape guard             | a0afd05 | green (closes the last red)
+B14 | modal detection counts hidden  | product-tour escape guard             | —       | next (see finding B14 / D12)
+B9  | landings has no relaunch entry | builder42 HostToolbar (D9)            | —       | after B14
 F7  | docs + telemetry               | docs/AGENTS.md, packages/VENDOR.md    | —       | pending
 ```
+
+Gate run for B12 (orchestrator, `080c6ed..a0afd05`): 3 files, all in scope, and all three are **pure
+additions** — `47 0` (engine), `133 0` (unit tests), `48 0` (e2e). Zero deleted lines in the whole
+commit, so no pre-existing assertion was touched anywhere; nothing to read in the test diff beyond
+the new cases. History intact.
+
+Mutation-tested: restored `createTour.ts` from `080c6ed` → the 2 new D11 cases that assert *yielding*
+failed (`aria-modal="true"` propagates; `dialog[open]` also detected); the other 2 new cases pass both
+ways **by design**, since they assert the unchanged D8 plain case and that driver.js's own
+`role="dialog"` popover must not count as a competitor. Restored, 42/42 green.
+
+Re-measured by the orchestrator: `@md/product-tour` 5 files/42 tests, email-builder 8/46,
+builder42 12/112, root 43/303, `pnpm check` 337 files 0/0/3, `pnpm lint` the same 3 errors by name.
+Full e2e `--workers=1 --retries=0`: **53 passed / 22 failed / 3 skipped** of 78 (77 + B12's new test),
+and the 22 are exactly the baseline names — automations 5, dashboard 1, lists 2, login 2,
+registration 2, smoke 1, subscribers 3, workspace-tour 6. `workspace-tour.spec.ts:186` is no longer
+among them. **The tour chain no longer contributes a single e2e failure.**
 
 Gate run for B10 (orchestrator, `b57c634..46c3a3f`): 3 files, all in scope; zero deletions; `b57c634`
 still an ancestor. The new unit test is a pure `116 0` addition and the two source files are
@@ -292,6 +318,19 @@ auditor subagent is launched.
 ---
 
 ## Findings
+
+**B14 — B12's modal detection counts modals that are in the DOM but not open, which would silently
+disable Escape-dismiss.** Found by the orchestrator reading B12's diff. `hasCompetingModalOpen()`
+(`packages/product-tour/src/createTour.ts`) accepts **any** node matching
+`[aria-modal="true"], dialog[open], [role="dialog"]` outside `.driver-popover`, with no check that it
+is actually rendered. Plenty of UI kits keep a closed dialog mounted and merely hidden
+(`display:none`, `visibility:hidden`, `hidden`, zero-size). The moment any editor mounts one of those,
+the guard would yield on **every** Escape and the tour could never be dismissed by keyboard again —
+i.e. a silent regression of B8, in the one place we have just proven users need. Not a live defect
+today: measured, both editors' "Escape dismisses the tour" e2e tests pass at `a0afd05`, so no such
+node exists on either route right now. It is a trap, not a bug — and the cheap fix (a visibility
+check, per D12) is worth taking while the file is fresh. Owner: B14.
+
 
 **B12 — with the tour active, Escape closes the tour instead of an open host modal, and that is on
 the tour's own happy path.** Surfaced as the one non-baseline e2e failure after B10:
