@@ -24,6 +24,7 @@ import ChannelEditorShell, { shellStyles } from './shared/ChannelEditorShell';
 import { CHANNEL } from './shared/channels';
 import { retryDynamicImport } from '@/lib/app/retry-dynamic-import';
 import { useAutosave } from './shared/useAutosave';
+import { useHostTheme } from './hooks/useHostTheme';
 
 /**
  * Full-screen wrapper around EmailBuilder.js (vendored email-builder-standalone) — the visual
@@ -103,6 +104,9 @@ export default function VisualEmailBuilder({
   const [mediaOpen, setMediaOpen] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
   const { toast, show } = useToast();
+  // D30: the host decides the theme, the package receives it as a prop — the
+  // editor itself never reads data-theme/prefers-color-scheme.
+  const hostTheme = useHostTheme();
 
   // The builder's image/background inputs dispatch `toggle-media-library` when
   // the user clicks "Browse gallery" (shown because we pass `galleryImages`).
@@ -346,6 +350,7 @@ export default function VisualEmailBuilder({
           mergeTags={mergeTags}
           primaryColor={CHANNEL.email.hex}
           secondaryColor={CHANNEL.email.hex}
+          darkMode={hostTheme === 'dark'}
           height="100%"
           sticky
           /* Source-code and JSON views stay off: templates are edited
