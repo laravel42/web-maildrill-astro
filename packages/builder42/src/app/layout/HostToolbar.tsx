@@ -85,11 +85,7 @@ function HostTourRestart() {
   const { t } = useTranslation("header");
 
   return (
-    <div
-      className="pbx-history"
-      role="group"
-      aria-label={t("restartTour.label")}
-    >
+    <div className="pbx-history">
       <button
         type="button"
         className="pbx-history__btn"
@@ -116,12 +112,10 @@ export function HostCanvasToolbar() {
         <HostViews />
         <ViewportDropdown />
       </div>
-      <div
-        id={HOST_HISTORY_ID}
-        className="pbx-canvas-toolbar__right"
-        {...dataTourAttr(BUILDER42_TOUR_ANCHORS.toolbarHistory)}
-      >
-        <HostHistory />
+      <div id={HOST_HISTORY_ID} className="pbx-canvas-toolbar__right">
+        <div {...dataTourAttr(BUILDER42_TOUR_ANCHORS.toolbarHistory)}>
+          <HostHistory />
+        </div>
         <HostTourRestart />
       </div>
     </div>

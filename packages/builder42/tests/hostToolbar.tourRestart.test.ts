@@ -50,4 +50,36 @@ describe("HostToolbar — tour-restart control (D14: no tour anchor)", () => {
       /dataTourAttr/,
     );
   });
+
+  it("renders <HostTourRestart /> as a sibling of the toolbarHistory-anchored wrapper, not inside it (B15)", () => {
+    const toolbarFnBody = source.slice(source.indexOf("export function HostCanvasToolbar"));
+    // The element carrying the toolbarHistory anchor must close (</div>) before
+    // <HostTourRestart /> appears — i.e. HostTourRestart is NOT a descendant of it.
+    const anchorOpenIdx = toolbarFnBody.indexOf(
+      "dataTourAttr(BUILDER42_TOUR_ANCHORS.toolbarHistory)",
+    );
+    expect(anchorOpenIdx).toBeGreaterThan(-1);
+    const afterAnchor = toolbarFnBody.slice(anchorOpenIdx);
+    const anchorWrapperCloseIdx = afterAnchor.indexOf("</div>");
+    const restartUsageIdx = afterAnchor.indexOf("<HostTourRestart />");
+    expect(anchorWrapperCloseIdx).toBeGreaterThan(-1);
+    expect(restartUsageIdx).toBeGreaterThan(-1);
+    expect(restartUsageIdx).toBeGreaterThan(anchorWrapperCloseIdx);
+  });
+
+  it("drops the redundant role=group/aria-label on the tour-restart wrapper (button keeps its own accessible name)", () => {
+    const restartFnBody = source.slice(
+      source.indexOf("function HostTourRestart()"),
+      source.indexOf("export function HostCanvasToolbar"),
+    );
+    expect(restartFnBody).not.toMatch(/role="group"/);
+    // The wrapper div itself must not carry aria-label (only the button does).
+    const wrapperOpenTag = restartFnBody.slice(
+      restartFnBody.indexOf('<div className="pbx-history"'),
+      restartFnBody.indexOf(">") + restartFnBody.indexOf('<div className="pbx-history"'),
+    );
+    expect(wrapperOpenTag).not.toMatch(/aria-label/);
+    // The button still carries its own accessible name via aria-label.
+    expect(restartFnBody).toMatch(/aria-label=\{t\("restartTour\.label"\)\}/);
+  });
 });
