@@ -18,6 +18,51 @@ la lectura del diff. La revisión visual la hace el usuario a mano.
 
 ---
 
+## Estado: implementado en `feat/ui-polish-p1`
+
+Las seis tareas de la serie (T1–T6) están hechas, un commit por tarea:
+
+- **T1** (`8e4a79e`) — hook de host `useHostTheme` (`MutationObserver` sobre `data-theme`) +
+  `darkMode` al `<Builder>` desde `VisualEmailBuilder.tsx`.
+- **T2** (`11c3baf`) — la pestaña activa de la librería pasa al store (`componentsLibraryDrawerCategory`),
+  con `resolveLibraryCategory` normalizando el valor leído.
+- **T3** (`4953ce1`) — la pestaña Blocks se agrupa en *Básicos* / *Estructura*, cada grupo con su
+  propia ancla; `groupBuiltInBlockIndices` devuelve índices sobre el `BUTTONS` original.
+- **T4** (`1b24bcc`) + **T4b** (`3ebfea1`) — pasos y anclas de básicos/estructura/galería de
+  plantillas, con la guarda compartida de restauración diferida de la librería; T4b corrigió
+  títulos de paso que habían quedado en inglés en `es-419`/`it-IT`.
+- **T5** (`c9e389a`) — el paso de la paleta de comandos abre y cierra la paleta de verdad, con
+  guarda por `data-state` y `blur()` del input.
+- **T6** (`a799e03`) — pasos y anclas nuevos `eb.canvas.textBlock` y `eb.inspector.tabs`, ambos
+  omitidos vía `when()` cuando el documento no tiene un bloque `NotionText`.
+
+Las cinco preguntas abiertas (§ "Decisiones que necesito de ti antes de implementar") se
+resolvieron con los "asumo" del propio plan: **Q1** la galería es la pestaña Templates; **Q2** sí,
+los tiles quedan agrupados en la UI (no solo explicados por copy); **Q3** los pasos que dependen
+del documento se omiten con `when()`, nunca se siembra contenido; **Q4** el paso de texto señala la
+superficie editable, no entra en modo edición en línea; **Q5** un solo paso de pestañas del
+inspector, sin un tercer paso para *Styles*.
+
+Durante la implementación se fijaron tres contratos que este plan no anticipaba:
+
+- **D31** — un hook de host que necesita observar el DOM expone un núcleo sin DOM e inyectable
+  (`normalizeHostTheme`, `readHostTheme`, `observeHostTheme` con una fábrica de observer
+  inyectable), porque el entorno raíz de vitest es `node` (sin jsdom/happy-dom/`@testing-library`).
+- **D32** — el agrupamiento de bloques (`groupBuiltInBlockIndices`) devuelve índices sobre el
+  array `BUTTONS` original, nunca reindexa: el payload de drag (`buttonIndex`) y el
+  click-to-insert resuelven contra ese array tal cual.
+- **D33** — los cuatro pasos de la librería comparten una sola guarda de restauración diferida del
+  drawer (`enterLibraryStep` / `leaveLibraryStep` / `flushLibraryStepRestore` en `tourSteps.ts`),
+  en vez de que cada paso snapshot-ee y restaure por su cuenta.
+
+**Lo que sigue sin verificar:** la suite e2e no se corrió en esta tanda, por decisión del usuario
+(ver "Verificación" arriba) — sigue pendiente para cuando se retome esa suite. Tampoco nadie ha
+mirado el editor en modo oscuro en un navegador real todavía: los riesgos de §A.3 (que el lienzo del
+correo no se oscurezca, que el cambio de tema no pierda el documento en edición, el contraste real
+del inspector) siguen pendientes de una revisión humana.
+
+---
+
 ## Parte A — dark mode
 
 ### A.1 Causa raíz (medida, no supuesta)
