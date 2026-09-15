@@ -231,9 +231,24 @@ B10 | ⌘K palette relaunch entry red  | EB CommandPalette + EB tour hook      |
 B12 | Escape vs an open host modal   | product-tour escape guard             | a0afd05 | green (closes the last red)
 B14 | modal detection counts hidden  | product-tour escape guard             | 46d9557 | green
 B9  | landings has no relaunch entry | builder42 HostToolbar (D9)            | eb9b7bf | WIP/red: my contract was contradictory — see I2
-B9b | drop the anchor, keep the button| same files, minus the registry       | —       | next (D14)
+B9b | drop the anchor, keep the button| same files, minus the registry        | f229159 | green (chain back to green)
+B9c | button sits inside the history anchor | HostToolbar only               | —       | next (see finding B15)
 F7  | docs + telemetry               | docs/AGENTS.md, packages/VENDOR.md    | —       | pending
 ```
+
+Gate run for B9+B9b (orchestrator, net `2cbef01..f229159`): the **net** effect is exactly the intended
+one — `tourAnchors.ts` and `tour-anchors-coverage.test.ts` show an **empty** diff against pre-B9 (the
+registry is back to its 12 step anchors), `HostToolbar.tsx` is `25 1`, the new unit test `53 0`, and
+`tour.spec.ts` `16 21` where the 21 removed lines are the obsolete `test.skip` block and its
+partly-wrong reason text. The two `tourSteps.*` tests went green **by the key removal alone** — neither
+appears in the diff. Re-measured by the orchestrator: builder42 **13 files / 117 tests** green,
+`tsc -p packages/builder42` 0, and `tests/e2e/tour.spec.ts` → **14 passed / 0 skipped / 0 failed**.
+
+The landings relaunch test is real coverage, not a source scan: it marks the tour seen, opens the
+embed, asserts zero popovers, clicks the button **by accessible name**
+(`getByRole('button', { name: 'View the guided tour' })`) and asserts exactly one popover. The new
+builder42 unit test is a static source scan — weak by nature, and honest about it in its own header
+(this package has no DOM environment); the e2e is what actually bites.
 
 Gate run for B14 (orchestrator, `ae30cb0..46d9557`): 2 files, both in scope; `61 6` and `107 0`. The
 6 deleted lines are the old `hasCompetingModalOpen()` doc block, rewritten in place — **no code and
@@ -365,6 +380,16 @@ names alone and should have been in the contract, not discovered by the implemen
 **D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
 
 ## Findings
+
+**B15 — the new relaunch button sits *inside* the element that carries the `pbx.toolbar.history`
+anchor, so the history tour step now highlights it too.** Found by the orchestrator reading B9b's
+diff. `HostCanvasToolbar` renders
+`<div {...dataTourAttr(toolbarHistory)}><HostHistory /><HostTourRestart /></div>`, and driver.js
+highlights that whole wrapper — so the step whose copy talks about undo/redo draws its box around a
+help button it never mentions (plan §1.4.8 is explicit about highlight precision). Secondary, same
+place: `HostTourRestart` wraps a single button in its own `role="group"` reusing the `pbx-history`
+class, which is redundant labelling for one control. Cosmetic, not a break — the button works and its
+e2e passes. Owner: B9c, moving it out of the anchored wrapper without changing its look or wiring.
 
 
 **B14 — B12's modal detection counts modals that are in the DOM but not open, which would silently
