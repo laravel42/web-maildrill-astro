@@ -22,6 +22,7 @@ import {
   setComponentsLibraryDrawerOpen,
   setSelectedBlockId,
 } from '../documents/editor/EditorContext';
+import { enterCommandPaletteStep, leaveCommandPaletteStep } from './commandPaletteControl';
 import { EMAIL_BUILDER_TOUR_ANCHORS } from './tourAnchors';
 
 /**
@@ -361,7 +362,10 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
     });
   }
 
-  // 15. eb.commandPalette — App/CommandPalette/index.tsx (⌘K). Siempre visible.
+  // 15. eb.commandPalette — App/CommandPalette/index.tsx (⌘K). Siempre visible. La paleta
+  // vive oculta (`hidden`) hasta que se abre, así que el paso la abre con su propio atajo al
+  // entrar y la restaura al salir (§T5, `commandPaletteControl.ts`) — sin esto el popover
+  // apuntaría a un elemento invisible.
   steps.push({
     anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.commandPalette,
     popover: {
@@ -369,6 +373,9 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
       description: t('steps.commandPalette.description'),
       side: 'top',
     },
+    before: () => enterCommandPaletteStep(),
+    after: () => leaveCommandPaletteStep(),
+    skipMissingElement: true,
   });
 
   // 16. eb.header.actions — Host: EditorHeader.tsx, botón "Send test" a solas. Solo si el
