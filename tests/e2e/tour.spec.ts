@@ -215,6 +215,49 @@ test.describe('email editor tour (/dashboard/templates/email)', () => {
     await expect(page.getByRole('button', { name: 'Save template' })).toBeVisible();
   });
 
+  test('clicking the popover\'s close button (×) dismisses the tour while the editor stays open (B16/D15)', async ({ page }) => {
+    await resetEmailTourState(page);
+    await gotoApp(page, '/dashboard/templates/email');
+
+    const popover = tourPopover(page);
+    await expect(popover).toHaveCount(1, { timeout: 45_000 });
+    const overlay = page.locator('.driver-overlay');
+    await expect(overlay).toHaveCount(1);
+
+    // driver.js's own close button, rendered inside its popover
+    // (`.driver-popover-close-btn`, `aria-label="Close"`, the «×» glyph) — not a
+    // host-authored control.
+    await page.getByRole('button', { name: 'Close' }).click();
+
+    await expect(popover, 'the close button removes the popover').toHaveCount(0);
+    await expect(overlay, 'the close button removes the overlay too').toHaveCount(0);
+
+    // The editor itself stays open: same route, canvas/save anchor still visible.
+    await expect(page).toHaveURL(/\/dashboard\/templates\/email/);
+    await expect(page.getByRole('button', { name: 'Save template' })).toBeVisible();
+  });
+
+  test('clicking the overlay outside the popover dismisses the tour while the editor stays open (B16/D15)', async ({ page }) => {
+    await resetEmailTourState(page);
+    await gotoApp(page, '/dashboard/templates/email');
+
+    const popover = tourPopover(page);
+    await expect(popover).toHaveCount(1, { timeout: 45_000 });
+    const overlay = page.locator('.driver-overlay');
+    await expect(overlay).toHaveCount(1);
+
+    // Click the overlay itself, at a fixed corner far from the popover and from the
+    // highlighted element — `overlayClickBehavior: 'close'` only reacts to a click that
+    // lands on the overlay's own stage path, not on the popover or the highlighted anchor.
+    await overlay.click({ position: { x: 5, y: 5 } });
+
+    await expect(popover, 'the overlay click removes the popover').toHaveCount(0);
+    await expect(overlay, 'the overlay click removes itself').toHaveCount(0);
+
+    await expect(page).toHaveURL(/\/dashboard\/templates\/email/);
+    await expect(page.getByRole('button', { name: 'Save template' })).toBeVisible();
+  });
+
   test('Escape yields to the send-test dialog when it is open on top of the tour (D11): the dialog closes, the tour stays open on the same step', async ({ page }) => {
     test.setTimeout(120_000);
     await resetEmailTourState(page);
@@ -374,6 +417,43 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
     await expect(page.locator('.driver-overlay'), 'the overlay is gone too').toHaveCount(0);
 
     // The editor itself stays open: same route, canvas anchor still visible.
+    await expect(page).toHaveURL(/\/dashboard\/landings\/editor/);
+    await expect(page.locator('[data-tour="pbx.canvas.frame"]')).toBeVisible();
+  });
+
+  test('clicking the popover\'s close button (×) dismisses the tour while the editor stays open (B16/D15)', async ({ page }) => {
+    await resetLandingTourState(page);
+    await gotoApp(page, '/dashboard/landings/editor');
+
+    const popover = tourPopover(page);
+    await expect(popover).toHaveCount(1, { timeout: 45_000 });
+    const overlay = page.locator('.driver-overlay');
+    await expect(overlay).toHaveCount(1);
+
+    await page.getByRole('button', { name: 'Close' }).click();
+
+    await expect(popover, 'the close button removes the popover').toHaveCount(0);
+    await expect(overlay, 'the close button removes the overlay too').toHaveCount(0);
+
+    // The editor itself stays open: same route, canvas anchor still visible.
+    await expect(page).toHaveURL(/\/dashboard\/landings\/editor/);
+    await expect(page.locator('[data-tour="pbx.canvas.frame"]')).toBeVisible();
+  });
+
+  test('clicking the overlay outside the popover dismisses the tour while the editor stays open (B16/D15)', async ({ page }) => {
+    await resetLandingTourState(page);
+    await gotoApp(page, '/dashboard/landings/editor');
+
+    const popover = tourPopover(page);
+    await expect(popover).toHaveCount(1, { timeout: 45_000 });
+    const overlay = page.locator('.driver-overlay');
+    await expect(overlay).toHaveCount(1);
+
+    await overlay.click({ position: { x: 5, y: 5 } });
+
+    await expect(popover, 'the overlay click removes the popover').toHaveCount(0);
+    await expect(overlay, 'the overlay click removes itself').toHaveCount(0);
+
     await expect(page).toHaveURL(/\/dashboard\/landings\/editor/);
     await expect(page.locator('[data-tour="pbx.canvas.frame"]')).toBeVisible();
   });

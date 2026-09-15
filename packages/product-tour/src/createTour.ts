@@ -251,14 +251,19 @@ export function createTour(options: CreateTourOptions): Tour {
     // un modal abierto por encima de la página (y no es el propio popover de driver.js), este
     // guard NO consume la tecla: no llama a stopPropagation()/preventDefault() ni cierra el
     // tour — deja que el evento se propague para que el propio handler del modal lo cierre. El
-    // tour permanece activo, en su paso actual.
+    // tour permanece activo, en su paso actual. Esto solo es seguro porque `allowKeyboardControl`
+    // se configura en `false` (ver `start()`): sin eso, este mismo evento —dejado propagar a
+    // propósito para que el modal lo vea— también llegaría al handler interno de Escape de
+    // driver.js (bubble-phase en `window`) y, ahora que `onDestroyStarted` sí destruye (D15),
+    // cerraría el tour de todos modos, rompiendo este caso (D11 se rompió exactamente así al
+    // arreglar D15, hasta desactivar `allowKeyboardControl`; ver el comentario en `start()`).
     if (hasCompetingModalOpen()) return;
     // D8: mientras el tour está activo, Escape cierra EL TOUR y nada más. Se detiene la
     // propagación/default en fase de captura para que el editor anfitrión nunca vea esta
     // tecla (los tests F4 del host dependen de eso), y el cierre se hace aquí mismo — nunca
-    // se depende del propio handler de Escape de driver.js (bubble-phase, jamás alcanzado tras
-    // el stopPropagation() de arriba, y de todos modos ese handler interno tampoco es alcanzable
-    // desde fuera de driver.js).
+    // se depende del propio handler de Escape de driver.js: con `allowKeyboardControl: false`
+    // (D15) ese handler interno ni siquiera se registra, así que este paquete es la ÚNICA
+    // vía de cierre por teclado, sin importar si esta rama llega a `stopPropagation()` o no.
     e.stopPropagation();
     e.preventDefault();
     dismissActiveInstance();
@@ -365,7 +370,25 @@ export function createTour(options: CreateTourOptions): Tour {
 
     driverInstance = driver({
       animate: !prefersReducedMotion(),
-      allowKeyboardControl: true,
+      // D15/D11: `false`, no `true`. driver.js's OWN internal keydown listener (bubble-phase
+      // on `window`, gated by this flag — verified reading `driver.js@1.8.0`'s source,
+      // function `Q(e,t)`) reacts to Escape by calling the very same internal teardown that
+      // `onDestroyStarted` now (correctly, per D15) destroys the instance from. While that
+      // hook was a no-op (the pre-fix bug this task closes), driver.js's own Escape listener
+      // being reachable was harmless — it fired but destroyed nothing. Now that the hook
+      // really destroys, leaving this `true` reintroduced a second, competing path to close
+      // the tour on Escape: the D11 case (`hasCompetingModalOpen()` true) deliberately lets
+      // the keydown bubble PAST our own capture-phase guard, uninterrupted, so a modal
+      // opened on top of the tour can close itself — but that same bubbling keydown also
+      // reaches driver.js's bubble-phase `window` listener, which would then destroy the
+      // tour anyway, breaking D11 (proven by execution: the existing "Escape yields to the
+      // send-test dialog" test started failing — tour destroyed — the moment `onDestroyStarted`
+      // was fixed to call `destroy()`, with `allowKeyboardControl` still `true`). This package
+      // already owns 100% of Escape handling via its own capture-phase guard (D8); driver.js's
+      // internal keyboard handling (Escape here, plus ArrowLeft/ArrowRight step navigation,
+      // neither part of this package's documented contract) is disabled entirely so there is
+      // never a second listener for the same key.
+      allowKeyboardControl: false,
       overlayClickBehavior: 'close',
       popoverClass: options.popoverClass ?? 'md-tour',
       showProgress: true,
@@ -384,6 +407,34 @@ export function createTour(options: CreateTourOptions): Tour {
         });
       },
       onDestroyStarted: () => {
+        // D15: cuando el consumidor (nosotros) define `onDestroyStarted`, driver.js le
+        // entrega la responsabilidad ENTERA de cerrar y no destruye nada por su cuenta —
+        // verificado leyendo `driver.js@1.8.0`'s `dist/driver.js.mjs`, función `h(e=!0)`:
+        // `if(e && a){ a(...); return }` corta el ciclo de destrucción ahí mismo cuando hay
+        // un `onDestroyStarted` configurado (`a`) y el cierre vino con `e` en su valor por
+        // defecto (`true`) — el caso de TODOS los cierres que driver.js inicia él mismo: su
+        // botón de cerrar del popover (`.driver-popover-close-btn` → `onCloseClick` →
+        // `closeClick` → esta misma `h()`), `overlayClickBehavior: 'close'` (`overlayClick`
+        // → esta misma `h()`), y su propio handler interno de Escape (inalcanzable aquí por
+        // el guard de captura de arriba, pero también pasaría por esta función). Sin un
+        // `driverInstance.destroy()` explícito en este hook, ninguno de esos tres cierres
+        // desmontaba el popover/overlay — el defecto reportado por el usuario en la «×».
+        //
+        // El comentario que vivía aquí antes afirmaba que llamar a `destroy()` desde dentro
+        // de este hook reentraría el ciclo de destrucción. Es falso: el método PÚBLICO
+        // `destroy()` es `()=>{h(!1)}` — siempre invoca `h` con `e=false`, así que la
+        // condición `if(e && a)` de arriba nunca es cierta para una llamada a `destroy()`,
+        // sea desde donde sea. `destroy()` no puede reentrar `onDestroyStarted`: esa etapa
+        // solo se dispara con `e` en su valor por defecto (`true`), nunca desde el propio
+        // `destroy()` público.
+        //
+        // Exactamente un `tour_dismissed` por cierre (D15): este hook es ahora el ÚNICO
+        // lugar que emite el evento para los cierres que driver.js inicia (×, overlay); el
+        // guard de Escape de este paquete (`dismissActiveInstance()`) sigue emitiéndolo él
+        // mismo para SU cierre porque nunca llega a disparar este hook (`e.stopPropagation()`
+        // en fase de captura evita que el handler interno de Escape de driver.js —y por
+        // tanto este `onDestroyStarted`— vea la tecla). Un mismo cierre nunca pasa por los
+        // dos caminos a la vez, así que nunca hay doble emisión.
         const wasLastStep = driverInstance?.isLastStep() ?? false;
         if (!wasLastStep) {
           const index = driverInstance?.getActiveIndex();
@@ -394,9 +445,7 @@ export function createTour(options: CreateTourOptions): Tour {
             totalSteps: driveSteps.length,
           });
         }
-        // No llamar a driverInstance.destroy() aquí: este hook ya se dispara *dentro* del
-        // propio ciclo de destrucción de driver.js (incluido cuando lo invocamos nosotros
-        // desde `stop()`); volver a llamar a `destroy()` reentra en ese ciclo.
+        destroyActiveInstance();
       },
       onDoneClick: () => {
         persistence.markCompleted(options.tourId, options.version);
