@@ -103,12 +103,66 @@ function releaseTourGeneration(tourId: string, generation: number): void {
 const COMPETING_MODAL_SELECTOR = '[aria-modal="true"], dialog[open], [role="dialog"]';
 
 /**
- * `true` si hay, en este momento, un elemento modal (ver `COMPETING_MODAL_SELECTOR`) abierto
- * por encima de la página que NO sea el propio popover de driver.js. driver.js pinta su
- * popover con `role="dialog"` (verificado leyendo `driver.js@1.8.0`'s `dist/driver.js.mjs`:
- * `m.setAttribute('role','dialog')` sobre el nodo `.driver-popover`), así que ese nodo — y
- * cualquier cosa contenida en él — queda explícitamente excluido: de lo contrario el propio
- * tour se detectaría a sí mismo como "modal competidor" y el caso llano (D8) se rompería.
+ * `true` si `candidate` está realmente pintado en pantalla, no solo presente en el DOM (D12).
+ * Muchos UI kits dejan un diálogo cerrado montado y solo oculto (`display:none`,
+ * `visibility:hidden`, el atributo `hidden`, o tamaño cero) — sin esta comprobación, ese nodo
+ * seguiría matcheando `COMPETING_MODAL_SELECTOR` y el guard de Escape cedería SIEMPRE, dejando
+ * el tour sin forma de cerrarse por teclado (una regresión silenciosa de D8/D11).
+ *
+ * El atributo `hidden` se comprueba siempre de forma explícita, incluso cuando la plataforma
+ * ofrece `checkVisibility`: por spec ese atributo solo oculta el elemento a través de la regla
+ * `[hidden] { display: none }` de la hoja de estilos UA por defecto, y no todo runtime aplica
+ * esa hoja de estilos (verificado leyendo el propio `Element.checkVisibility` de happy-dom —
+ * el motor de tests de este paquete — que nunca inspecciona `hidden` ni añade esa regla), así
+ * que confiar solo en `checkVisibility` para este caso sería no-determinista según el runtime.
+ *
+ * Para el resto (`display:none`, `visibility:hidden`, tamaño cero), usa la comprobación de
+ * plataforma cuando existe: `Element.checkVisibility({ checkVisibilityCSS: true, checkOpacity:
+ * false })` — no se asume disponible en todo runtime (no está en todos los builds de
+ * jsdom/happy-dom que puedan usar los tests de este paquete), así que se detecta por feature
+ * antes de usarla.
+ *
+ * Sin `checkVisibility`, el fallback comprueba explícitamente `display`/`visibility` (inline y
+ * computado) y el rect del cliente — y falla siempre hacia el caso llano: si la visibilidad no
+ * puede determinarse, se trata el candidato como NO competidor, porque "Escape no hace nada" es
+ * peor para quien usa el teclado que "Escape cerró el tour" (D12). Deliberadamente barato: nada
+ * de layout adicional más allá de lo que `getBoundingClientRect()` ya da gratis.
+ */
+function isElementVisible(candidate: Element): boolean {
+  if ((candidate as HTMLElement).hidden) return false;
+
+  const checkVisibility = (candidate as { checkVisibility?: (options?: Record<string, boolean>) => boolean })
+    .checkVisibility;
+  if (typeof checkVisibility === 'function') {
+    return checkVisibility.call(candidate, { checkVisibilityCSS: true, checkOpacity: false });
+  }
+
+  const htmlElement = candidate as HTMLElement;
+  const inlineDisplay = htmlElement.style?.display;
+  const inlineVisibility = htmlElement.style?.visibility;
+  if (inlineDisplay === 'none' || inlineVisibility === 'hidden') return false;
+
+  if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+    const computed = window.getComputedStyle(htmlElement);
+    if (computed.display === 'none' || computed.visibility === 'hidden') return false;
+  }
+
+  if (typeof candidate.getBoundingClientRect === 'function') {
+    const rect = candidate.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) return false;
+  }
+
+  return true;
+}
+
+/**
+ * `true` si hay, en este momento, un elemento modal VISIBLE (ver `COMPETING_MODAL_SELECTOR` e
+ * `isElementVisible`, D12) abierto por encima de la página que NO sea el propio popover de
+ * driver.js. driver.js pinta su popover con `role="dialog"` (verificado leyendo
+ * `driver.js@1.8.0`'s `dist/driver.js.mjs`: `m.setAttribute('role','dialog')` sobre el nodo
+ * `.driver-popover`), así que ese nodo — y cualquier cosa contenida en él — queda
+ * explícitamente excluido: de lo contrario el propio tour se detectaría a sí mismo como
+ * "modal competidor" y el caso llano (D8) se rompería.
  *
  * Barata a propósito (D11: "this runs on every Escape keydown, not on every key"): un solo
  * `querySelectorAll` acotado a los tres selectores de arriba, invocado solo cuando la tecla
@@ -119,6 +173,7 @@ function hasCompetingModalOpen(): boolean {
   const candidates = document.querySelectorAll(COMPETING_MODAL_SELECTOR);
   for (const candidate of candidates) {
     if (candidate.closest('.driver-popover')) continue;
+    if (!isElementVisible(candidate)) continue;
     return true;
   }
   return false;

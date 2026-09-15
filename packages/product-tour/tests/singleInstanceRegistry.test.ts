@@ -307,6 +307,113 @@ describe('createTour — Escape yields to a competing modal open on top of the p
     window.removeEventListener('keydown', hostListener);
   });
 
+  it('Escape with a [role="dialog"] element hidden via display:none does NOT yield — the tour is still dismissed and the host listener never sees the key (D12)', async () => {
+    document.body.innerHTML = '<button data-tour="a">a</button><button data-tour="b">b</button>';
+    const onEvent = vi.fn();
+    const steps: TourStep[] = [
+      { anchorKey: 'a', popover: { title: 'A' } },
+      { anchorKey: 'b', popover: { title: 'B' } },
+    ];
+    const tour = createTour({ tourId: 'hidden-modal-display-none-id', version: 1, storagePrefix: 'test:', steps, onEvent });
+    await tour.start();
+    expect(tour.isActive()).toBe(true);
+
+    // Mounted, matches the selector, but not actually rendered — the exact trap this task
+    // closes: a closed-but-mounted dialog kept in the DOM by a UI kit, hidden with
+    // display:none rather than unmounted.
+    const modal = document.createElement('div');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('role', 'dialog');
+    modal.style.display = 'none';
+    document.body.appendChild(modal);
+
+    const hostListener = vi.fn();
+    window.addEventListener('keydown', hostListener);
+
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+    );
+
+    // The hidden node must not pre-empt Escape: the tour dismisses itself exactly as the
+    // plain case (D8), and the host's bubble-phase listener never sees the key.
+    expect(tour.isActive()).toBe(false);
+    expect(document.querySelectorAll('.driver-popover').length).toBe(0);
+    expect(onEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'tour_dismissed', tourId: 'hidden-modal-display-none-id' }),
+    );
+    expect(hostListener).not.toHaveBeenCalled();
+
+    window.removeEventListener('keydown', hostListener);
+  });
+
+  it('Escape with a [role="dialog"] element hidden via visibility:hidden does NOT yield (D12)', async () => {
+    document.body.innerHTML = '<button data-tour="a">a</button><button data-tour="b">b</button>';
+    const onEvent = vi.fn();
+    const steps: TourStep[] = [
+      { anchorKey: 'a', popover: { title: 'A' } },
+      { anchorKey: 'b', popover: { title: 'B' } },
+    ];
+    const tour = createTour({ tourId: 'hidden-modal-visibility-hidden-id', version: 1, storagePrefix: 'test:', steps, onEvent });
+    await tour.start();
+    expect(tour.isActive()).toBe(true);
+
+    const modal = document.createElement('div');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('role', 'dialog');
+    modal.style.visibility = 'hidden';
+    document.body.appendChild(modal);
+
+    const hostListener = vi.fn();
+    window.addEventListener('keydown', hostListener);
+
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+    );
+
+    expect(tour.isActive()).toBe(false);
+    expect(document.querySelectorAll('.driver-popover').length).toBe(0);
+    expect(onEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'tour_dismissed', tourId: 'hidden-modal-visibility-hidden-id' }),
+    );
+    expect(hostListener).not.toHaveBeenCalled();
+
+    window.removeEventListener('keydown', hostListener);
+  });
+
+  it('Escape with a [role="dialog"] element hidden via the `hidden` attribute does NOT yield (D12)', async () => {
+    document.body.innerHTML = '<button data-tour="a">a</button><button data-tour="b">b</button>';
+    const onEvent = vi.fn();
+    const steps: TourStep[] = [
+      { anchorKey: 'a', popover: { title: 'A' } },
+      { anchorKey: 'b', popover: { title: 'B' } },
+    ];
+    const tour = createTour({ tourId: 'hidden-modal-hidden-attr-id', version: 1, storagePrefix: 'test:', steps, onEvent });
+    await tour.start();
+    expect(tour.isActive()).toBe(true);
+
+    const modal = document.createElement('div');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('role', 'dialog');
+    modal.hidden = true;
+    document.body.appendChild(modal);
+
+    const hostListener = vi.fn();
+    window.addEventListener('keydown', hostListener);
+
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+    );
+
+    expect(tour.isActive()).toBe(false);
+    expect(document.querySelectorAll('.driver-popover').length).toBe(0);
+    expect(onEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'tour_dismissed', tourId: 'hidden-modal-hidden-attr-id' }),
+    );
+    expect(hostListener).not.toHaveBeenCalled();
+
+    window.removeEventListener('keydown', hostListener);
+  });
+
   it("the driver.js popover's own role=\"dialog\" does not count as a competing modal — the plain case is not broken by the detection", async () => {
     document.body.innerHTML = '<button data-tour="a">a</button><button data-tour="b">b</button>';
     const onEvent = vi.fn();
