@@ -140,6 +140,50 @@ The visual editor is **vendored and compiled from source**, wrapped by
   - To force a manual refresh in dev: `localStorage.removeItem('eb:lib:thumbnails'); location.reload()`.
     (The `window.__recapture*` helpers are **backend-mode only** — they hit `/dev/*` endpoints.)
 
+## Guided product tours (`packages/product-tour`)
+
+`@md/product-tour` (`packages/product-tour`) is the driver.js-based tour engine — host- and
+domain-agnostic, knows nothing about Maildrill, PostHog, or which editor mounted it.
+`createTour()` defers `import('driver.js')` and the popover CSS to `start()`, never to module
+top-level, so neither enters an editor's initial chunk. Full design record:
+[`product-tour-driverjs-plan.md`](product-tour-driverjs-plan.md).
+
+- **Anchors are a per-editor registry, not inline strings.** Each editor owns one
+  `tourAnchors.ts` (`packages/email-builder-standalone/src/tour/tourAnchors.ts`,
+  `packages/builder42/src/app/tour/tourAnchors.ts`) mapping a step key to a `data-tour="…"`
+  value, stamped via that file's `dataTourAttr(...)`. No `.tsx` may hardcode a `data-tour`
+  string. Renaming or removing a key without updating the registry (and the step + its i18n
+  copy that reference it) breaks the tour silently at runtime — nothing type-checks that
+  connection.
+- **builder42 additionally enforces the registry stays 1:1 with the tour steps**, including
+  copy parity per locale (`packages/builder42/tests/tourSteps.flags.test.ts`,
+  `tourSteps.i18n-parity.test.ts`). Consequence: a control that no step highlights must **not**
+  get a `data-tour` key — find it by accessible name instead (see the landings relaunch button
+  below, `HostToolbar.tsx`, which has no anchor on purpose).
+- **Single instance:** the engine keeps at most one live driver.js instance per `tourId`,
+  process-wide, last-start-wins — a second `start()` destroys the first even if it arrives while
+  the first is still awaiting its lazy `import('driver.js')`.
+- **Escape** closes the tour and never reaches the host editor, except when a visible modal is
+  open on top of the page (`[aria-modal="true"], dialog[open], [role="dialog"]`, excluding
+  driver.js's own `.driver-popover`, and only if actually visible — hidden/zero-size/`display:
+  none` dialogs don't count) — then Escape is left to the modal and the tour stays open.
+- **Relaunch entry points**, per editor: email editor → the header help button in
+  `App/TemplatePanel/index.tsx` and the command palette (`App/CommandPalette/index.tsx`), both
+  via `requestTourRestart()` (`documents/editor/EditorContext.tsx`). Landings → `HostToolbar.tsx`
+  in the embed and `ProfileMenu.tsx` in the standalone, both via
+  `requestBuilder42TourRestart()`. The Astro host's `src/components/react/shared/EditorHeader.tsx`
+  wires **no** tour button for either channel — it only stamps `data-tour` anchors.
+- **Persistence:** email under the `eb:` prefix via the engine's own
+  `createLocalStoragePersistence('eb:')`; builder42 through `useLocalConfig`'s
+  `tourSeen`/`tourVersion` keys (`pb:` prefix) via a custom `TourPersistence` adapter. Bump each
+  editor's own `TOUR_VERSION` constant to re-offer the tour to everyone who already saw a prior
+  version.
+- **Telemetry:** the engine emits four domain-agnostic events through `onEvent` —
+  `tour_started`, `tour_step_viewed`, `tour_completed`, `tour_dismissed` — and never imports
+  PostHog. The mapping to `window.posthog?.capture(event.event, { tour_id, step_index,
+  total_steps, editor })` lives only in the two host wrappers,
+  `src/components/react/VisualEmailBuilder.tsx` and `src/components/react/LandingPageBuilder.tsx`.
+
 ## Local development caveats
 
 - **Auth is real (passwordless login code, allowlisted during the private rollout — see

@@ -16,16 +16,18 @@
  *   dispara en cierres iniciados por driver.js mismo: su botón de cerrar, `overlayClickBehavior`)
  *   — ver `dismissActiveInstance()`.
  * - Escape le pertenece a la superficie más alta, no incondicionalmente al tour (D11): antes de
- *   consumir el Escape, el guard comprueba si hay un MODAL abierto por encima de la página (ver
- *   `hasCompetingModalOpen()`) — un elemento que matchee `[aria-modal="true"], dialog[open],
- *   [role="dialog"]` y que no sea el propio popover de driver.js (`.driver-popover`, que también
- *   lleva `role="dialog"`) ni esté contenido en él. Si existe ese modal, el guard NO llama a
+ *   consumir el Escape, el guard comprueba si hay un MODAL VISIBLE abierto por encima de la
+ *   página (ver `hasCompetingModalOpen()` / `isElementVisible()`, D12) — un elemento que matchee
+ *   `[aria-modal="true"], dialog[open], [role="dialog"]`, que esté realmente pintado en pantalla
+ *   (no solo presente en el DOM: `hidden`, `display:none`, `visibility:hidden` o tamaño cero no
+ *   cuentan) y que no sea el propio popover de driver.js (`.driver-popover`, que también lleva
+ *   `role="dialog"`) ni esté contenido en él. Si existe ese modal visible, el guard NO llama a
  *   `stopPropagation()`/`preventDefault()` ni cierra el tour: deja que el Escape se propague, así
  *   el propio handler del modal lo cierra, y el tour queda intacto en su paso actual. Si no hay
- *   modal competidor, el comportamiento es exactamente el de siempre (caso llano, D8, sin cambios).
- *   La detección es genérica y agnóstica de host (D1: este paquete no sabe nada de Maildrill, MUI
- *   ni de ningún editor en particular) y barata (un `querySelectorAll` acotado a esos tres
- *   selectores, solo cuando la tecla es Escape — no en cada keydown).
+ *   modal competidor visible, el comportamiento es exactamente el de siempre (caso llano, D8, sin
+ *   cambios). La detección es genérica y agnóstica de host (D1: este paquete no sabe nada de
+ *   Maildrill, MUI ni de ningún editor en particular) y barata (un `querySelectorAll` acotado a
+ *   esos tres selectores, solo cuando la tecla es Escape — no en cada keydown).
  * - Invariante "a lo sumo un tour activo por `tourId`" (D7): un registro a nivel de módulo,
  *   por `tourId`, garantiza que un segundo `start()` — incluso si llega mientras el primero
  *   sigue esperando su `import('driver.js')` diferido — nunca deja dos instancias de driver.js

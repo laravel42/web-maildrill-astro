@@ -5,12 +5,18 @@ editores visuales vendorizados: `packages/email-builder-standalone` (editor de e
 `/dashboard/templates/email`) y `packages/builder42` (editor de landings,
 `/dashboard/landings/editor`).
 
-Estado (2026-09-14): **F1, F2a, F2b, F3a, F3b, F4, F5 y F6 implementados y commiteados** en la
-rama `feat/ui-polish-p1`. Queda **F7** (docs + telemetría) y, antes, arreglar los tres defectos
-que destapó el e2e de F6: el tour arranca **dos veces** en ambos editores, `Escape` no lo cierra,
-y en el embed de landings no hay entrada alcanzable para relanzarlo. El estado vivo de la
-orquestación — baseline, gates, decisiones de contrato, incidencias y hallazgos numerados — vive
-en [`.orquestacion/bitacora.md`](../.orquestacion/bitacora.md); **léela antes de retomar**.
+Estado (2026-09-14): **F1–F7 implementados y commiteados** en la rama `feat/ui-polish-p1`. El
+e2e de F6 destapó tres defectos reales, los tres arreglados en la misma cadena: el tour arrancaba
+**dos veces** en ambos editores (B7), `Escape` no lo cerraba (B8), y el embed de landings no tenía
+entrada alcanzable para relanzarlo (B9/B9b/B9c). La misma cadena produjo además varios
+follow-ups: la entrada de la paleta de comandos del editor de email dejó de relanzar el tour tras
+el fix de B7/B8 (B10, cerrado junto con B11 — el nonce de relanzamiento quedaba silenciado); y el
+guard de Escape necesitó dos rondas más (B12: cede el Escape a un modal del host abierto por
+encima del tour; B14: ese chequeo de "modal competidor" debía ignorar modales presentes en el DOM
+pero ocultos, o el guard cedía siempre y el tour quedaba sin forma de cerrarse por teclado). El
+estado vivo de la orquestación — baseline, gates, decisiones de contrato, incidencias y hallazgos
+numerados — vive en [`.orquestacion/bitacora.md`](../.orquestacion/bitacora.md); **léela antes de
+retomar**.
 
 Las fases están empaquetadas para ejecutarse con subagentes (dependencias y criterios de
 aceptación explícitos por fase). **Ninguna fase ya implementada debe revertirse: si un agente la
@@ -387,7 +393,7 @@ audit:apca` sin regresiones; captura comparativa claro/oscuro en el PR.
 - **Aceptación:** `pnpm check && pnpm lint && pnpm test && pnpm build` y `pnpm test:e2e` verdes.
   Los e2e son el gate honesto: las anclas solo existen en runtime.
 
-### F7 — Documentación y telemetría
+### F7 — Documentación y telemetría — **implementado**
 
 - **Depende de:** F6.
 - **Entrega:** sección de tours en `docs/AGENTS.md` (contrato `data-tour`: no renombrar sin
@@ -397,6 +403,23 @@ audit:apca` sin regresiones; captura comparativa claro/oscuro en el PR.
   `LandingPageBuilder.tsx`) y qué debe recablearse el día de la extracción**, eventos PostHog
   (`tour_started`, `tour_step_viewed`, `tour_completed`, `tour_dismissed`) conectados por el
   host, y actualización de este documento a "implementado".
+- **Hecho:** sección "Guided product tours" añadida a `docs/AGENTS.md` (contrato de anclas,
+  regla 1:1 de builder42, instancia única, Escape, entradas de relanzamiento por editor,
+  claves de persistencia y los cuatro eventos + dónde vive el mapeo a PostHog). Nota de
+  divergencia del tour (sin equivalente upstream) añadida a `packages/VENDOR.md` en la sección
+  de EmailBuilder.js, y nota del boundary de exportabilidad añadida en la sección de Builder42
+  (costuras de hoy — `tourEnabled`/`onTourEvent` en `LandingPageBuilder.tsx` — y qué se
+  recablea el día de la extracción: analítica y persistencia). El comentario de cabecera de
+  `packages/product-tour/src/createTour.ts` se actualizó (solo comentarios) para reflejar que
+  el chequeo de "modal competidor" de D11 exige que el modal esté **visible** (D12,
+  `isElementVisible()`), no solo presente en el DOM.
+- **Nota de verificación (e2e, no ejecutado en esta tarea de documentación):** según el estado
+  registrado en `.orquestacion/bitacora.md`, la suite de `tests/e2e/tour.spec.ts` es inestable
+  bajo el `fullyParallel: true` de `playwright.config.ts` con el número de workers por defecto;
+  el comando fiable registrado es `npx playwright test --project=chromium --no-deps
+  --workers=1 --retries=0`. Con ese comando, las fallas fuera de la cadena del tour (automations,
+  dashboard, lists, login, registration, smoke, subscribers, workspace-tour — 22 nombres) son
+  preexistentes/no relacionadas en el entorno de desarrollo actual.
 
 ### F8 (opcional, posterior) — `driver.js/hints`
 
