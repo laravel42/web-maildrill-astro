@@ -268,8 +268,9 @@ B9b | drop the anchor, keep the button| same files, minus the registry        | 
 B9c | button sits inside the history anchor | HostToolbar only                | 22fc29e | green
 F7  | docs + telemetry               | AGENTS.md, VENDOR.md, plan, engine doc | a31a1ef | green — **plan implemented**
 B16 | «×» / overlay click don't close | product-tour destroy paths           | fdace56 | green (see finding B18)
-B17 | email header steps: one per control | EditorHeader + EB anchors/steps/copy | —    | next (D16/D17)
-B18 | arrow-key step navigation lost | product-tour key handler              | —       | after B17 (D18)
+B17 | email header steps: one per control | EditorHeader + EB anchors/steps/copy | 64668ac | red: 3 obsolete expectations left behind
+B17b| close B17's obsolete expectations | 2 EB hook fixtures + 2 e2e assertions + identity copy | — | next
+B18 | arrow-key step navigation lost | product-tour key handler              | —       | after B17b (D18)
 ```
 
 Gate run for B16 (orchestrator, `105dde1..fdace56`): 3 files, all in scope; `57 8` on the engine (the
