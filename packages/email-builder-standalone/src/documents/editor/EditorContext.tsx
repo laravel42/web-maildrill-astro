@@ -197,7 +197,12 @@ const createInitialState = (): TValue => ({
   samplesDrawerOpen: true,
   componentsLibraryDrawerOpen: false,
   componentsLibraryDrawerMode: 'full',
-  componentsLibraryDrawerCategory: 'sections',
+  // 'blocks' — 'sections' was the initial value from before Point 7
+  // (EMAIL_BUILDER_TASKS.md) removed the standalone Sections tab; it is
+  // no longer a valid category key (see CATEGORIES in
+  // ComponentsLibraryDrawer.tsx), so defaulting to it would immediately
+  // get normalized away on first read (T2, D28).
+  componentsLibraryDrawerCategory: 'blocks',
   inspectorDrawerWidth: lateralPanel,
   devMode: false,
   componentsStorageMode: 'backend',

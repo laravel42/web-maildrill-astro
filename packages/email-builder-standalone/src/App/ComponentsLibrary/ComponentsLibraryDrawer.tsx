@@ -44,6 +44,8 @@ import EmptyState from '../../components/EmptyState';
 import { resolveBackendUrl } from '../../components/UnsplashImagePicker/unsplash-api';
 import {
   getComponentsStorageMode,
+  setComponentsLibraryDrawerCategory,
+  useComponentsLibraryDrawerCategory,
   useComponentsLibraryDrawerOpen,
   useComponentsLibraryEnabled,
   useComponentsLibraryRefreshNonce,
@@ -133,6 +135,23 @@ const CATEGORIES: ReadonlyArray<{ key: string; labelKey: string; enabled: boolea
   { key: 'blocks', labelKey: 'componentsLibrary.drawer.category.blocks', enabled: true },
   { key: 'templates', labelKey: 'componentsLibrary.drawer.category.templates', enabled: true },
 ];
+
+/**
+ * Resolve the drawer's active tab from the stored category (editor
+ * store, D28) against the currently visible tabs. Pure and React-free
+ * so a tour `before()` hook (or a unit test) can call it without
+ * mounting anything: normalization happens on read, not via a
+ * render-then-fix effect. Falls back to the first visible key, and to
+ * `'blocks'` when nothing is visible (shouldn't happen — Blocks is
+ * always enabled — but keeps the function total).
+ */
+export function resolveLibraryCategory(
+  stored: string | null | undefined,
+  visibleKeys: readonly string[],
+): string {
+  if (stored != null && visibleKeys.includes(stored)) return stored;
+  return visibleKeys[0] ?? 'blocks';
+}
 
 /**
  * Single draggable card. The drag item carries `(category, axis, id)`;
@@ -870,6 +889,7 @@ export default function ComponentsLibraryDrawer() {
       }),
     [templateLibrary],
   );
+  const visibleKeys = useMemo(() => visibleCategories.map((c) => c.key), [visibleCategories]);
   const [sectionsRefreshKey, setSectionsRefreshKey] = useState(0);
   const [templatesRefreshKey, setTemplatesRefreshKey] = useState(0);
   const [renameTarget, setRenameTarget] = useState<RenameSubtreeTarget | null>(null);
@@ -885,16 +905,27 @@ export default function ComponentsLibraryDrawer() {
   // single shared value across tabs.)
   const SEARCH_UNFILTERED = '';
   const SORT_DEFAULT: LibrarySortKey = 'updatedDesc';
-  // Active category tab. Defaults to the first visible category.
-  const [activeTab, setActiveTab] = useState<string>(() => visibleCategories[0]?.key ?? 'blocks');
+  // Active category tab (D28): lives in the editor store, not local
+  // React state, so it can be driven from outside React (e.g. a tour
+  // `before()` hook opening the drawer on a specific tab). Normalized
+  // on every read via `resolveLibraryCategory` — never trust the raw
+  // stored value directly, it may point at a tab that's currently
+  // hidden (Templates disabled) or at the legacy dead default.
+  const storedCategory = useComponentsLibraryDrawerCategory();
+  const activeTab = resolveLibraryCategory(storedCategory, visibleKeys);
 
-  // Keep the active tab valid when the visible set changes (disabling
-  // templateLibrary hides Templates).
+  // Keep the store in sync with the resolved value: when the raw stored
+  // category isn't valid for the current visible set (e.g. Templates
+  // just got hidden, or the initial default), persist the resolved
+  // fallback so the store never keeps an invisible tab "selected".
+  // Guarded by the equality check so this can't loop — the setter
+  // itself also no-ops on this test, but we compare here too since
+  // `activeTab` is derived every render.
   useEffect(() => {
-    if (!visibleCategories.some((c) => c.key === activeTab)) {
-      setActiveTab(visibleCategories[0]?.key ?? 'blocks');
+    if (storedCategory !== activeTab) {
+      setComponentsLibraryDrawerCategory(activeTab);
     }
-  }, [visibleCategories, activeTab]);
+  }, [storedCategory, activeTab]);
 
   // External mutations to localStorage (the seeder / lazy thumbnail
   // generator) bump the global nonce; refetch every tab in response.
@@ -957,7 +988,7 @@ export default function ComponentsLibraryDrawer() {
             <Box className="eb-side-tabs" {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.libraryTabs)}>
               <Tabs
                 value={activeTab}
-                onChange={(_, v: string) => setActiveTab(v)}
+                onChange={(_, v: string) => setComponentsLibraryDrawerCategory(v)}
                 variant="fullWidth"
                 aria-label={t('componentsLibrary.drawer.title')}
               >
