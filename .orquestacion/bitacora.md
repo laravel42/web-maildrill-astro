@@ -185,6 +185,24 @@ Known ignorable dirt in `git status`: `.cursor/hooks/`, `.kiro/` (untracked loca
   no `.tsx` may hardcode an anchor key; there simply is no key here. Corollary, if the tour should
   ever *teach* the relaunch button, that is a step + copy in en/es/it and belongs in its own task, not
   smuggled in through the registry.
+- **D15** (B16) — **Every close path destroys the tour, and each close emits exactly one event.**
+  `onDestroyStarted` must destroy (that is driver.js's contract when the hook is overridden), so the
+  «×» and the overlay click behave like Escape. Exactly one `tour_dismissed` per dismissal — the
+  Escape path already emits before destroying, so the two paths must not double-emit — and finishing
+  with "Done" stays a `tour_completed`, never also a dismissal.
+- **D16** (B17) — **One step, one control.** A tour step highlights the single control its copy talks
+  about, never the container that happens to hold it (plan §1.4.8; same defect class as B15). For the
+  email header that means: `eb.header.identity` re-pointed to the name field alone, a new
+  `eb.header.save` on the "Save template" button, a new `eb.header.status` on the autosave indicator,
+  a new anchor on the desktop/mobile switch, and `eb.header.actions` re-pointed to the "Send test"
+  button alone. Every new key needs its step **and** its copy in every locale — the email package
+  enforces that too (`tourSteps.flags.test.ts`, `tourSteps.i18n-parity.test.ts`), which is the same
+  invariant D14 records for builder42.
+- **D17** (B17) — **Step order follows the eye, not the registry.** Insert the new steps where the
+  controls actually are: identity → save → autosave status, and the desktop/mobile switch immediately
+  after the existing `eb.toolbar.views` step (both are canvas-toolbar view controls). "Send test"
+  stays the last step. Copy that currently describes saving inside the identity step moves to the save
+  step — after this change no step may describe a control it does not highlight.
 
 ---
 
@@ -243,6 +261,8 @@ B9  | landings has no relaunch entry | builder42 HostToolbar (D9)            | e
 B9b | drop the anchor, keep the button| same files, minus the registry        | f229159 | green (chain back to green)
 B9c | button sits inside the history anchor | HostToolbar only                | 22fc29e | green
 F7  | docs + telemetry               | AGENTS.md, VENDOR.md, plan, engine doc | a31a1ef | green — **plan implemented**
+B16 | «×» / overlay click don't close | product-tour destroy paths           | —       | next (D15)
+B17 | email header steps: one per control | EditorHeader + EB anchors/steps/copy | —    | after B16 (D16/D17)
 ```
 
 Gate run for B9c (orchestrator, `1223782..22fc29e`): 2 files, `5 11` and `32 0`. The anchor moved onto
@@ -447,6 +467,26 @@ names alone and should have been in the contract, not discovered by the implemen
 **D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
 
 ## Findings
+
+**B16 — driver.js's own «×» (and the overlay click) never close the tour.** Reported by the user for
+the email editor. Cause, read in `packages/product-tour/src/createTour.ts`: when a consumer overrides
+`onDestroyStarted`, driver.js hands the responsibility for closing over to that hook — it does not
+destroy anything itself. Our hook only emits `tour_dismissed` and deliberately returns without
+destroying, with a comment claiming a re-entrancy risk. That reading was wrong: B7B8 already
+established (by reading `driver.js@1.8.0`) that the public `destroy()` **skips** `onDestroyStarted`,
+so calling it from inside that hook cannot loop. Same hook serves `overlayClickBehavior: 'close'`, so
+clicking the overlay is broken too. Escape (D8/D11) and "Done" both work because each destroys
+explicitly. Owner: B16, per **D15**.
+
+**B17 — the email tour's header steps highlight groups instead of controls.** Reported by the user,
+and confirmed by reading the anchors: `eb.header.identity` is stamped on the whole centre block of
+`src/components/react/shared/EditorHeader.tsx`, which contains the name field **and** the "Save
+template" button, so the step about naming draws its box around Save too; `eb.header.actions` is
+stamped on the right-hand block, which contains the autosave indicator **and** "Send test", so
+autosave is never explained on its own. The desktop/mobile switch (`ScreenSizeSelector`,
+`InspectorDrawer/.../helpers/inputs/SelectScreen.tsx`, rendered from `TemplatePanel/index.tsx`) has
+**no anchor at all** and no step. Note `eb.toolbar.views` is the Edit/Preview/HTML/JSON tab group
+(`MainTabsGroup.tsx`), not the viewport switch — easy to confuse. Owner: B17, per **D16**/**D17**.
 
 **B15 — the new relaunch button sits *inside* the element that carries the `pbx.toolbar.history`
 anchor, so the history tour step now highlights it too.** Found by the orchestrator reading B9b's
