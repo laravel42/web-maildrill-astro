@@ -138,7 +138,8 @@ numbers below — a dev server restart or seeded-data change moves them.
 | `pnpm test`                               | Root vitest: `tests/**` only. **Does not** run the packages' own suites.                                             |
 | `pnpm --filter <pkg> test`                | That package's own suite. Must be run per package; the root run does not cover them.                                |
 | `pnpm --filter builder42 build:runtime`    | Compiles the runtime shipped inside published landings. Guards plan §1.4.7.                                          |
-| `pnpm build`                              | Full Astro build. **RED at baseline — see B1.**                                                                     |
+| `pnpm build`                              | Full Astro build. Was RED at baseline (**B1**, fixed in `68c32ae`); green at `a31a1ef`, **not re-run since B16/B17**. ~2 min. |
+| `npx playwright test --project=chromium --no-deps <spec> --workers=1 --retries=0` | The only reliable e2e invocation here (`--no-deps` because the `setup` project is red by design — B6). **Per D19 pass the affected spec(s), and `-g` for a single test: one test is 20–45 s, the whole suite is 12–40 min.** |
 
 `tsc --noEmit` repo-wide carries ~460 pre-existing errors in the vendored packages (documented in
 `docs/AGENTS.md`): never "fixed", only checked for new ones.
