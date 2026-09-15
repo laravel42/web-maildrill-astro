@@ -50,6 +50,18 @@
  * - Respeta `prefers-reduced-motion` desactivando la animación de driver.js.
  * - Persistencia y analítica conectadas vía las factories de persistence.ts / analytics.ts,
  *   ambas inyectadas por el consumidor (nunca defaults con conocimiento de dominio).
+ * - Concurrent anchor resolution (D23/D24, B19): `before()` hooks stay sequential and in
+ *   declaration order — they mutate host UI (switch canvas view, open a drawer, flip a
+ *   localStorage flag, select a block) and running them concurrently would interleave those
+ *   mutations. Only the WAITING for each anchor is concurrent: each step's `waitForAnchor()`
+ *   is started right after its own `before()` runs, kept as a promise (not awaited there), and
+ *   all of them are awaited together once the loop over `eligibleSteps` finishes. This means a
+ *   tour with N missing anchors now costs one shared timeout window instead of N sequential
+ *   ones — see `start()` and `buildDriveStep()`/`beginDriveStep()` below. Consequence accepted
+ *   by D24: each step's timeout is measured from the moment ITS OWN `before()` ran, not from
+ *   when the whole tour started, so a step whose anchor mounts later than its own timeout is
+ *   skipped even though, under the old fully-sequential code, an earlier step's timeout might
+ *   have accidentally given it more real time to appear.
  */
 
 import type { Driver, DriveStep } from 'driver.js';
@@ -424,9 +436,30 @@ export function createTour(options: CreateTourOptions): Tour {
     // import — abortar sin construir nada ni tocar el DOM.
     if (!isCurrentGeneration(options.tourId, generation)) return;
 
-    const driveSteps: DriveStep[] = [];
+    // D23/D24 (B19): `before()` hooks run here, sequentially, in declaration order — this loop
+    // still awaits each `step.before?.()` one at a time, exactly like before, because those
+    // hooks mutate host UI (switch the canvas view, open a drawer, flip a localStorage flag,
+    // select a block) and running them concurrently would interleave those mutations and
+    // change what the DOM looks like mid-resolution. What changes is that this loop no longer
+    // waits for the anchor itself: `beginAnchorWait()` applies the step's precondition
+    // (`before()`) and then STARTS `waitForAnchor()`/`resolveAnchor()` for that step, handing
+    // back the pending promise without awaiting it here. That keeps "this step's wait begins
+    // once its own precondition has been applied" true, while earlier steps' waits keep
+    // polling in the background during later steps' `before()` calls — so a late-mounting
+    // anchor is still caught within its own timeout window.
+    const pendingSteps: PendingDriveStep[] = [];
     for (const step of eligibleSteps) {
-      const driveStep = await buildDriveStep(root, step);
+      pendingSteps.push(await beginAnchorWait(root, step));
+    }
+
+    // All the anchor waits started above run concurrently; awaiting them together with a
+    // single `Promise.all` here means the total cost is the SLOWEST single wait, not the sum
+    // of every missing anchor's timeout (the defect this task fixes — see the top-of-file doc
+    // block, D23/D24). `driveStepResults` preserves `pendingSteps`' order, so the resulting
+    // `driveSteps` array below stays in declared step order.
+    const driveStepResults = await Promise.all(pendingSteps.map((pending) => finishDriveStep(pending)));
+    const driveSteps: DriveStep[] = [];
+    for (const driveStep of driveStepResults) {
       if (driveStep) driveSteps.push(driveStep);
     }
 
@@ -568,13 +601,54 @@ export function createTour(options: CreateTourOptions): Tour {
   return { isSupported, start, stop, isActive };
 }
 
-async function buildDriveStep(root: TourRoot, step: TourStep): Promise<DriveStep | null> {
+/**
+ * Resultado intermedio de `beginAnchorWait()`: el `step` original (para armar el `DriveStep`
+ * después) junto con la promesa de resolución de su ancla, ya en marcha. `skip` se calcula aquí
+ * porque decide, sin esperar nada, si esa promesa es un `waitForAnchor()` (polling) o un
+ * `resolveAnchor()` síncrono envuelto en `Promise.resolve()` (D24: `skipMissingElement: false`
+ * sigue sin esperar nada).
+ */
+interface PendingDriveStep {
+  step: TourStep;
+  skip: boolean;
+  elementPromise: Promise<Element | null>;
+}
+
+/**
+ * Aplica la precondición de `step` (`before()`, awaited — D23: esto sigue siendo secuencial en
+ * el llamador, porque esta función en sí misma se awaitea una vez por paso dentro del loop de
+ * `start()`) y luego ARRANCA la resolución de su ancla sin esperarla: devuelve la promesa en
+ * marcha para que `start()` la vaya acumulando y las espere todas juntas después con
+ * `finishDriveStep()`. Este es el punto exacto en el que D23/D24 separan "aplicar la
+ * precondición" (secuencial, en orden de declaración) de "esperar la ancla" (concurrente):
+ * arrancar el `waitForAnchor()` aquí, inmediatamente después del `before()` de ESTE paso, es lo
+ * que preserva "la espera de este paso empieza en cuanto se aplicó su propia precondición" —
+ * mientras el polling de pasos anteriores sigue corriendo en segundo plano durante los
+ * `before()` de los pasos siguientes.
+ */
+async function beginAnchorWait(root: TourRoot, step: TourStep): Promise<PendingDriveStep> {
   if (step.before) await step.before();
 
   const skip = step.skipMissingElement ?? true;
-  const element = skip
-    ? await waitForAnchor(root, step.anchorKey, { timeoutMs: step.waitForElementMs ?? 2000 })
-    : resolveAnchor(root, step.anchorKey);
+  const elementPromise = skip
+    ? waitForAnchor(root, step.anchorKey, { timeoutMs: step.waitForElementMs ?? 2000 })
+    : Promise.resolve(resolveAnchor(root, step.anchorKey));
+
+  return { step, skip, elementPromise };
+}
+
+/**
+ * Segunda mitad de lo que antes era `buildDriveStep()`: espera la promesa de ancla ya en
+ * marcha (que para entonces puede llevar corriendo desde hace tiempo — o ya estar resuelta,
+ * ver `beginAnchorWait()`) y ensambla el `DriveStep` final, o `null` si el paso debe omitirse.
+ * Comportamiento sin cambios respecto al `buildDriveStep()` original: `skipMissingElement:
+ * true` (default) descarta el paso si el ancla no aparece; `skipMissingElement: false` nunca
+ * descarta, cae a `element: step.anchorKey` y deja que driver.js falle explícitamente si no
+ * existe.
+ */
+async function finishDriveStep(pending: PendingDriveStep): Promise<DriveStep | null> {
+  const { step, skip } = pending;
+  const element = await pending.elementPromise;
 
   if (!element) {
     if (skip) return null;
