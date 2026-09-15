@@ -89,7 +89,6 @@ function HostTourRestart() {
       className="pbx-history"
       role="group"
       aria-label={t("restartTour.label")}
-      {...dataTourAttr(BUILDER42_TOUR_ANCHORS.toolbarTourRestart)}
     >
       <button
         type="button"

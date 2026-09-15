@@ -31,8 +31,6 @@ export const BUILDER42_TOUR_ANCHORS = {
   toolbarViews: 'pbx.toolbar.views',
   /** `app/layout/HostToolbar.tsx` (`#md-landing-editor-history`) — deshacer/rehacer. */
   toolbarHistory: 'pbx.toolbar.history',
-  /** `app/layout/HostToolbar.tsx` — relanzar el tour guiado (único punto de entrada alcanzable en el embed). */
-  toolbarTourRestart: 'pbx.toolbar.tourRestart',
   /** `app/layout/Sidebar.tsx` — tabs Componentes/Plantillas (solo en modo `sidebarMode = "open"`). */
   sidebarTabs: 'pbx.sidebar.tabs',
   /** `app/layout/Sidebar.tsx` — paleta arrastrable de secciones y elementos. */
