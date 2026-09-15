@@ -33,14 +33,19 @@ re-pointed to single controls; copy in all three locales).
 root `pnpm test` 43/303 · `pnpm check` 337 files 0 errors/0 warnings/3 hints · `pnpm lint` the same
 3 pre-existing errors by name. All green.
 
-**Two verification gaps to close first, cheaply, before writing any code:**
+**Two verification gaps — BOTH CLOSED (2026-09-15, at `9ebdaf0`, by the orchestrator):**
 
-1. `tests/e2e/tour.spec.ts` (20 tests) has **no clean full-spec run recorded since B17b**. The last one
-   was 19 passed / 1 failed, and that failure (`clicking the overlay outside the popover…`) passed on
-   its own in 43 s — a flake in a 9.1-min run of a spec that takes 2.8 min on a fresh server. Re-run
-   the spec once and record it.
-2. `pnpm build` was green at `a31a1ef` but **has not been re-run since B16/B17/B17b**. It is ~2 min.
-   Do it before any merge.
+1. `tests/e2e/tour.spec.ts` → **20 passed / 0 failed / 0 skipped in 2.5 min**, on a freshly started
+   dev server (`--project=chromium --no-deps --workers=1 --retries=0`). The B16 overlay-click test
+   that had failed inside the 9.1-min run passes here, which settles it as the flake B13/B20 describe,
+   not a regression. Log: `.orquestacion/e2e-tour-2026-09-15.log`.
+2. `pnpm build` → **Complete!**, server built in **1m 43s** — first full build since B16/B17/B17b.
+   Log: `.orquestacion/build-2026-09-15.log`.
+
+Environment as re-established for those runs: Postgres 5432 and Redis 6379 were already up; 4321 and
+3001 were **down** and were started fresh (`pnpm dev` + `pnpm dev:workers`, logs in `.orquestacion/`).
+Note for whoever checks ports: Astro dev binds **`[::1]:4321` only**, so a `127.0.0.1` reachability
+probe reports it down while it is serving 200s — check with an HTTP request, not with the IPv4 port.
 
 **Then, in this order:**
 
@@ -138,7 +143,7 @@ numbers below — a dev server restart or seeded-data change moves them.
 | `pnpm test`                               | Root vitest: `tests/**` only. **Does not** run the packages' own suites.                                             |
 | `pnpm --filter <pkg> test`                | That package's own suite. Must be run per package; the root run does not cover them.                                |
 | `pnpm --filter builder42 build:runtime`    | Compiles the runtime shipped inside published landings. Guards plan §1.4.7.                                          |
-| `pnpm build`                              | Full Astro build. Was RED at baseline (**B1**, fixed in `68c32ae`); green at `a31a1ef`, **not re-run since B16/B17**. ~2 min. |
+| `pnpm build`                              | Full Astro build. Was RED at baseline (**B1**, fixed in `68c32ae`); green at `9ebdaf0` (2026-09-15, 1m 43s). ~2 min. |
 | `npx playwright test --project=chromium --no-deps <spec> --workers=1 --retries=0` | The only reliable e2e invocation here (`--no-deps` because the `setup` project is red by design — B6). **Per D19 pass the affected spec(s), and `-g` for a single test: one test is 20–45 s, the whole suite is 12–40 min.** |
 
 `tsc --noEmit` repo-wide carries ~460 pre-existing errors in the vendored packages (documented in
