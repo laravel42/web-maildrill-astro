@@ -39,15 +39,15 @@
       "description": "Este panel agrupa bloques y plantillas completas para empezar desde cero o desde un diseño ya armado."
     },
     "blocksBasics": {
-      "title": "Basics",
+      "title": "Básicos",
       "description": "Bloques de propósito único — texto, imagen, botón, divisor, espaciador y redes sociales. Arrastra uno al lienzo, o haz clic para añadirlo."
     },
     "blocksLayout": {
-      "title": "Structure",
+      "title": "Estructura",
       "description": "Columnas y contenedores organizan los demás bloques dentro de ellos. Así construyes un correo que se ve bien en cualquier cliente."
     },
     "libraryTemplates": {
-      "title": "Templates",
+      "title": "Plantillas",
       "description": "Una galería de plantillas completas — empieza desde una en vez de un lienzo vacío. Aplicarla reemplaza lo que hay en el lienzo."
     },
     "canvasRoot": {
