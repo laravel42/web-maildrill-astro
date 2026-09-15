@@ -49,6 +49,10 @@ probe reports it down while it is serving 200s — check with an HTTP request, n
 
 **Then, in this order:**
 
+- **B18 — DONE (2026-09-15, `252afea`, gated green).** Arrow-key step navigation is back, owned by the
+  engine's own capture-phase handler (D18), with the two boundary no-ops (D21) and the
+  editable-target/modifier bail-out (D22). `allowKeyboardControl` stays `false`. New finding from its
+  gate: **B22** (no browser-level coverage for arrows).
 - **B21 — decide how the e2e suite is served (needs the user, not a subagent).** This is the live
   question the session ended on: the full suite costs 12 min on a fresh dev server and **over 40 min**
   on a degraded one, which is why D19 now forbids running it as a per-task reflex. The cause is Vite
@@ -59,7 +63,7 @@ probe reports it down while it is serving 200s — check with an HTTP request, n
 - **B18 — restore arrow-key step navigation (D18).** B16 had to set `allowKeyboardControl: false`;
   that flag also governed driver.js's `ArrowLeft`/`ArrowRight`, so the engine must now own arrows the
   way it already owns Escape. Nothing is unreachable today (Tab + Enter still work), so this is
-  capability restoration, not a break.
+  capability restoration, not a break. — **closed by `252afea`, see above.**
 - **B19 — anchor resolution is sequential at 2 s per missing anchor** (see finding). Cheap to improve,
   and it is the reason the tour takes seconds to appear.
 - Optional, recorded and deliberately not done: a tour step + copy teaching the landings relaunch
@@ -292,6 +296,18 @@ Known ignorable dirt in `git status`: `.cursor/hooks/`, `.kiro/` (untracked loca
   tour happened to be open. Any such locator uses `[role="dialog"]:not(.driver-popover)` (the pattern
   `tests/e2e/tour.spec.ts` already uses). Applied to `workspace-tour.spec.ts:186`, whose green/red
   history was luck rather than evidence.
+- **D21** (B18) — **Arrows navigate between existing steps only; they never finish the tour.**
+  `ArrowRight` on the last step and `ArrowLeft` on the first are no-ops (checked with
+  `isLastStep()` / `getActiveIndex() === 0` *before* consuming the key, so a no-op arrow does not
+  swallow the event either). Reason: `moveNext()` on the last step routes into driver.js's own
+  advance handler, which we replaced with `onDoneClick` — the path that persists completion and
+  emits `tour_completed` — and a keypress must never silently finish and persist the tour.
+  Completing stays the Done button's job, reachable with Tab + Enter.
+- **D22** (B18) — **The engine does not steal arrows from text entry.** If any modifier is held
+  (`alt`/`ctrl`/`meta`/`shift`) or the event `target` is an editable surface (`<input>`,
+  `<textarea>`, `<select>`, or `isContentEditable`), the handler returns without consuming: there
+  the key means caret or option movement to whoever is focused. Generic DOM shapes only, no class
+  or component names — still host-agnostic (D1).
 
 ---
 
@@ -354,9 +370,33 @@ B16 | «×» / overlay click don't close | product-tour destroy paths           
 B17 | email header steps: one per control | EditorHeader + EB anchors/steps/copy | 64668ac | red on landing: 3 obsolete expectations
 B17b| close B17's obsolete expectations | 2 EB hook fixtures + 2 e2e assertions + identity copy | fb40a42 | green
 —   | disambiguate a dialog locator  | workspace-tour.spec.ts (orchestrator, 2 lines) | —   | see D20 / note below
-B18 | arrow-key step navigation lost | product-tour key handler              | —       | pending (D18)
+B18 | arrow-key step navigation lost | product-tour key handler              | 252afea | green (D18/D21/D22)
 B21 | the e2e suite costs 40 min     | playwright.config.ts + how we serve the app | —  | pending — needs a decision (finding B20)
 ```
+
+Gate run for B18 (orchestrator, `e2d0058..252afea`): 2 files, both in scope; `99 27` on
+`createTour.ts` and `316 0` on the new `tests/keyboardNavigation.test.ts` (pure addition, nothing to
+read for weakened assertions). **Zero deletions in the whole commit** (`--diff-filter=D` empty), and
+`e2d0058` is still an ancestor of `HEAD`. Read the 27 removed lines of `createTour.ts` one by one: they
+are the Escape block re-indented one level inside a new `if (e.key === 'Escape')` branch plus two
+comment blocks rewritten in place — **no logic and no condition removed**; the Escape path keeps the
+same order (`isActive()` → `hasCompetingModalOpen()` → `stopPropagation`/`preventDefault` →
+`dismissActiveInstance()`).
+
+Mutation-tested by the orchestrator, not taken from the report: restored `createTour.ts` from
+`e2d0058` → **4 of 12** new cases failed by name (`ArrowRight moves … forward`, `ArrowLeft moves …
+back`, `ArrowRight on the last step is a no-op`, `full walk to the end, then ArrowLeft back to
+start`), all with real assertions (`expected 'Step A' to be 'Step B'`). Restored with
+`git checkout HEAD --` → `git status` clean and 62/62 green again. Recorded honestly: the other **8
+cases pass against the pre-change engine too**, because they assert that nothing happens (gating,
+modifiers, editable targets, no active tour) — real coverage of the new guards, but they do not bite
+on their own.
+
+Re-measured: `@md/product-tour` **7 files / 62 tests** (was 6/50), `npx tsc -p packages/product-tour`
+0 errors, `pnpm check` 337 files 0 errors / 0 warnings / 3 hints, `pnpm lint` the same 3 pre-existing
+errors by name. e2e per D19 — the shared key handler is what changed, so the spec that covers both
+editors' Escape paths: `tests/e2e/tour.spec.ts` → **20 passed / 0 failed / 0 skipped in 2.5 min**
+(`.orquestacion/e2e-tour-B18.log`).
 
 Gate run for B17+B17b (orchestrator, `7403b7c..fb40a42`): 13 files, all in scope. Every pre-existing
 test file touched is an **addition only** — `tourAnchors.render.test.tsx` `1 0` (one more anchor in
@@ -599,6 +639,19 @@ names alone and should have been in the contract, not discovered by the implemen
 **D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
 
 ## Findings
+
+**B22 — arrow-key navigation has no browser-level coverage, and nothing asserts that a *consumed*
+arrow is contained.** Found by the orchestrator reading B18's tests. The 12 new unit cases prove
+navigation against real driver.js under happy-dom, but two things are still unproven: (a) no e2e
+presses `ArrowRight`/`ArrowLeft` in either real editor, so "the tour advances by keyboard in the
+browser" rests on the unit layer alone; (b) on the happy path no test asserts the host never sees the
+key — the tests dispatch on `window`, where `stopPropagation()` cannot hide the event from another
+`window` listener (that would need `stopImmediatePropagation()`, which the guard deliberately does not
+use), so containment would have to be asserted by dispatching from a descendant element. Neither is a
+defect: the capture-phase listener on `window` runs before any document/element handler in a real DOM,
+and the F4 host tests already cover Escape containment. Cheap to close if wanted: one e2e in
+`tests/e2e/tour.spec.ts` (the spec is 2.5 min) plus one unit case dispatching from a child node.
+Owner: unassigned.
 
 **B19 — the engine resolves anchors one at a time, waiting up to 2 s for each one that is missing, so a
 tour with absent anchors takes seconds to appear.** `buildDriveStep` in
