@@ -533,6 +533,10 @@
         "sections": "Sections",
         "templates": "Templates"
       },
+      "group": {
+        "basics": "Básicos",
+        "layout": "Estructura"
+      },
       "themes": {
         "loading": "Cargando temas…",
         "empty": "Aún no hay temas guardados. Usa \"Guardar como tema\" en la vista Globales del inspector.",

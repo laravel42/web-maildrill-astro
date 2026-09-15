@@ -576,6 +576,10 @@
         "sections": "Sections",
         "templates": "Templates"
       },
+      "group": {
+        "basics": "Basics",
+        "layout": "Structure"
+      },
       "themes": {
         "loading": "Loading themes…",
         "empty": "No themes saved yet. Use \"Save as theme\" in the Globals inspector view.",

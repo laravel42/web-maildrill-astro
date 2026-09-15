@@ -133,6 +133,18 @@ describe('EmailBuilder — anclas que dependen de interacción', () => {
 
     expect(queryAllByTour(EMAIL_BUILDER_TOUR_ANCHORS.inspectorPanel)).toHaveLength(1);
   });
+
+  it('"eb.library.blocksBasics" y "eb.library.blocksLayout" aparecen al abrir el drawer de la librería (tab Blocks) y no antes', () => {
+    expect(queryAllByTour(EMAIL_BUILDER_TOUR_ANCHORS.blocksBasics)).toHaveLength(0);
+    expect(queryAllByTour(EMAIL_BUILDER_TOUR_ANCHORS.blocksLayout)).toHaveLength(0);
+
+    act(() => {
+      setComponentsLibraryDrawerOpen(true);
+    });
+
+    expect(queryAllByTour(EMAIL_BUILDER_TOUR_ANCHORS.blocksBasics)).toHaveLength(1);
+    expect(queryAllByTour(EMAIL_BUILDER_TOUR_ANCHORS.blocksLayout)).toHaveLength(1);
+  });
 });
 
 describe('EmailBuilder — anclas no alcanzables en este árbol (ver comentario de cabecera)', () => {

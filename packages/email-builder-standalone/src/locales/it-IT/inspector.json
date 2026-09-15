@@ -533,6 +533,10 @@
         "sections": "Sections",
         "templates": "Templates"
       },
+      "group": {
+        "basics": "Base",
+        "layout": "Struttura"
+      },
       "themes": {
         "loading": "Caricamento temi…",
         "empty": "Nessun tema salvato. Usa \"Salva come tema\" nella vista Globali dell'ispettore.",

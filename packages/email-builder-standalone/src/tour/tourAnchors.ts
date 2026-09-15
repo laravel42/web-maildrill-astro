@@ -31,6 +31,10 @@ export const EMAIL_BUILDER_TOUR_ANCHORS = {
   libraryRail: 'eb.library.rail',
   /** `ComponentsLibraryDrawer.tsx` — categorías `blocks`/`templates` (drawer expandido). */
   libraryTabs: 'eb.library.tabs',
+  /** `BlocksCategoryContent.tsx` — grupo "Basics" (Text, Image, Button, Divider, Spacer, Social). */
+  blocksBasics: 'eb.library.blocksBasics',
+  /** `BlocksCategoryContent.tsx` — grupo "Structure" (Columns, Container). */
+  blocksLayout: 'eb.library.blocksLayout',
   /** `TemplatePanel` — lienzo (`.preview-container`): clic para seleccionar, arrastrar para insertar. */
   canvasRoot: 'eb.canvas.root',
   /** `InspectorDrawer/index.tsx` (+ `InspectorHandle`) — editar el bloque seleccionado. */
