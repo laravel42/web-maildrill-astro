@@ -15,6 +15,17 @@
  *   destruir, porque `destroy()` público de driver.js salta su hook `onDestroyStarted` (solo se
  *   dispara en cierres iniciados por driver.js mismo: su botón de cerrar, `overlayClickBehavior`)
  *   — ver `dismissActiveInstance()`.
+ * - Escape le pertenece a la superficie más alta, no incondicionalmente al tour (D11): antes de
+ *   consumir el Escape, el guard comprueba si hay un MODAL abierto por encima de la página (ver
+ *   `hasCompetingModalOpen()`) — un elemento que matchee `[aria-modal="true"], dialog[open],
+ *   [role="dialog"]` y que no sea el propio popover de driver.js (`.driver-popover`, que también
+ *   lleva `role="dialog"`) ni esté contenido en él. Si existe ese modal, el guard NO llama a
+ *   `stopPropagation()`/`preventDefault()` ni cierra el tour: deja que el Escape se propague, así
+ *   el propio handler del modal lo cierra, y el tour queda intacto en su paso actual. Si no hay
+ *   modal competidor, el comportamiento es exactamente el de siempre (caso llano, D8, sin cambios).
+ *   La detección es genérica y agnóstica de host (D1: este paquete no sabe nada de Maildrill, MUI
+ *   ni de ningún editor en particular) y barata (un `querySelectorAll` acotado a esos tres
+ *   selectores, solo cuando la tecla es Escape — no en cada keydown).
  * - Invariante "a lo sumo un tour activo por `tourId`" (D7): un registro a nivel de módulo,
  *   por `tourId`, garantiza que un segundo `start()` — incluso si llega mientras el primero
  *   sigue esperando su `import('driver.js')` diferido — nunca deja dos instancias de driver.js
@@ -83,6 +94,36 @@ function releaseTourGeneration(tourId: string, generation: number): void {
   }
 }
 
+/**
+ * Selector genérico y agnóstico de host (D1, D11) para cualquier superficie modal que pueda
+ * estar abierta por encima de la página: `aria-modal="true"`, un `<dialog open>`, o cualquier
+ * elemento con `role="dialog"`. Deliberadamente amplio — este paquete no conoce Maildrill, MUI
+ * ni ningún editor en particular, así que no hay lista de clases ni de componentes permitidos.
+ */
+const COMPETING_MODAL_SELECTOR = '[aria-modal="true"], dialog[open], [role="dialog"]';
+
+/**
+ * `true` si hay, en este momento, un elemento modal (ver `COMPETING_MODAL_SELECTOR`) abierto
+ * por encima de la página que NO sea el propio popover de driver.js. driver.js pinta su
+ * popover con `role="dialog"` (verificado leyendo `driver.js@1.8.0`'s `dist/driver.js.mjs`:
+ * `m.setAttribute('role','dialog')` sobre el nodo `.driver-popover`), así que ese nodo — y
+ * cualquier cosa contenida en él — queda explícitamente excluido: de lo contrario el propio
+ * tour se detectaría a sí mismo como "modal competidor" y el caso llano (D8) se rompería.
+ *
+ * Barata a propósito (D11: "this runs on every Escape keydown, not on every key"): un solo
+ * `querySelectorAll` acotado a los tres selectores de arriba, invocado solo cuando la tecla
+ * es Escape (ver `handleEscapeCapture`), nunca en cada `keydown`.
+ */
+function hasCompetingModalOpen(): boolean {
+  if (typeof document === 'undefined') return false;
+  const candidates = document.querySelectorAll(COMPETING_MODAL_SELECTOR);
+  for (const candidate of candidates) {
+    if (candidate.closest('.driver-popover')) continue;
+    return true;
+  }
+  return false;
+}
+
 export interface CreateTourOptions {
   /** Identificador único del tour (usado como clave de persistencia y en eventos). */
   tourId: string;
@@ -149,6 +190,12 @@ export function createTour(options: CreateTourOptions): Tour {
 
   const handleEscapeCapture = (e: KeyboardEvent) => {
     if (e.key !== 'Escape' || !driverInstance?.isActive()) return;
+    // D11: Escape le pertenece a la superficie más alta, no incondicionalmente al tour. Si hay
+    // un modal abierto por encima de la página (y no es el propio popover de driver.js), este
+    // guard NO consume la tecla: no llama a stopPropagation()/preventDefault() ni cierra el
+    // tour — deja que el evento se propague para que el propio handler del modal lo cierre. El
+    // tour permanece activo, en su paso actual.
+    if (hasCompetingModalOpen()) return;
     // D8: mientras el tour está activo, Escape cierra EL TOUR y nada más. Se detiene la
     // propagación/default en fase de captura para que el editor anfitrión nunca vea esta
     // tecla (los tests F4 del host dependen de eso), y el cierre se hace aquí mismo — nunca

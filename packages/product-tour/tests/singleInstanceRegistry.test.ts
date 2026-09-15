@@ -210,6 +210,139 @@ describe('createTour — Escape dismisses the tour and does not propagate to the
   });
 });
 
+describe('createTour — Escape yields to a competing modal open on top of the page (D11)', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+    localStorage.clear();
+  });
+
+  it('Escape with an [aria-modal="true"] element present propagates to a host listener and leaves the tour active', async () => {
+    document.body.innerHTML = '<button data-tour="a">a</button><button data-tour="b">b</button>';
+    const onEvent = vi.fn();
+    const steps: TourStep[] = [
+      { anchorKey: 'a', popover: { title: 'A' } },
+      { anchorKey: 'b', popover: { title: 'B' } },
+    ];
+    const tour = createTour({ tourId: 'competing-modal-id', version: 1, storagePrefix: 'test:', steps, onEvent });
+    await tour.start();
+    expect(tour.isActive()).toBe(true);
+
+    // A generic modal surface opened on top of the page — no product-specific selector, just
+    // the same shape any host (Maildrill's MUI dialogs included) would render.
+    const modal = document.createElement('div');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('role', 'dialog');
+    document.body.appendChild(modal);
+
+    const hostListener = vi.fn();
+    window.addEventListener('keydown', hostListener);
+
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+    );
+
+    // The guard yielded: the host's own bubble-phase listener saw the key...
+    expect(hostListener).toHaveBeenCalledTimes(1);
+    // ...the tour was NOT dismissed, stays on the same run, no tour_dismissed emitted...
+    expect(tour.isActive()).toBe(true);
+    expect(onEvent).not.toHaveBeenCalledWith(expect.objectContaining({ event: 'tour_dismissed' }));
+    // ...and its popover/overlay are still there.
+    expect(document.querySelectorAll('.driver-popover').length).toBe(1);
+
+    window.removeEventListener('keydown', hostListener);
+    tour.stop();
+  });
+
+  it('Escape with only a dialog[open] element present also yields — no [role="dialog"] required for detection', async () => {
+    document.body.innerHTML = '<button data-tour="a">a</button>';
+    const steps: TourStep[] = [{ anchorKey: 'a', popover: { title: 'A' } }];
+    const tour = createTour({ tourId: 'competing-modal-dialog-el-id', version: 1, storagePrefix: 'test:', steps });
+    await tour.start();
+    expect(tour.isActive()).toBe(true);
+
+    const dialogEl = document.createElement('dialog');
+    dialogEl.setAttribute('open', '');
+    document.body.appendChild(dialogEl);
+
+    const hostListener = vi.fn();
+    window.addEventListener('keydown', hostListener);
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+    );
+
+    expect(hostListener).toHaveBeenCalledTimes(1);
+    expect(tour.isActive()).toBe(true);
+
+    window.removeEventListener('keydown', hostListener);
+    tour.stop();
+  });
+
+  it('Escape with only the tour open (no competing modal) still stops propagation, dismisses the tour and emits tour_dismissed', async () => {
+    document.body.innerHTML = '<button data-tour="a">a</button><button data-tour="b">b</button>';
+    const onEvent = vi.fn();
+    const steps: TourStep[] = [
+      { anchorKey: 'a', popover: { title: 'A' } },
+      { anchorKey: 'b', popover: { title: 'B' } },
+    ];
+    const tour = createTour({ tourId: 'no-competing-modal-id', version: 1, storagePrefix: 'test:', steps, onEvent });
+    await tour.start();
+    expect(tour.isActive()).toBe(true);
+
+    const hostListener = vi.fn();
+    window.addEventListener('keydown', hostListener);
+
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+    );
+
+    // The plain case (D8) is unaffected by the new detection: the tour is gone, dismissed,
+    // and the host listener never saw the key.
+    expect(tour.isActive()).toBe(false);
+    expect(document.querySelectorAll('.driver-popover').length).toBe(0);
+    expect(onEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'tour_dismissed', tourId: 'no-competing-modal-id' }),
+    );
+    expect(hostListener).not.toHaveBeenCalled();
+
+    window.removeEventListener('keydown', hostListener);
+  });
+
+  it("the driver.js popover's own role=\"dialog\" does not count as a competing modal — the plain case is not broken by the detection", async () => {
+    document.body.innerHTML = '<button data-tour="a">a</button><button data-tour="b">b</button>';
+    const onEvent = vi.fn();
+    const steps: TourStep[] = [
+      { anchorKey: 'a', popover: { title: 'A' } },
+      { anchorKey: 'b', popover: { title: 'B' } },
+    ];
+    const tour = createTour({ tourId: 'driver-popover-is-not-a-modal-id', version: 1, storagePrefix: 'test:', steps, onEvent });
+    await tour.start();
+    expect(tour.isActive()).toBe(true);
+
+    // Sanity: driver.js's own popover really does carry role="dialog" — if this assumption
+    // ever stops holding (a driver.js upgrade), this test fails loudly instead of silently
+    // passing because the detection accidentally treated the tour as its own competing modal.
+    const popover = document.querySelector('.driver-popover');
+    expect(popover?.getAttribute('role')).toBe('dialog');
+
+    const hostListener = vi.fn();
+    window.addEventListener('keydown', hostListener);
+
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+    );
+
+    // Despite the popover's own role="dialog", the guard still treats this as the plain case:
+    // it dismisses the tour itself and the host listener never sees the key.
+    expect(tour.isActive()).toBe(false);
+    expect(onEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'tour_dismissed', tourId: 'driver-popover-is-not-a-modal-id' }),
+    );
+    expect(hostListener).not.toHaveBeenCalled();
+
+    window.removeEventListener('keydown', hostListener);
+  });
+});
+
 describe('createTour — existing behaviour survives the D7/D8 changes', () => {
   afterEach(() => {
     document.body.innerHTML = '';

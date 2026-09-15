@@ -214,6 +214,54 @@ test.describe('email editor tour (/dashboard/templates/email)', () => {
     await expect(page).toHaveURL(/\/dashboard\/templates\/email/);
     await expect(page.getByRole('button', { name: 'Save template' })).toBeVisible();
   });
+
+  test('Escape yields to the send-test dialog when it is open on top of the tour (D11): the dialog closes, the tour stays open on the same step', async ({ page }) => {
+    test.setTimeout(120_000);
+    await resetEmailTourState(page);
+    // Reduced motion, as the full-step-walk test above: makes the tour's highlight
+    // transitions instantaneous so the popover for the `eb.header.actions` step is
+    // reliably visible (not mid-transition) once we start walking toward it.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoApp(page, '/dashboard/templates/email');
+
+    const popover = tourPopover(page);
+    await expect(popover, 'tour popover appears on first visit').toHaveCount(1, { timeout: 45_000 });
+
+    // Walk the real "Next" button until the tour's own popover is visible on the
+    // `eb.header.actions` step — the one that highlights the "Send test" button — instead
+    // of racing a fixed timeout against the lazily-imported popover's mount time (the
+    // actual defect this test targets, per the task's measured 5–6.5s mount window).
+    const nextBtn = tourNextButton(page);
+    const sendTest = page.getByRole('button', { name: 'Send test' });
+    const highlightedActions = page.locator('.driver-active-element').filter({ has: sendTest });
+    for (let i = 0; i < 20; i++) {
+      if (await highlightedActions.count().catch(() => 0) > 0) break;
+      await expect(popover, `tour popover visible mid-walk (step ${i})`).toHaveCount(1);
+      await expect(nextBtn).toBeVisible();
+      const isDone = await nextBtn.evaluate((el) => el.classList.contains('driver-popover-done-btn'));
+      await nextBtn.click({ timeout: 60_000 });
+      if (isDone) break;
+    }
+
+    // The tour popover is now, deterministically, on the step that highlights "Send test" —
+    // and the button itself sits inside the highlighted area, so it stays clickable without
+    // `force: true`.
+    await expect(highlightedActions, 'the eb.header.actions step highlights Send test').toHaveCount(1);
+    await expect(popover, 'exactly one tour popover before opening the dialog').toHaveCount(1);
+
+    await sendTest.click();
+    const dialog = page.locator('[role="dialog"]:not(.driver-popover)').first();
+    await expect(dialog, 'the send-test dialog opens on top of the tour').toBeVisible();
+
+    await page.keyboard.press('Escape');
+
+    // D11: Escape belongs to the topmost surface — the dialog, not the tour. It closes...
+    await expect(dialog, 'Escape closes the dialog, not the tour').not.toBeVisible();
+    // ...and the tour is still open, still on the very same step (its own popover, still
+    // just the one instance, never dismissed).
+    await expect(popover, 'the tour stays open on the same step').toHaveCount(1);
+    await expect(popover.locator('.driver-popover-title')).toBeVisible();
+  });
 });
 
 test.describe('landing editor tour (/dashboard/landings/editor)', () => {
