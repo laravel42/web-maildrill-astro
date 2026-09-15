@@ -172,7 +172,10 @@ export default function InspectorDrawer({
             backgroundColor: `${theme.palette.background.paper} !important`,
           }}
         >
-          <Box sx={{ display: isCompact ? 'none' : 'flex', alignItems: 'center', minWidth: 0 }}>
+          <Box
+            {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.inspectorTabs)}
+            sx={{ display: isCompact ? 'none' : 'flex', alignItems: 'center', minWidth: 0 }}
+          >
             <Tabs
               sx={{
                 backgroundColor: `${theme.palette.background.paper} !important`,

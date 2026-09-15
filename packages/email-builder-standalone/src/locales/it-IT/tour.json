@@ -54,9 +54,17 @@
       "title": "La tela",
       "description": "Clicca un blocco per selezionarlo, oppure trascinane uno dalla libreria per aggiungerlo."
     },
+    "canvasTextBlock": {
+      "title": "Modifica il testo direttamente sulla tela",
+      "description": "Clicca sul testo per iniziare a scrivere — appare una barra di formattazione mentre modifichi."
+    },
     "inspectorPanel": {
       "title": "Modifica il blocco selezionato",
       "description": "Quando un blocco è selezionato, qui trovi le sue opzioni di contenuto e stile."
+    },
+    "inspectorTabs": {
+      "title": "Contenuto e Stili",
+      "description": "Questo pannello ha due tab per il blocco selezionato: Contenuto (cosa dice) e Stili (come appare)."
     },
     "imageSources": {
       "title": "Aggiungi immagini",

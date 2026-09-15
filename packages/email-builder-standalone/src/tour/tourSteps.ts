@@ -23,6 +23,12 @@ import {
   setSelectedBlockId,
 } from '../documents/editor/EditorContext';
 import { enterCommandPaletteStep, leaveCommandPaletteStep } from './commandPaletteControl';
+import {
+  enterCanvasTextBlockStep,
+  enterInspectorTabsStep,
+  hasNotionTextBlock,
+  leaveInspectorTabsStep,
+} from './textBlockStepControl';
 import { EMAIL_BUILDER_TOUR_ANCHORS } from './tourAnchors';
 
 /**
@@ -326,7 +332,26 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
       },
     },
 
-    // 13. eb.inspector.panel — InspectorDrawer/index.tsx. Requiere bloque seleccionado
+    // 13. eb.canvas.textBlock — block-notion-text/src/index.tsx, superficie de lectura del
+    // bloque de texto. Requiere un bloque NotionText en el documento (D25 — el tour nunca
+    // escribe en el documento del usuario; sin uno, el paso se omite vía `when`, no se crea
+    // un bloque de demostración). Solo selecciona el bloque (antes()); nunca entra en edición
+    // inline (Q4) — eso enfocaría un contenteditable y el motor del tour deliberadamente no
+    // le roba las flechas a un target editable, así que perderíamos la navegación por teclado
+    // del propio tour.
+    {
+      anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.canvasTextBlock,
+      popover: {
+        title: t('steps.canvasTextBlock.title'),
+        description: t('steps.canvasTextBlock.description'),
+        side: 'left',
+      },
+      when: () => hasNotionTextBlock(),
+      before: () => enterCanvasTextBlockStep(),
+      skipMissingElement: true,
+    },
+
+    // 14. eb.inspector.panel — InspectorDrawer/index.tsx. Requiere bloque seleccionado
     // (§1.4.5); si el documento está vacío no hay nada que seleccionar, así que el paso se
     // omite por completo vía `when` (no solo se salta el highlight: no debe contarse en la
     // barra de progreso de un tour sin nada que inspeccionar).
@@ -344,9 +369,28 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
       },
       skipMissingElement: true,
     },
+
+    // 15. eb.inspector.tabs — InspectorDrawer/index.tsx, franja de pestañas Content/Styles a
+    // solas. Misma precondición que eb.canvas.textBlock (D25): requiere un bloque NotionText,
+    // porque `enterInspectorTabsStep` selecciona ese bloque para que el inspector tenga algo
+    // que mostrar. `before`/`after` abren el inspector en modo `full` en la pestaña Content y
+    // restauran el estado transitorio previo al salir — ver textBlockStepControl.ts para por
+    // qué no usa `setInspectorDrawerMode`.
+    {
+      anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.inspectorTabs,
+      popover: {
+        title: t('steps.inspectorTabs.title'),
+        description: t('steps.inspectorTabs.description'),
+        side: 'left',
+      },
+      when: () => hasNotionTextBlock(),
+      before: () => enterInspectorTabsStep(),
+      after: () => leaveInspectorTabsStep(),
+      skipMissingElement: true,
+    },
   ];
 
-  // 14. eb.image.sources — ImageSourceTabs.tsx (galería / Unsplash / subida). Solo si al
+  // 16. eb.image.sources — ImageSourceTabs.tsx (galería / Unsplash / subida). Solo si al
   // menos una fuente adicional a la subida directa está encendida (§3.1 precondición:
   // "Solo si galleryImages/unsplashEnabled").
   if (config.galleryImages || config.unsplashEnabled) {
@@ -362,7 +406,7 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
     });
   }
 
-  // 15. eb.commandPalette — App/CommandPalette/index.tsx (⌘K). Siempre visible. La paleta
+  // 17. eb.commandPalette — App/CommandPalette/index.tsx (⌘K). Siempre visible. La paleta
   // vive oculta (`hidden`) hasta que se abre, así que el paso la abre con su propio atajo al
   // entrar y la restaura al salir (§T5, `commandPaletteControl.ts`) — sin esto el popover
   // apuntaría a un elemento invisible.
@@ -378,7 +422,7 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
     skipMissingElement: true,
   });
 
-  // 16. eb.header.actions — Host: EditorHeader.tsx, botón "Send test" a solas. Solo si el
+  // 18. eb.header.actions — Host: EditorHeader.tsx, botón "Send test" a solas. Solo si el
   // host pasó `onSendTest` (§3.1 precondición: "onSendTest presente"). Última parada del
   // tour por decisión de contrato (D16/D17): "Send test" siempre cierra el recorrido.
   if (config.onSendTest) {

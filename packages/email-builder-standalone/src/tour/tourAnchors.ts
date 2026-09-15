@@ -39,8 +39,12 @@ export const EMAIL_BUILDER_TOUR_ANCHORS = {
   libraryTemplates: 'eb.library.templates',
   /** `TemplatePanel` — lienzo (`.preview-container`): clic para seleccionar, arrastrar para insertar. */
   canvasRoot: 'eb.canvas.root',
+  /** `block-notion-text/src/index.tsx` — superficie de lectura del bloque de texto seleccionado. */
+  canvasTextBlock: 'eb.canvas.textBlock',
   /** `InspectorDrawer/index.tsx` (+ `InspectorHandle`) — editar el bloque seleccionado. */
   inspectorPanel: 'eb.inspector.panel',
+  /** `InspectorDrawer/index.tsx` — la franja de pestañas Content/Styles a solas. */
+  inspectorTabs: 'eb.inspector.tabs',
   /** `@md/merge-tag-menu` en campos de texto — personalización con datos del suscriptor. */
   inspectorMergeTags: 'eb.inspector.mergeTags',
   /** `components/ImageSourceTabs.tsx` — galería / Unsplash / subida. */

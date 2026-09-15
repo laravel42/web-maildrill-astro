@@ -54,9 +54,17 @@
       "title": "The canvas",
       "description": "Click a block to select it, or drag one in from the library to add it."
     },
+    "canvasTextBlock": {
+      "title": "Edit text right on the canvas",
+      "description": "Click the text to start typing — a formatting toolbar appears while you edit."
+    },
     "inspectorPanel": {
       "title": "Edit the selected block",
       "description": "Once a block is selected, its content and style options appear here."
+    },
+    "inspectorTabs": {
+      "title": "Content and Styles",
+      "description": "This panel has two tabs for the selected block: Content (what it says) and Styles (how it looks)."
     },
     "imageSources": {
       "title": "Add images",

@@ -175,3 +175,39 @@ describe('EmailBuilder — anclas no alcanzables en este árbol (ver comentario 
     expect(queryAllByTour(EMAIL_BUILDER_TOUR_ANCHORS.inspectorMergeTags)).toHaveLength(0);
   });
 });
+
+describe('EmailBuilder — eb.inspector.tabs (T6)', () => {
+  it('aparece exactamente una vez con el inspector en su estado por defecto (no compacto)', () => {
+    expect(queryAllByTour(EMAIL_BUILDER_TOUR_ANCHORS.inspectorTabs)).toHaveLength(1);
+  });
+});
+
+describe('EmailBuilder — eb.canvas.textBlock (T6)', () => {
+  it('no aparece cuando no hay ningún bloque de texto seleccionado', () => {
+    expect(queryAllByTour(EMAIL_BUILDER_TOUR_ANCHORS.canvasTextBlock)).toHaveLength(0);
+  });
+
+  it('aparece exactamente una vez tras seleccionar el bloque de texto', () => {
+    let newId: string | null = null;
+    act(() => {
+      newId = appendBuiltInBlockToParent('root', BUTTONS[0]!.block());
+    });
+    expect(newId).toBeTruthy();
+
+    // `appendBuiltInBlockToParent` selecciona el bloque recién insertado
+    // (comportamiento existente de `commitInsertSavedComponent`), así que
+    // aquí ya se espera la ancla puesta — la selección explícita siguiente
+    // confirma la condición real bajo la que el paso del tour la mostraría.
+    act(() => {
+      setSelectedBlockId(newId);
+    });
+
+    expect(queryAllByTour(EMAIL_BUILDER_TOUR_ANCHORS.canvasTextBlock)).toHaveLength(1);
+
+    act(() => {
+      setSelectedBlockId(null);
+    });
+
+    expect(queryAllByTour(EMAIL_BUILDER_TOUR_ANCHORS.canvasTextBlock)).toHaveLength(0);
+  });
+});

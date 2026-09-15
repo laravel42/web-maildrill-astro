@@ -54,9 +54,17 @@
       "title": "El lienzo",
       "description": "Haz clic en un bloque para seleccionarlo, o arrastra uno desde la librería para añadirlo."
     },
+    "canvasTextBlock": {
+      "title": "Edita el texto en el lienzo",
+      "description": "Haz clic en el texto para empezar a escribir — aparece una barra de formato mientras editas."
+    },
     "inspectorPanel": {
       "title": "Edita el bloque seleccionado",
       "description": "Al seleccionar un bloque, sus opciones de contenido y estilo aparecen aquí."
+    },
+    "inspectorTabs": {
+      "title": "Contenido y Estilos",
+      "description": "Este panel tiene dos pestañas para el bloque seleccionado: Contenido (lo que dice) y Estilos (cómo se ve)."
     },
     "imageSources": {
       "title": "Añade imágenes",

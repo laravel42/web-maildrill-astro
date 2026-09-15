@@ -29,6 +29,18 @@ const F2A_EXCLUDED_ANCHORS = [
 ] as const;
 
 /**
+ * Anclas cuyo `when()` depende del estado del DOCUMENTO (no de un flag del host) — T6 añadió
+ * dos más a la única que ya existía (`inspectorPanel`). Este test resetea el documento a
+ * EMPTY antes de cada caso, así que la comprobación genérica de "when() es true bajo
+ * HOST_CONFIG" no aplica a ninguna de las tres: se cubren aparte, con un documento no vacío.
+ */
+const DOCUMENT_DEPENDENT_ANCHORS = [
+  EMAIL_BUILDER_TOUR_ANCHORS.inspectorPanel,
+  EMAIL_BUILDER_TOUR_ANCHORS.canvasTextBlock,
+  EMAIL_BUILDER_TOUR_ANCHORS.inspectorTabs,
+] as const;
+
+/**
  * Configuración real con la que `VisualEmailBuilder.tsx` monta el editor en Maildrill hoy
  * (ver el componente del host): htmlTab/jsonTab/componentTree/templateSaving/themeSaving
  * apagados; templateLibrary/galleryImages/unsplashEnabled/enableAI encendidos; onSendTest
@@ -89,11 +101,12 @@ describe('buildEmailBuilderTourSteps — filtrado por flags (§1.4.6)', () => {
     expect(emittedAnchors).toContain(EMAIL_BUILDER_TOUR_ANCHORS.headerActions); // onSendTest presente
 
     // Cada paso emitido, si trae `when`, debe seguir siendo `true` bajo esta config para las
-    // anclas que no dependen de que el documento tenga bloques. "eb.inspector.panel" es la
-    // única excepción: su `when` depende del estado del documento (§1.4.5), no de un flag del
-    // host, y se cubre en su propio describe más abajo con un documento no vacío.
+    // anclas que no dependen de que el documento tenga bloques. Las 3 anclas de
+    // DOCUMENT_DEPENDENT_ANCHORS son la excepción: su `when` depende del estado del documento
+    // (§1.4.5 / T6), no de un flag del host, y se cubren en sus propios describe más abajo con
+    // un documento no vacío.
     for (const step of steps) {
-      if (step.anchorKey === EMAIL_BUILDER_TOUR_ANCHORS.inspectorPanel) continue;
+      if ((DOCUMENT_DEPENDENT_ANCHORS as readonly string[]).includes(step.anchorKey)) continue;
       if (step.when) {
         expect(step.when(), `when() de "${step.anchorKey}" debería ser true bajo HOST_CONFIG`).toBe(
           true,
@@ -169,6 +182,44 @@ describe('buildEmailBuilderTourSteps — eb.inspector.panel depende de selecció
     );
     expect(inspectorStep).toBeDefined();
     expect(inspectorStep!.when?.()).toBe(true);
+  });
+});
+
+describe('buildEmailBuilderTourSteps — eb.canvas.textBlock / eb.inspector.tabs dependen de un NotionText (T6/D25)', () => {
+  it('ambos se omiten (when === false) cuando el documento está vacío', () => {
+    resetEditorState();
+    const steps = buildEmailBuilderTourSteps(HOST_CONFIG);
+
+    const textBlockStep = steps.find(
+      (step) => step.anchorKey === EMAIL_BUILDER_TOUR_ANCHORS.canvasTextBlock,
+    );
+    const inspectorTabsStep = steps.find(
+      (step) => step.anchorKey === EMAIL_BUILDER_TOUR_ANCHORS.inspectorTabs,
+    );
+
+    expect(textBlockStep).toBeDefined();
+    expect(inspectorTabsStep).toBeDefined();
+    expect(textBlockStep!.when?.()).toBe(false);
+    expect(inspectorTabsStep!.when?.()).toBe(false);
+  });
+
+  it('ambos son true cuando el documento tiene un bloque NotionText', () => {
+    const newId = appendBuiltInBlockToParent('root', BUTTONS[0]!.block());
+    expect(newId).toBeTruthy();
+
+    const steps = buildEmailBuilderTourSteps(HOST_CONFIG);
+
+    const textBlockStep = steps.find(
+      (step) => step.anchorKey === EMAIL_BUILDER_TOUR_ANCHORS.canvasTextBlock,
+    );
+    const inspectorTabsStep = steps.find(
+      (step) => step.anchorKey === EMAIL_BUILDER_TOUR_ANCHORS.inspectorTabs,
+    );
+
+    expect(textBlockStep).toBeDefined();
+    expect(inspectorTabsStep).toBeDefined();
+    expect(textBlockStep!.when?.()).toBe(true);
+    expect(inspectorTabsStep!.when?.()).toBe(true);
   });
 });
 
