@@ -45,6 +45,7 @@ import EmailBuilder from '../src/index';
 import {
   appendBuiltInBlockToParent,
   resetDocument,
+  setComponentsLibraryDrawerCategory,
   setComponentsLibraryDrawerOpen,
   setSelectedBlockId,
 } from '../src/documents/editor/EditorContext';
@@ -144,6 +145,20 @@ describe('EmailBuilder — anclas que dependen de interacción', () => {
 
     expect(queryAllByTour(EMAIL_BUILDER_TOUR_ANCHORS.blocksBasics)).toHaveLength(1);
     expect(queryAllByTour(EMAIL_BUILDER_TOUR_ANCHORS.blocksLayout)).toHaveLength(1);
+  });
+
+  it('"eb.library.templates" aparece exactamente una vez con el drawer abierto en la pestaña Templates, y cero veces en la pestaña Blocks', () => {
+    act(() => {
+      setComponentsLibraryDrawerOpen(true);
+    });
+
+    expect(queryAllByTour(EMAIL_BUILDER_TOUR_ANCHORS.libraryTemplates)).toHaveLength(0);
+
+    act(() => {
+      setComponentsLibraryDrawerCategory('templates');
+    });
+
+    expect(queryAllByTour(EMAIL_BUILDER_TOUR_ANCHORS.libraryTemplates)).toHaveLength(1);
   });
 });
 

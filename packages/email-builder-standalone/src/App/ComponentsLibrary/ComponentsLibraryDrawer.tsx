@@ -1029,13 +1029,15 @@ export default function ComponentsLibraryDrawer() {
                 </>
               )}
               {activeTab === 'templates' && (
-                <TemplatesCategoryContent
-                  search={SEARCH_UNFILTERED}
-                  sort={SORT_DEFAULT}
-                  onRename={setRenameTarget}
-                  refreshKey={templatesRefreshKey}
-                  onChange={() => setTemplatesRefreshKey((k) => k + 1)}
-                />
+                <Box {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.libraryTemplates)}>
+                  <TemplatesCategoryContent
+                    search={SEARCH_UNFILTERED}
+                    sort={SORT_DEFAULT}
+                    onRename={setRenameTarget}
+                    refreshKey={templatesRefreshKey}
+                    onChange={() => setTemplatesRefreshKey((k) => k + 1)}
+                  />
+                </Box>
               )}
             </Box>
           </>

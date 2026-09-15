@@ -38,6 +38,18 @@
       "title": "Blocks and templates",
       "description": "This panel groups blocks and full templates so you can start from scratch or from a layout."
     },
+    "blocksBasics": {
+      "title": "Basics",
+      "description": "Single-purpose blocks — text, image, button, divider, spacer, and social. Drag one onto the canvas, or click it to append it."
+    },
+    "blocksLayout": {
+      "title": "Structure",
+      "description": "Columns and containers arrange the other blocks inside them. This is how you build an email that survives every client."
+    },
+    "libraryTemplates": {
+      "title": "Templates",
+      "description": "A gallery of complete templates — start from one instead of a blank canvas. Applying one replaces what is on the canvas."
+    },
     "canvasRoot": {
       "title": "The canvas",
       "description": "Click a block to select it, or drag one in from the library to add it."

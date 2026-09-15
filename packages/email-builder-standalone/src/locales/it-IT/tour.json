@@ -38,6 +38,18 @@
       "title": "Blocchi e template",
       "description": "Questo pannello raggruppa blocchi e template completi, per partire da zero o da un layout già pronto."
     },
+    "blocksBasics": {
+      "title": "Basics",
+      "description": "Blocchi a scopo unico — testo, immagine, pulsante, divisore, spaziatore e social. Trascinane uno sulla tela, oppure clicca per aggiungerlo."
+    },
+    "blocksLayout": {
+      "title": "Structure",
+      "description": "Colonne e contenitori organizzano gli altri blocchi al loro interno. È così che costruisci un'email che funziona su ogni client."
+    },
+    "libraryTemplates": {
+      "title": "Templates",
+      "description": "Una galleria di template completi — parti da uno invece che da una tela vuota. Applicarlo sostituisce ciò che c'è sulla tela."
+    },
     "canvasRoot": {
       "title": "La tela",
       "description": "Clicca un blocco per selezionarlo, oppure trascinane uno dalla libreria per aggiungerlo."

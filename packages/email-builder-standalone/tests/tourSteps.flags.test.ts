@@ -184,6 +184,53 @@ describe('buildEmailBuilderTourSteps — eb.library.tabs abre el drawer antes de
   });
 });
 
+describe('buildEmailBuilderTourSteps — grupo de librería: blocksBasics/blocksLayout/libraryTemplates (D33)', () => {
+  it('emite los 3 pasos nuevos bajo la config del host, después de libraryTabs y antes de canvasRoot', () => {
+    const steps = buildEmailBuilderTourSteps(HOST_CONFIG);
+    const anchors = steps.map((step) => step.anchorKey);
+
+    const libraryTabsIdx = anchors.indexOf(EMAIL_BUILDER_TOUR_ANCHORS.libraryTabs);
+    const blocksBasicsIdx = anchors.indexOf(EMAIL_BUILDER_TOUR_ANCHORS.blocksBasics);
+    const blocksLayoutIdx = anchors.indexOf(EMAIL_BUILDER_TOUR_ANCHORS.blocksLayout);
+    const libraryTemplatesIdx = anchors.indexOf(EMAIL_BUILDER_TOUR_ANCHORS.libraryTemplates);
+    const canvasRootIdx = anchors.indexOf(EMAIL_BUILDER_TOUR_ANCHORS.canvasRoot);
+
+    expect(libraryTabsIdx).toBeGreaterThanOrEqual(0);
+    expect(blocksBasicsIdx).toBeGreaterThanOrEqual(0);
+    expect(blocksLayoutIdx).toBeGreaterThanOrEqual(0);
+    expect(libraryTemplatesIdx).toBeGreaterThanOrEqual(0);
+    expect(canvasRootIdx).toBeGreaterThanOrEqual(0);
+
+    expect(libraryTabsIdx).toBeLessThan(blocksBasicsIdx);
+    expect(blocksBasicsIdx).toBeLessThan(blocksLayoutIdx);
+    expect(blocksLayoutIdx).toBeLessThan(libraryTemplatesIdx);
+    expect(libraryTemplatesIdx).toBeLessThan(canvasRootIdx);
+  });
+
+  it('el when() de eb.library.templates es false cuando templateLibrary está apagado', () => {
+    const steps = buildEmailBuilderTourSteps({ ...HOST_CONFIG, templateLibrary: false });
+    const templatesStep = steps.find(
+      (step) => step.anchorKey === EMAIL_BUILDER_TOUR_ANCHORS.libraryTemplates,
+    );
+    expect(templatesStep).toBeDefined();
+    expect(templatesStep!.when?.()).toBe(false);
+  });
+
+  it('blocksBasics, blocksLayout y libraryTemplates exponen before y after', () => {
+    const steps = buildEmailBuilderTourSteps(HOST_CONFIG);
+    for (const anchor of [
+      EMAIL_BUILDER_TOUR_ANCHORS.blocksBasics,
+      EMAIL_BUILDER_TOUR_ANCHORS.blocksLayout,
+      EMAIL_BUILDER_TOUR_ANCHORS.libraryTemplates,
+    ]) {
+      const step = steps.find((s) => s.anchorKey === anchor);
+      expect(step, `paso "${anchor}" debería existir`).toBeDefined();
+      expect(step!.before, `paso "${anchor}" debería exponer before()`).toBeDefined();
+      expect(step!.after, `paso "${anchor}" debería exponer after()`).toBeDefined();
+    }
+  });
+});
+
 describe('getEmailBuilderTourLabels', () => {
   it('devuelve los 4 textos de botones/progreso, no vacíos', () => {
     const labels = getEmailBuilderTourLabels();

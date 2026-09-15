@@ -18,6 +18,7 @@ import type { TourStep } from '@md/product-tour';
 import i18n from '../i18n';
 import {
   editorStateStore,
+  setComponentsLibraryDrawerCategory,
   setComponentsLibraryDrawerOpen,
   setSelectedBlockId,
 } from '../documents/editor/EditorContext';
@@ -75,6 +76,92 @@ function firstRootBlockId(): string | null {
   if (!Array.isArray(childrenIds) || childrenIds.length === 0) return null;
   const [first] = childrenIds as string[];
   return first ?? null;
+}
+
+/** Snapshot del drawer de librería tomado al entrar en el primer paso de librería del grupo. */
+interface LibraryStepSnapshot {
+  open: boolean;
+  category: string;
+}
+
+/**
+ * Guardia compartida de los 4 pasos de librería consecutivos (`eb.library.tabs`,
+ * `eb.library.blocksBasics`, `eb.library.blocksLayout`, `eb.library.templates` — §D33). Sin
+ * esta guardia, cada paso abriría/cerraría el drawer por su cuenta y el usuario vería un
+ * parpadeo entre cada uno de los 4 pasos consecutivos. En su lugar: el primer paso del grupo
+ * toma una única foto del estado previo del drawer (abierto/cerrado + categoría activa);
+ * cada paso siguiente del grupo solo pide el tab que necesita; y el restore al estado previo
+ * se programa con `setTimeout(0)` al salir de un paso de librería — si el siguiente paso del
+ * tour es también de librería, `enterLibraryStep` cancela ese restore antes de que llegue a
+ * ejecutarse (el motor llama `after()` del paso saliente antes que `before()` del entrante,
+ * ver `createTour.ts`), así el drawer nunca se cierra entre dos pasos de librería seguidos.
+ */
+let libraryStepSnapshot: LibraryStepSnapshot | null = null;
+let libraryStepRestoreTimer: ReturnType<typeof setTimeout> | null = null;
+
+function applyLibraryStepSnapshot(snapshot: LibraryStepSnapshot): void {
+  const state = editorStateStore.getState();
+  if (state.componentsLibraryDrawerOpen !== snapshot.open) {
+    setComponentsLibraryDrawerOpen(snapshot.open);
+  }
+  if (state.componentsLibraryDrawerCategory !== snapshot.category) {
+    setComponentsLibraryDrawerCategory(snapshot.category);
+  }
+}
+
+/** Foto del estado del drawer de librería tomada al entrar en el primer paso de librería. */
+export function enterLibraryStep(category: 'blocks' | 'templates'): void {
+  if (libraryStepRestoreTimer !== null) {
+    clearTimeout(libraryStepRestoreTimer);
+    libraryStepRestoreTimer = null;
+  }
+  if (libraryStepSnapshot === null) {
+    const state = editorStateStore.getState();
+    libraryStepSnapshot = {
+      open: state.componentsLibraryDrawerOpen,
+      category: state.componentsLibraryDrawerCategory,
+    };
+  }
+  const state = editorStateStore.getState();
+  if (!state.componentsLibraryDrawerOpen) {
+    setComponentsLibraryDrawerOpen(true);
+  }
+  if (state.componentsLibraryDrawerCategory !== category) {
+    setComponentsLibraryDrawerCategory(category);
+  }
+}
+
+/** Programa el restore del estado previo del drawer; se cancela si entra otro paso de librería. */
+export function leaveLibraryStep(): void {
+  if (libraryStepSnapshot === null) return;
+  if (libraryStepRestoreTimer !== null) {
+    clearTimeout(libraryStepRestoreTimer);
+  }
+  libraryStepRestoreTimer = setTimeout(() => {
+    flushLibraryStepRestore();
+  }, 0);
+}
+
+/** Ejecuta de inmediato el restore pendiente, si hay uno (helper de test; seguro en producción). */
+export function flushLibraryStepRestore(): void {
+  if (libraryStepRestoreTimer !== null) {
+    clearTimeout(libraryStepRestoreTimer);
+    libraryStepRestoreTimer = null;
+  }
+  if (libraryStepSnapshot !== null) {
+    const snapshot = libraryStepSnapshot;
+    libraryStepSnapshot = null;
+    applyLibraryStepSnapshot(snapshot);
+  }
+}
+
+/** Descarta la foto y cualquier restore pendiente sin tocar el store (solo para tests). */
+export function resetLibraryStepGuard(): void {
+  if (libraryStepRestoreTimer !== null) {
+    clearTimeout(libraryStepRestoreTimer);
+    libraryStepRestoreTimer = null;
+  }
+  libraryStepSnapshot = null;
 }
 
 /**
@@ -163,31 +250,69 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
     },
 
     // 8. eb.library.tabs — ComponentsLibraryDrawer.tsx (categorías blocks/templates).
-    // Solo existe en el DOM con el drawer abierto (§1.4.5): `before` lo abre, `after` lo
-    // deja como estaba encontrado (no lo cierra por decisión propia, ver más abajo) — el
-    // motor ya trae `waitForElement`/`skipMissingElement` como red de seguridad si el drawer
-    // tarda en montar el panel de tabs.
-    (() => {
-      let wasOpenBeforeStep = false;
-      return {
-        anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.libraryTabs,
-        popover: {
-          title: t('steps.libraryTabs.title'),
-          description: t('steps.libraryTabs.description'),
-          side: 'right',
-        },
-        before: () => {
-          wasOpenBeforeStep = editorStateStore.getState().componentsLibraryDrawerOpen;
-          setComponentsLibraryDrawerOpen(true);
-        },
-        after: () => {
-          if (!wasOpenBeforeStep) setComponentsLibraryDrawerOpen(false);
-        },
-        skipMissingElement: true,
-      } satisfies TourStep;
-    })(),
+    // Solo existe en el DOM con el drawer abierto (§1.4.5). Primer paso del grupo de 4 pasos
+    // de librería consecutivos (8-11, §D33): usa la guardia compartida `enterLibraryStep` /
+    // `leaveLibraryStep` en vez de abrir/cerrar el drawer por su cuenta, así los 4 pasos no
+    // parpadean entre sí — el motor ya trae `waitForElement`/`skipMissingElement` como red de
+    // seguridad si el drawer tarda en montar el panel de tabs.
+    {
+      anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.libraryTabs,
+      popover: {
+        title: t('steps.libraryTabs.title'),
+        description: t('steps.libraryTabs.description'),
+        side: 'right',
+      },
+      before: () => enterLibraryStep('blocks'),
+      after: () => leaveLibraryStep(),
+      skipMissingElement: true,
+    },
 
-    // 9. eb.canvas.root — TemplatePanel `.preview-container`. Puramente descriptivo: el
+    // 9. eb.library.blocksBasics — BlocksCategoryContent.tsx, grupo "Basics" (Text, Image,
+    // Button, Divider, Spacer, Social). Segundo paso del grupo de librería (§D33).
+    {
+      anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.blocksBasics,
+      popover: {
+        title: t('steps.blocksBasics.title'),
+        description: t('steps.blocksBasics.description'),
+        side: 'right',
+      },
+      before: () => enterLibraryStep('blocks'),
+      after: () => leaveLibraryStep(),
+      skipMissingElement: true,
+    },
+
+    // 10. eb.library.blocksLayout — BlocksCategoryContent.tsx, grupo "Structure" (Columns,
+    // Container). Tercer paso del grupo de librería (§D33).
+    {
+      anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.blocksLayout,
+      popover: {
+        title: t('steps.blocksLayout.title'),
+        description: t('steps.blocksLayout.description'),
+        side: 'right',
+      },
+      before: () => enterLibraryStep('blocks'),
+      after: () => leaveLibraryStep(),
+      skipMissingElement: true,
+    },
+
+    // 11. eb.library.templates — ComponentsLibraryDrawer.tsx, pestaña Templates. Cuarto y
+    // último paso del grupo de librería (§D33). Condicional al flag `templateLibrary`
+    // (precondición §3.1: "Solo si templateLibrary"); vive en el literal (no `push`eado) para
+    // que el orden de los 4 pasos de librería se mantenga (§D17).
+    {
+      anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.libraryTemplates,
+      popover: {
+        title: t('steps.libraryTemplates.title'),
+        description: t('steps.libraryTemplates.description'),
+        side: 'right',
+      },
+      when: () => Boolean(config.templateLibrary),
+      before: () => enterLibraryStep('templates'),
+      after: () => leaveLibraryStep(),
+      skipMissingElement: true,
+    },
+
+    // 12. eb.canvas.root — TemplatePanel `.preview-container`. Puramente descriptivo: el
     // overlay de driver.js pone `pointer-events: none` sobre todo menos el elemento
     // resaltado (§1.4.4), así que el paso no promete "arrastra un bloque aquí" como acción
     // ejecutable dentro del tour, solo explica qué es el lienzo.
@@ -200,7 +325,7 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
       },
     },
 
-    // 10. eb.inspector.panel — InspectorDrawer/index.tsx. Requiere bloque seleccionado
+    // 13. eb.inspector.panel — InspectorDrawer/index.tsx. Requiere bloque seleccionado
     // (§1.4.5); si el documento está vacío no hay nada que seleccionar, así que el paso se
     // omite por completo vía `when` (no solo se salta el highlight: no debe contarse en la
     // barra de progreso de un tour sin nada que inspeccionar).
@@ -220,7 +345,7 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
     },
   ];
 
-  // 11. eb.image.sources — ImageSourceTabs.tsx (galería / Unsplash / subida). Solo si al
+  // 14. eb.image.sources — ImageSourceTabs.tsx (galería / Unsplash / subida). Solo si al
   // menos una fuente adicional a la subida directa está encendida (§3.1 precondición:
   // "Solo si galleryImages/unsplashEnabled").
   if (config.galleryImages || config.unsplashEnabled) {
@@ -236,7 +361,7 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
     });
   }
 
-  // 12. eb.commandPalette — App/CommandPalette/index.tsx (⌘K). Siempre visible.
+  // 15. eb.commandPalette — App/CommandPalette/index.tsx (⌘K). Siempre visible.
   steps.push({
     anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.commandPalette,
     popover: {
@@ -246,7 +371,7 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
     },
   });
 
-  // 13. eb.header.actions — Host: EditorHeader.tsx, botón "Send test" a solas. Solo si el
+  // 16. eb.header.actions — Host: EditorHeader.tsx, botón "Send test" a solas. Solo si el
   // host pasó `onSendTest` (§3.1 precondición: "onSendTest presente"). Última parada del
   // tour por decisión de contrato (D16/D17): "Send test" siempre cierra el recorrido.
   if (config.onSendTest) {
