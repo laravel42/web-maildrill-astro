@@ -15,6 +15,20 @@
  *   destruir, porque `destroy()` público de driver.js salta su hook `onDestroyStarted` (solo se
  *   dispara en cierres iniciados por driver.js mismo: su botón de cerrar, `overlayClickBehavior`)
  *   — ver `dismissActiveInstance()`.
+ * - Keyboard step navigation (D18): the SAME capture-phase `window` keydown handler that owns
+ *   Escape also owns `ArrowRight`/`ArrowLeft` — one listener per key, this package the only
+ *   owner. `ArrowRight` calls `driverInstance.moveNext()`, `ArrowLeft` calls
+ *   `driverInstance.movePrevious()`, gated exactly like Escape (`isActive()`, then
+ *   `hasCompetingModalOpen()` yields to a visible competing modal without consuming the key,
+ *   D11/D12). D21: arrows move between EXISTING steps only — `ArrowRight` on the last step and
+ *   `ArrowLeft` on the first step are no-ops (checked via `isLastStep()`/`getActiveIndex()`
+ *   before calling `moveNext()`/`movePrevious()`), because `moveNext()` on the last step would
+ *   route into driver.js's own advance handler — replaced by `onDoneClick`, which persists
+ *   completion and emits `tour_completed` — and a keypress must never silently finish and
+ *   persist the tour; completing stays the Done button's job. D22: the engine does not steal
+ *   arrows from text entry — any modifier key held, or a `target` that is an editable surface
+ *   (`<input>`, `<textarea>`, `<select>`, or `isContentEditable`), and the handler returns
+ *   without consuming, host-agnostically (D1).
  * - Escape le pertenece a la superficie más alta, no incondicionalmente al tour (D11): antes de
  *   consumir el Escape, el guard comprueba si hay un MODAL VISIBLE abierto por encima de la
  *   página (ver `hasCompetingModalOpen()` / `isElementVisible()`, D12) — un elemento que matchee
@@ -166,9 +180,10 @@ function isElementVisible(candidate: Element): boolean {
  * explícitamente excluido: de lo contrario el propio tour se detectaría a sí mismo como
  * "modal competidor" y el caso llano (D8) se rompería.
  *
- * Barata a propósito (D11: "this runs on every Escape keydown, not on every key"): un solo
- * `querySelectorAll` acotado a los tres selectores de arriba, invocado solo cuando la tecla
- * es Escape (ver `handleEscapeCapture`), nunca en cada `keydown`.
+ * Barata a propósito (D11: "this runs on every Escape keydown, not on every key"; D18 extiende
+ * lo mismo a ArrowLeft/ArrowRight): un solo `querySelectorAll` acotado a los tres selectores de
+ * arriba, invocado solo cuando la tecla es Escape o una flecha (ver `handleEscapeCapture`),
+ * nunca en cada `keydown`.
  */
 function hasCompetingModalOpen(): boolean {
   if (typeof document === 'undefined') return false;
@@ -179,6 +194,20 @@ function hasCompetingModalOpen(): boolean {
     return true;
   }
   return false;
+}
+
+/**
+ * `true` if `target` is an editable surface where ArrowLeft/ArrowRight mean caret or option
+ * movement rather than tour step navigation (D22): an `<input>`, `<textarea>`, `<select>`, or
+ * any element with `isContentEditable` (rich-text editors). Deliberately generic and
+ * host-agnostic (D1) — no class names, no component names, just the shapes the DOM itself
+ * already exposes for "this element consumes arrow keys for editing".
+ */
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  const tagName = target.tagName;
+  if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT') return true;
+  return (target as HTMLElement).isContentEditable === true;
 }
 
 export interface CreateTourOptions {
@@ -246,27 +275,67 @@ export function createTour(options: CreateTourOptions): Tour {
   let currentTotalSteps = 0;
 
   const handleEscapeCapture = (e: KeyboardEvent) => {
-    if (e.key !== 'Escape' || !driverInstance?.isActive()) return;
-    // D11: Escape le pertenece a la superficie más alta, no incondicionalmente al tour. Si hay
-    // un modal abierto por encima de la página (y no es el propio popover de driver.js), este
-    // guard NO consume la tecla: no llama a stopPropagation()/preventDefault() ni cierra el
-    // tour — deja que el evento se propague para que el propio handler del modal lo cierre. El
-    // tour permanece activo, en su paso actual. Esto solo es seguro porque `allowKeyboardControl`
-    // se configura en `false` (ver `start()`): sin eso, este mismo evento —dejado propagar a
-    // propósito para que el modal lo vea— también llegaría al handler interno de Escape de
-    // driver.js (bubble-phase en `window`) y, ahora que `onDestroyStarted` sí destruye (D15),
-    // cerraría el tour de todos modos, rompiendo este caso (D11 se rompió exactamente así al
-    // arreglar D15, hasta desactivar `allowKeyboardControl`; ver el comentario en `start()`).
-    if (hasCompetingModalOpen()) return;
-    // D8: mientras el tour está activo, Escape cierra EL TOUR y nada más. Se detiene la
-    // propagación/default en fase de captura para que el editor anfitrión nunca vea esta
-    // tecla (los tests F4 del host dependen de eso), y el cierre se hace aquí mismo — nunca
-    // se depende del propio handler de Escape de driver.js: con `allowKeyboardControl: false`
-    // (D15) ese handler interno ni siquiera se registra, así que este paquete es la ÚNICA
-    // vía de cierre por teclado, sin importar si esta rama llega a `stopPropagation()` o no.
-    e.stopPropagation();
-    e.preventDefault();
-    dismissActiveInstance();
+    if (!driverInstance?.isActive()) return;
+
+    if (e.key === 'Escape') {
+      // D11: Escape le pertenece a la superficie más alta, no incondicionalmente al tour. Si hay
+      // un modal abierto por encima de la página (y no es el propio popover de driver.js), este
+      // guard NO consume la tecla: no llama a stopPropagation()/preventDefault() ni cierra el
+      // tour — deja que el evento se propague para que el propio handler del modal lo cierre. El
+      // tour permanece activo, en su paso actual. Esto solo es seguro porque `allowKeyboardControl`
+      // se configura en `false` (ver `start()`): sin eso, este mismo evento —dejado propagar a
+      // propósito para que el modal lo vea— también llegaría al handler interno de Escape de
+      // driver.js (bubble-phase en `window`) y, ahora que `onDestroyStarted` sí destruye (D15),
+      // cerraría el tour de todos modos, rompiendo este caso (D11 se rompió exactamente así al
+      // arreglar D15, hasta desactivar `allowKeyboardControl`; ver el comentario en `start()`).
+      if (hasCompetingModalOpen()) return;
+      // D8: mientras el tour está activo, Escape cierra EL TOUR y nada más. Se detiene la
+      // propagación/default en fase de captura para que el editor anfitrión nunca vea esta
+      // tecla (los tests F4 del host dependen de eso), y el cierre se hace aquí mismo — nunca
+      // se depende del propio handler de Escape de driver.js: con `allowKeyboardControl: false`
+      // (D15) ese handler interno ni siquiera se registra, así que este paquete es la ÚNICA
+      // vía de cierre por teclado, sin importar si esta rama llega a `stopPropagation()` o no.
+      e.stopPropagation();
+      e.preventDefault();
+      dismissActiveInstance();
+      return;
+    }
+
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      // D18: this same capture-phase handler also owns arrow-key step navigation — one
+      // listener per key, this package the only owner (see the top-of-file doc block and the
+      // `allowKeyboardControl: false` comment in `start()` for why driver.js's own internal
+      // keyboard handling stays disabled instead of growing a second listener here).
+      //
+      // D22: the engine does not steal arrows from text entry. Any modifier held, or a
+      // `target` that is an editable surface, means the key means caret/option movement to
+      // whoever is focused, not step navigation — bail out without consuming, host-agnostically
+      // (D1: no class names, no component names, just the generic editable-surface shapes).
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || isEditableTarget(e.target)) return;
+      // D11/D12: same gating as Escape — a visible competing modal on top of the page owns
+      // the keyboard, so the tour must not consume the arrow either.
+      if (hasCompetingModalOpen()) return;
+
+      if (e.key === 'ArrowRight') {
+        // D21: ArrowRight moves between EXISTING steps only. On the last step, `moveNext()`
+        // would route into driver.js's own advance handler — replaced by `onDoneClick`, which
+        // persists completion and emits `tour_completed` (see `start()`) — so a keypress must
+        // not silently finish and persist the tour. Checked BEFORE stopping propagation/default:
+        // a no-op arrow on the last step must not behave as if the tour had consumed the key.
+        if (driverInstance.isLastStep()) return;
+        e.stopPropagation();
+        e.preventDefault();
+        driverInstance.moveNext();
+      } else {
+        // D21: symmetric no-op at the other boundary — ArrowLeft on the first step must not
+        // call `movePrevious()` (there is nowhere to go, and driver.js has no "before the
+        // first step" state to route into, but the no-op must still not consume the key).
+        if (driverInstance.getActiveIndex() === 0) return;
+        e.stopPropagation();
+        e.preventDefault();
+        driverInstance.movePrevious();
+      }
+    }
   };
 
   function attachEscapeGuard() {
@@ -385,9 +454,12 @@ export function createTour(options: CreateTourOptions): Tour {
       // send-test dialog" test started failing — tour destroyed — the moment `onDestroyStarted`
       // was fixed to call `destroy()`, with `allowKeyboardControl` still `true`). This package
       // already owns 100% of Escape handling via its own capture-phase guard (D8); driver.js's
-      // internal keyboard handling (Escape here, plus ArrowLeft/ArrowRight step navigation,
-      // neither part of this package's documented contract) is disabled entirely so there is
-      // never a second listener for the same key.
+      // internal keyboard handling stays disabled entirely so there is never a second listener
+      // for the same key — including for ArrowLeft/ArrowRight (D18): this package's capture-phase
+      // guard now implements step navigation itself (`moveNext()`/`movePrevious()`, gated the
+      // same way as Escape, plus the D21 last/first-step no-ops and the D22 editable-target
+      // bail-out — see `handleEscapeCapture`), so re-enabling this flag would, exactly as with
+      // Escape above, recreate a second, competing bubble-phase listener for the same keys.
       allowKeyboardControl: false,
       overlayClickBehavior: 'close',
       popoverClass: options.popoverClass ?? 'md-tour',
