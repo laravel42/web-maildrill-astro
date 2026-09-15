@@ -58,6 +58,7 @@ import { EMAIL_BUILDER_TOUR_ANCHORS } from '../src/tour/tourAnchors';
 /** Anclas presentes en el DOM justo tras el montaje inicial, sin ninguna interacción. */
 const ALWAYS_PRESENT_ANCHORS = [
   EMAIL_BUILDER_TOUR_ANCHORS.toolbarViews,
+  EMAIL_BUILDER_TOUR_ANCHORS.viewportScreenSize,
   EMAIL_BUILDER_TOUR_ANCHORS.toolbarHistory,
   EMAIL_BUILDER_TOUR_ANCHORS.libraryRail,
   EMAIL_BUILDER_TOUR_ANCHORS.canvasRoot,

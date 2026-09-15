@@ -8,11 +8,23 @@
   "steps": {
     "headerIdentity": {
       "title": "Name and autosave",
-      "description": "Set the template name and category here. Your changes save automatically as you work."
+      "description": "Set the template name and category here — this is how you will find it again in the gallery."
+    },
+    "headerSave": {
+      "title": "Save template",
+      "description": "Names and saves the template explicitly. Use it whenever you want a checkpoint you control, not just the autosave."
+    },
+    "headerStatus": {
+      "title": "Autosave status",
+      "description": "Your work saves automatically as you go. This shows the state: Draft, Saving…, Autosaved, or Unsaved changes if something has not synced yet."
     },
     "toolbarViews": {
       "title": "Edit or preview",
-      "description": "Switch between the editor and a preview, and check how it looks on desktop or mobile."
+      "description": "Switch between the editor and a preview of the finished email."
+    },
+    "viewportScreenSize": {
+      "title": "Desktop or mobile",
+      "description": "Preview how the email renders on desktop or mobile. Some blocks let you set different values for each, so check both before you send."
     },
     "toolbarHistory": {
       "title": "Undo anytime",

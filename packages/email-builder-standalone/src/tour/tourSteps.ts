@@ -85,7 +85,7 @@ function firstRootBlockId(): string | null {
  */
 export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig): TourStep[] {
   const steps: TourStep[] = [
-    // 1. eb.header.identity — Host: EditorHeader.tsx (nombre, categoría, idioma, autoguardado).
+    // 1. eb.header.identity — Host: EditorHeader.tsx, campo de nombre a solas.
     // Siempre visible: el header de identidad no depende de ningún flag del editor.
     {
       anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.headerIdentity,
@@ -97,7 +97,29 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
       },
     },
 
-    // 2. eb.toolbar.views — MainTabsGroup.tsx (editar/previsualizar, tamaño de pantalla).
+    // 2. eb.header.save — Host: EditorHeader.tsx, botón "Save template" a solas.
+    {
+      anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.headerSave,
+      popover: {
+        title: t('steps.headerSave.title'),
+        description: t('steps.headerSave.description'),
+        side: 'bottom',
+        align: 'start',
+      },
+    },
+
+    // 3. eb.header.status — Host: EditorHeader.tsx, indicador de autoguardado a solas.
+    {
+      anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.headerStatus,
+      popover: {
+        title: t('steps.headerStatus.title'),
+        description: t('steps.headerStatus.description'),
+        side: 'bottom',
+        align: 'end',
+      },
+    },
+
+    // 4. eb.toolbar.views — MainTabsGroup.tsx (editar/previsualizar).
     // Siempre visible: editor/preview no están gateados por ningún flag del embed.
     {
       anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.toolbarViews,
@@ -108,7 +130,19 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
       },
     },
 
-    // 3. eb.toolbar.history — TemplatePanel/index.tsx (undo/redo).
+    // 5. eb.viewport.screenSize — SelectScreen.tsx (ScreenSizeSelector), cambio desktop/mobile.
+    // Va inmediatamente después de eb.toolbar.views: ambos son controles del toolbar del
+    // lienzo (§ contrato D16/D17 — el orden sigue la vista, no el registro).
+    {
+      anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.viewportScreenSize,
+      popover: {
+        title: t('steps.viewportScreenSize.title'),
+        description: t('steps.viewportScreenSize.description'),
+        side: 'bottom',
+      },
+    },
+
+    // 6. eb.toolbar.history — TemplatePanel/index.tsx (undo/redo).
     {
       anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.toolbarHistory,
       popover: {
@@ -118,7 +152,7 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
       },
     },
 
-    // 4. eb.library.rail — ComponentsLibraryHandle.tsx + CompactBlocksList.tsx.
+    // 7. eb.library.rail — ComponentsLibraryHandle.tsx + CompactBlocksList.tsx.
     {
       anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.libraryRail,
       popover: {
@@ -128,7 +162,7 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
       },
     },
 
-    // 5. eb.library.tabs — ComponentsLibraryDrawer.tsx (categorías blocks/templates).
+    // 8. eb.library.tabs — ComponentsLibraryDrawer.tsx (categorías blocks/templates).
     // Solo existe en el DOM con el drawer abierto (§1.4.5): `before` lo abre, `after` lo
     // deja como estaba encontrado (no lo cierra por decisión propia, ver más abajo) — el
     // motor ya trae `waitForElement`/`skipMissingElement` como red de seguridad si el drawer
@@ -153,7 +187,7 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
       } satisfies TourStep;
     })(),
 
-    // 6. eb.canvas.root — TemplatePanel `.preview-container`. Puramente descriptivo: el
+    // 9. eb.canvas.root — TemplatePanel `.preview-container`. Puramente descriptivo: el
     // overlay de driver.js pone `pointer-events: none` sobre todo menos el elemento
     // resaltado (§1.4.4), así que el paso no promete "arrastra un bloque aquí" como acción
     // ejecutable dentro del tour, solo explica qué es el lienzo.
@@ -166,7 +200,7 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
       },
     },
 
-    // 7. eb.inspector.panel — InspectorDrawer/index.tsx. Requiere bloque seleccionado
+    // 10. eb.inspector.panel — InspectorDrawer/index.tsx. Requiere bloque seleccionado
     // (§1.4.5); si el documento está vacío no hay nada que seleccionar, así que el paso se
     // omite por completo vía `when` (no solo se salta el highlight: no debe contarse en la
     // barra de progreso de un tour sin nada que inspeccionar).
@@ -186,7 +220,7 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
     },
   ];
 
-  // 8. eb.image.sources — ImageSourceTabs.tsx (galería / Unsplash / subida). Solo si al
+  // 11. eb.image.sources — ImageSourceTabs.tsx (galería / Unsplash / subida). Solo si al
   // menos una fuente adicional a la subida directa está encendida (§3.1 precondición:
   // "Solo si galleryImages/unsplashEnabled").
   if (config.galleryImages || config.unsplashEnabled) {
@@ -202,7 +236,7 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
     });
   }
 
-  // 9. eb.commandPalette — App/CommandPalette/index.tsx (⌘K). Siempre visible.
+  // 12. eb.commandPalette — App/CommandPalette/index.tsx (⌘K). Siempre visible.
   steps.push({
     anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.commandPalette,
     popover: {
@@ -212,10 +246,9 @@ export function buildEmailBuilderTourSteps(config: EmailBuilderTourStepsConfig):
     },
   });
 
-  // 10. eb.header.actions — Host: EditorHeader.tsx (enviar prueba + guardar). Solo si el
-  // host pasó `onSendTest` (§3.1 precondición: "onSendTest presente"). El guardado en sí
-  // (autosave) no depende de este flag, pero el ancla del host solo se renderiza junto al
-  // botón de enviar prueba — sin `onSendTest` no hay nada que resaltar ahí.
+  // 13. eb.header.actions — Host: EditorHeader.tsx, botón "Send test" a solas. Solo si el
+  // host pasó `onSendTest` (§3.1 precondición: "onSendTest presente"). Última parada del
+  // tour por decisión de contrato (D16/D17): "Send test" siempre cierra el recorrido.
   if (config.onSendTest) {
     steps.push({
       anchorKey: EMAIL_BUILDER_TOUR_ANCHORS.headerActions,

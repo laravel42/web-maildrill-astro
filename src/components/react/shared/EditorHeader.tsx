@@ -258,14 +258,13 @@ export default function EditorHeader({
 
       <div
         className={styles.center}
-        {...(channel === 'email'
-          ? dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.headerIdentity)
-          : !channel && identity
-            ? dataTourAttrPbx(BUILDER42_TOUR_ANCHORS.headerIdentity)
-            : {})}
+        {...(!channel && identity ? dataTourAttrPbx(BUILDER42_TOUR_ANCHORS.headerIdentity) : {})}
       >
         <div className={styles.nameRow}>
-          <div className={`${styles.nameField}${nameError ? ` ${styles.nameFieldInvalid}` : ''}`}>
+          <div
+            className={`${styles.nameField}${nameError ? ` ${styles.nameFieldInvalid}` : ''}`}
+            {...(channel === 'email' ? dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.headerIdentity) : {})}
+          >
             <span
               className={styles.nameIcon}
               style={{ background: meta.tint, color: meta.color }}
@@ -303,6 +302,7 @@ export default function EditorHeader({
             className={styles.saveIcon}
             onClick={handleSave}
             disabled={status === 'saving'}
+            {...(channel === 'email' ? dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.headerSave) : {})}
           >
             <Icon name="save" size={14} stroke={2} />
             {saveLabel}
@@ -310,18 +310,24 @@ export default function EditorHeader({
         </div>
       </div>
 
-      <div
-        className={styles.right}
-        {...(channel === 'email' ? dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.headerActions) : {})}
-      >
-        <span className={styles.status} role="status">
+      <div className={styles.right}>
+        <span
+          className={styles.status}
+          role="status"
+          {...(channel === 'email' ? dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.headerStatus) : {})}
+        >
           <span
             className={`${styles.dot}${status === 'saving' ? ` ${styles.dotSaving}` : ''}${isDirty && status !== 'saving' ? ` ${styles.dotUnsaved}` : ''}`}
           />
           {statusLabel}
         </span>
         {onSendTest && (
-          <button type="button" className={styles.sbtn} onClick={onSendTest}>
+          <button
+            type="button"
+            className={styles.sbtn}
+            onClick={onSendTest}
+            {...(channel === 'email' ? dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.headerActions) : {})}
+          >
             <Icon name="send" size={14} />
             Send test
           </button>

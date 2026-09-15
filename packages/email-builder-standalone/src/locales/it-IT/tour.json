@@ -7,12 +7,24 @@
   },
   "steps": {
     "headerIdentity": {
-      "title": "Nome e salvataggio automatico",
-      "description": "Imposta qui il nome e la categoria del template. Le modifiche si salvano da sole mentre lavori."
+      "title": "Nome e categoria",
+      "description": "Imposta qui il nome e la categoria del template — così lo ritrovi nella galleria."
+    },
+    "headerSave": {
+      "title": "Salva template",
+      "description": "Nomina e salva il template in modo esplicito. Usalo quando vuoi un punto di controllo tuo, non solo il salvataggio automatico."
+    },
+    "headerStatus": {
+      "title": "Stato del salvataggio automatico",
+      "description": "Il tuo lavoro si salva da solo mentre procedi. Qui vedi lo stato: Draft, Saving…, Autosaved oppure Unsaved changes se qualcosa non si è ancora sincronizzato."
     },
     "toolbarViews": {
       "title": "Modifica o anteprima",
-      "description": "Passa dall'editor all'anteprima e controlla come appare su desktop o mobile."
+      "description": "Passa dall'editor all'anteprima dell'email finita."
+    },
+    "viewportScreenSize": {
+      "title": "Desktop o mobile",
+      "description": "Visualizza in anteprima come appare l'email su desktop o su mobile. Alcuni blocchi permettono valori diversi per ciascuno, quindi controlla entrambi prima di inviare."
     },
     "toolbarHistory": {
       "title": "Annulla senza pensieri",

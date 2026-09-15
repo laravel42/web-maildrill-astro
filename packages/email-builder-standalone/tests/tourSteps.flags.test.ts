@@ -128,13 +128,16 @@ describe('buildEmailBuilderTourSteps — filtrado por flags (§1.4.6)', () => {
     expect(emittedAnchors).not.toContain(EMAIL_BUILDER_TOUR_ANCHORS.headerActions);
   });
 
-  it('siempre emite las anclas sin precondición de flag (header identity, toolbar, library rail, canvas, command palette)', () => {
+  it('siempre emite las anclas sin precondición de flag (header identity/save/status, toolbar, viewport, library rail, canvas, command palette)', () => {
     const steps = buildEmailBuilderTourSteps({});
     const emittedAnchors = steps.map((step) => step.anchorKey);
     expect(emittedAnchors).toEqual(
       expect.arrayContaining([
         EMAIL_BUILDER_TOUR_ANCHORS.headerIdentity,
+        EMAIL_BUILDER_TOUR_ANCHORS.headerSave,
+        EMAIL_BUILDER_TOUR_ANCHORS.headerStatus,
         EMAIL_BUILDER_TOUR_ANCHORS.toolbarViews,
+        EMAIL_BUILDER_TOUR_ANCHORS.viewportScreenSize,
         EMAIL_BUILDER_TOUR_ANCHORS.toolbarHistory,
         EMAIL_BUILDER_TOUR_ANCHORS.libraryRail,
         EMAIL_BUILDER_TOUR_ANCHORS.libraryTabs,

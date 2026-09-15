@@ -305,6 +305,83 @@ test.describe('email editor tour (/dashboard/templates/email)', () => {
     await expect(popover, 'the tour stays open on the same step').toHaveCount(1);
     await expect(popover.locator('.driver-popover-title')).toBeVisible();
   });
+
+  test('the eb.header.save step highlights only "Save template", never the name field or the status indicator (B17/D16/D17)', async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await resetEmailTourState(page);
+    await gotoApp(page, '/dashboard/templates/email');
+
+    const popover = tourPopover(page);
+    await expect(popover, 'tour popover appears on first visit').toHaveCount(1, { timeout: 45_000 });
+
+    // Walk the real "Next" button until the tour reaches the step whose title is
+    // "Save template" — the popover title resolved from `steps.headerSave.title`.
+    const nextBtn = tourNextButton(page);
+    for (let i = 0; i < 20; i++) {
+      const title = await popover.locator('.driver-popover-title').textContent();
+      if (title === 'Save template') break;
+      await expect(nextBtn).toBeVisible();
+      const isDone = await nextBtn.evaluate((el) => el.classList.contains('driver-popover-done-btn'));
+      await nextBtn.click({ timeout: 60_000 });
+      if (isDone) break;
+    }
+    await expect(popover.locator('.driver-popover-title')).toHaveText('Save template');
+
+    // Exactly one highlighted element, and it IS the "Save template" button itself — not a
+    // container around it — so it does not also contain the name field or the status
+    // indicator (the two controls this step must never bundle in with, per the reported
+    // defect).
+    const active = page.locator('.driver-active-element');
+    await expect(active).toHaveCount(1);
+    await expect(active, 'the highlighted element is the Save template button itself').toHaveRole('button');
+    await expect(active, 'the highlighted element is the Save template button itself').toHaveText(
+      /Save template/,
+    );
+    await expect(active.locator('input'), 'the save step does not also highlight the name field').toHaveCount(0);
+    await expect(
+      active.locator('[role="status"]'),
+      'the save step does not also highlight the autosave status indicator',
+    ).toHaveCount(0);
+  });
+
+  test('the eb.header.status step highlights only the autosave indicator, never "Save template" or "Send test" (B17/D16/D17)', async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await resetEmailTourState(page);
+    await gotoApp(page, '/dashboard/templates/email');
+
+    const popover = tourPopover(page);
+    await expect(popover, 'tour popover appears on first visit').toHaveCount(1, { timeout: 45_000 });
+
+    // Walk the real "Next" button until the tour reaches the step whose title is
+    // "Autosave status" — the popover title resolved from `steps.headerStatus.title`.
+    const nextBtn = tourNextButton(page);
+    for (let i = 0; i < 20; i++) {
+      const title = await popover.locator('.driver-popover-title').textContent();
+      if (title === 'Autosave status') break;
+      await expect(nextBtn).toBeVisible();
+      const isDone = await nextBtn.evaluate((el) => el.classList.contains('driver-popover-done-btn'));
+      await nextBtn.click({ timeout: 60_000 });
+      if (isDone) break;
+    }
+    await expect(popover.locator('.driver-popover-title')).toHaveText('Autosave status');
+
+    // Exactly one highlighted element, and it is the status indicator itself (`role="status"`)
+    // — not a container that also bundles in "Save template" or "Send test" (the two
+    // interactive controls this step must never highlight alongside the indicator).
+    const active = page.locator('.driver-active-element');
+    await expect(active).toHaveCount(1);
+    await expect(active).toHaveAttribute('role', 'status');
+    await expect(
+      active.locator('button', { hasText: 'Save template' }),
+      'the status step does not also highlight the Save template button',
+    ).toHaveCount(0);
+    await expect(
+      active.locator('button', { hasText: 'Send test' }),
+      'the status step does not also highlight the Send test button',
+    ).toHaveCount(0);
+  });
 });
 
 test.describe('landing editor tour (/dashboard/landings/editor)', () => {

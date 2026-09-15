@@ -7,12 +7,24 @@
   },
   "steps": {
     "headerIdentity": {
-      "title": "Nombre y autoguardado",
-      "description": "Define aquí el nombre y la categoría de la plantilla. Los cambios se guardan solos mientras trabajas."
+      "title": "Nombra tu plantilla",
+      "description": "Define aquí el nombre y la categoría de la plantilla — así la vuelves a encontrar en la galería."
+    },
+    "headerSave": {
+      "title": "Guardar plantilla",
+      "description": "Nombra y guarda la plantilla de forma explícita. Úsalo cuando quieras un punto de control propio, no solo el autoguardado."
+    },
+    "headerStatus": {
+      "title": "Estado del autoguardado",
+      "description": "Tu trabajo se guarda solo mientras avanzas. Aquí ves el estado: Draft, Saving…, Autosaved o Unsaved changes si algo no ha terminado de sincronizarse."
     },
     "toolbarViews": {
       "title": "Editar o previsualizar",
-      "description": "Cambia entre el editor y la vista previa, y revisa cómo se ve en escritorio o en móvil."
+      "description": "Cambia entre el editor y la vista previa del correo terminado."
+    },
+    "viewportScreenSize": {
+      "title": "Escritorio o móvil",
+      "description": "Previsualiza cómo se ve el correo en escritorio o en móvil. Algunos bloques permiten valores distintos para cada uno, así que revisa los dos antes de enviar."
     },
     "toolbarHistory": {
       "title": "Deshacer sin miedo",

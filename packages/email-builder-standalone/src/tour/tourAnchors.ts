@@ -15,10 +15,16 @@
 
 /** Claves de ancla del tour "Editor de email" — orden y valores fijados por §3.1 del plan. */
 export const EMAIL_BUILDER_TOUR_ANCHORS = {
-  /** Host: `EditorHeader.tsx` — nombre, categoría, idioma, autoguardado. */
+  /** Host: `EditorHeader.tsx` — el campo de nombre a solas (no el bloque central). */
   headerIdentity: 'eb.header.identity',
-  /** `TemplatePanel/MainTabsGroup.tsx` — editar vs. previsualizar, tamaño de pantalla. */
+  /** Host: `EditorHeader.tsx` — el botón "Save template" a solas. */
+  headerSave: 'eb.header.save',
+  /** Host: `EditorHeader.tsx` — el indicador de autoguardado a solas. */
+  headerStatus: 'eb.header.status',
+  /** `TemplatePanel/MainTabsGroup.tsx` — editar vs. previsualizar. */
   toolbarViews: 'eb.toolbar.views',
+  /** `InspectorDrawer/.../SelectScreen.tsx` (`ScreenSizeSelector`) — cambio desktop/mobile. */
+  viewportScreenSize: 'eb.viewport.screenSize',
   /** `TemplatePanel/index.tsx` — deshacer/rehacer (banda `#ee-editor-header`). */
   toolbarHistory: 'eb.toolbar.history',
   /** `ComponentsLibrary/ComponentsLibraryHandle.tsx` + `CompactBlocksList.tsx` — rail de bloques. */
@@ -39,7 +45,7 @@ export const EMAIL_BUILDER_TOUR_ANCHORS = {
   themePresets: 'eb.theme.presets',
   /** `App/CommandPalette/index.tsx` — paleta de comandos (⌘K). */
   commandPalette: 'eb.commandPalette',
-  /** Host: `EditorHeader.tsx` — enviar prueba + guardar. */
+  /** Host: `EditorHeader.tsx` — el botón "Send test" a solas. */
   headerActions: 'eb.header.actions',
 } as const;
 
