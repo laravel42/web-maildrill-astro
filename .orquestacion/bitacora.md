@@ -11,14 +11,77 @@ Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour
 
 # START HERE — next session
 
-**The tour chain is CLOSED at `a31a1ef` (2026-09-14).** Read "Chain closed" below for the final
-measurements and for the three items that need a person (B3 visual review, B6 `AUTH_SECRET`,
-B13 e2e parallelism). Everything F1–F7 plus the B-series fixes is implemented, committed and gated.
-The section that follows was the previous session's hand-off and is kept for context.
+**State at hand-off (2026-09-15): `HEAD = be29bff`, branch `feat/ui-polish-p1`, tree clean** except the
+known untracked `.cursor/hooks/` and `.kiro/`. Nothing is half-finished: every task below has its own
+commit, and the last one that landed red (B17) was closed by B17b in the same session. 28 commits since
+`89a3bce`. **Not pushed** — the branch is local by choice; pushing is the user's call.
+
+The plan (`docs/product-tour-driverjs-plan.md`) is **implemented, F1–F7**. What came after F7 is user
+feedback on the real thing, which is where the next session picks up.
+
+**Done this session, each gated by the orchestrator:** B7B8 (single live tour per `tourId` +
+Escape dismisses), B10 (⌘K palette entry was broken for keyboard users; also fixed the swallowed
+restart, B11), B12 (Escape yields to an open modal), B14 (only a *visible* modal counts), B9/B9b/B9c
+(reachable relaunch button in the landings embed, no tour anchor, highlight precision), F7 (docs +
+telemetry + export boundary), then from the user's own testing: B16 (the «×» and the overlay click
+never closed the tour) and B17/B17b (one control per step in the email header: new steps for
+"Save template", the autosave indicator and the desktop/mobile switch, with `identity` and `actions`
+re-pointed to single controls; copy in all three locales).
+
+**Measured at `fb40a42`** (the two commits after it touch only a test file and this log):
+`@md/product-tour` 6 files/50 tests · `builder42` 13/119 · `email-builder-standalone` 8/47 ·
+root `pnpm test` 43/303 · `pnpm check` 337 files 0 errors/0 warnings/3 hints · `pnpm lint` the same
+3 pre-existing errors by name. All green.
+
+**Two verification gaps to close first, cheaply, before writing any code:**
+
+1. `tests/e2e/tour.spec.ts` (20 tests) has **no clean full-spec run recorded since B17b**. The last one
+   was 19 passed / 1 failed, and that failure (`clicking the overlay outside the popover…`) passed on
+   its own in 43 s — a flake in a 9.1-min run of a spec that takes 2.8 min on a fresh server. Re-run
+   the spec once and record it.
+2. `pnpm build` was green at `a31a1ef` but **has not been re-run since B16/B17/B17b**. It is ~2 min.
+   Do it before any merge.
+
+**Then, in this order:**
+
+- **B21 — decide how the e2e suite is served (needs the user, not a subagent).** This is the live
+  question the session ended on: the full suite costs 12 min on a fresh dev server and **over 40 min**
+  on a degraded one, which is why D19 now forbids running it as a per-task reflex. The cause is Vite
+  **dev** hydrating heavy `client:only` editor islands against a single server — see finding B20 for
+  the measurements and the three options (run e2e against a production build, selective parallelism, or
+  just restart the dev server before long runs). Option 1 is the real fix and would likely let
+  `fullyParallel` come back, but it changes what CI does, so it is a decision, not a task.
+- **B18 — restore arrow-key step navigation (D18).** B16 had to set `allowKeyboardControl: false`;
+  that flag also governed driver.js's `ArrowLeft`/`ArrowRight`, so the engine must now own arrows the
+  way it already owns Escape. Nothing is unreachable today (Tab + Enter still work), so this is
+  capability restoration, not a break.
+- **B19 — anchor resolution is sequential at 2 s per missing anchor** (see finding). Cheap to improve,
+  and it is the reason the tour takes seconds to appear.
+- Optional, recorded and deliberately not done: a tour step + copy teaching the landings relaunch
+  button (D14 corollary), the `onPopoverRender` passthrough that would delete
+  `useEmailBuilderTour`'s `MutationObserver` (B2), unifying the host `AppShell`'s ⌘K palette with the
+  editor-scoped ones (B10's finding).
+
+**Needs a person, not a subagent:** **B3** (nobody has *looked* at the popover in light/dark, or at
+stage clipping over compact rails and absolute panels), **B6** (`AUTH_SECRET` is empty in this `.env`,
+so real login 500s here for humans too; the dev bypass is the only reason e2e runs at all), **B13**
+(the suite's instability under `fullyParallel`).
+
+**Re-establish the preconditions before delegating anything** — they are environment state, not repo
+state: ports 4321/3001/5432/6379 up; `tests/e2e/.auth/user.json` present (an empty
+`{"cookies":[],"origins":[]}` is enough while the auth bypass is on); e2e run as
+`npx playwright test --project=chromium --no-deps <spec> --workers=1 --retries=0`. **Consider
+restarting the dev server**: this session ended with one that had degraded to ~3× its own earlier
+timings. Re-measure rather than trusting any number above that is older than the last commit.
+
+**Read the contract decisions (D1–D20) before writing a handoff.** Two of this session's three
+incidents came from a contract that contradicted a package's own tests — see **I2**, and the lesson
+recorded with it: before forbidding a file in a handoff, check whether the package's tests bind that
+file to something the task must change.
 
 ---
 
-# Previous hand-off (superseded)
+# Older hand-off (superseded, kept for context)
 
 **State at hand-off (2026-09-14):** `HEAD = 89a3bce`, branch `feat/ui-polish-p1`, tree clean except
 the known untracked `.cursor/hooks/` and `.kiro/`. Nothing is half-finished: every phase below has
@@ -530,6 +593,18 @@ names alone and should have been in the contract, not discovered by the implemen
 **D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
 
 ## Findings
+
+**B19 — the engine resolves anchors one at a time, waiting up to 2 s for each one that is missing, so a
+tour with absent anchors takes seconds to appear.** `buildDriveStep` in
+`packages/product-tour/src/createTour.ts` `await`s `waitForAnchor(...)` per step inside a sequential
+loop, with `skipMissingElement` defaulting to `true` and a 2000 ms timeout. Every anchor that is not in
+the DOM therefore costs a full 2 s **before the first popover renders**, and the cost is additive.
+Measured indirectly twice: B10 clocked 5–6.5 s to the first popover in this dev environment, and B17's
+three new anchors pushed two unit tests past their 5 s budget purely by adding 3 × 2 s of waiting
+(the fixtures were missing the stubs — B17b added them). Nothing is broken, and the `when()` filter
+already removes steps whose preconditions fail, but resolving the surviving anchors concurrently (or
+with a shorter per-anchor timeout) would cut the tour's time-to-first-paint directly. Not attempted;
+the engine was out of scope for both tasks that noticed it. Owner: **B19**.
 
 **B20 — the e2e suite is too expensive to use as a gate, and the cause is how we serve the app, not
 the tests.** Measured today: the full suite at `--workers=1` took 12.3 min, then 11.7 min, and by the
