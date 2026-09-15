@@ -75,7 +75,7 @@ test.describe('email editor tour (/dashboard/templates/email)', () => {
     const popover = tourPopover(page).first();
     await expect(popover, 'tour popover appears on first visit').toBeVisible({ timeout: 45_000 });
     await expect(popover).toHaveClass(/md-tour/);
-    await expect(popover.locator('.driver-popover-title')).toHaveText('Name and autosave');
+    await expect(popover.locator('.driver-popover-title')).toHaveText('Name your template');
   });
 
   test('does not auto-start once already seen', async ({ page }) => {
@@ -276,7 +276,7 @@ test.describe('email editor tour (/dashboard/templates/email)', () => {
     // actual defect this test targets, per the task's measured 5–6.5s mount window).
     const nextBtn = tourNextButton(page);
     const sendTest = page.getByRole('button', { name: 'Send test' });
-    const highlightedActions = page.locator('.driver-active-element').filter({ has: sendTest });
+    const highlightedActions = page.locator('.driver-active-element').and(sendTest);
     for (let i = 0; i < 20; i++) {
       if (await highlightedActions.count().catch(() => 0) > 0) break;
       await expect(popover, `tour popover visible mid-walk (step ${i})`).toHaveCount(1);

@@ -7,7 +7,7 @@
   },
   "steps": {
     "headerIdentity": {
-      "title": "Name and autosave",
+      "title": "Name your template",
       "description": "Set the template name and category here — this is how you will find it again in the gallery."
     },
     "headerSave": {

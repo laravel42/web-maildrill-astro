@@ -80,7 +80,10 @@ describe('useEmailBuilderTour — F4 acceptance', () => {
     seedOneBlock();
     document.body.innerHTML += `
       <div data-tour="eb.header.identity"></div>
+      <div data-tour="eb.header.save"></div>
+      <div data-tour="eb.header.status"></div>
       <div data-tour="eb.toolbar.views"></div>
+      <div data-tour="eb.viewport.screenSize"></div>
       <div data-tour="eb.toolbar.history"></div>
       <div data-tour="eb.library.rail"></div>
       <div data-tour="eb.library.tabs"></div>
