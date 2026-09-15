@@ -219,10 +219,27 @@ B7  | duplicate tour instances       | engine registry + EB hook             | 4
 B8  | Escape does not dismiss tour   | product-tour escape guard             | 4e842fd | green (same commit)
 B10 | ⌘K palette relaunch entry red  | EB CommandPalette + EB tour hook      | 46c3a3f | green (closes B7B8's red; B11 fixed too)
 B12 | Escape vs an open host modal   | product-tour escape guard             | a0afd05 | green (closes the last red)
-B14 | modal detection counts hidden  | product-tour escape guard             | —       | next (see finding B14 / D12)
-B9  | landings has no relaunch entry | builder42 HostToolbar (D9)            | —       | after B14
+B14 | modal detection counts hidden  | product-tour escape guard             | 46d9557 | green
+B9  | landings has no relaunch entry | builder42 HostToolbar (D9)            | —       | next
 F7  | docs + telemetry               | docs/AGENTS.md, packages/VENDOR.md    | —       | pending
 ```
+
+Gate run for B14 (orchestrator, `ae30cb0..46d9557`): 2 files, both in scope; `61 6` and `107 0`. The
+6 deleted lines are the old `hasCompetingModalOpen()` doc block, rewritten in place — **no code and
+no assertion removed** (read line by line). History intact. Mutation-tested: restored `createTour.ts`
+from `ae30cb0` → the 3 new D12 cases failed by name (`display:none`, `visibility:hidden`, `hidden`
+attribute); restored, 45/45 green. Re-measured: `@md/product-tour` 5 files/45 tests, `tsc` 0,
+`pnpm check` 337 files 0/0/3, `pnpm lint` the same 3 by name.
+
+e2e gate deliberately **targeted, not the full suite**: B14 can only change the Escape path, which
+lives on the two editor routes. `tests/e2e/tour.spec.ts` → **13 passed / 1 skipped**;
+`workspace-tour.spec.ts -g "send-test dialog"` → **1 passed** (the test B12 closed stays closed).
+
+Worth recording from B14's report: happy-dom (this package's test environment) **does** implement
+`checkVisibility`, so the platform branch is the one exercised for `display:none` /
+`visibility:hidden`, but it never inspects the `hidden` attribute — which is why that attribute is
+checked explicitly and unconditionally before `checkVisibility` is consulted. The no-`checkVisibility`
+fallback branch is therefore **not covered by any test**; stated plainly rather than implied.
 
 Gate run for B12 (orchestrator, `080c6ed..a0afd05`): 3 files, all in scope, and all three are **pure
 additions** — `47 0` (engine), `133 0` (unit tests), `48 0` (e2e). Zero deleted lines in the whole
