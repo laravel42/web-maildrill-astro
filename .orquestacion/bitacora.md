@@ -203,6 +203,12 @@ Known ignorable dirt in `git status`: `.cursor/hooks/`, `.kiro/` (untracked loca
   after the existing `eb.toolbar.views` step (both are canvas-toolbar view controls). "Send test"
   stays the last step. Copy that currently describes saving inside the identity step moves to the save
   step — after this change no step may describe a control it does not highlight.
+- **D18** (B18) — **The engine owns the tour's keyboard, all of it.** Since `allowKeyboardControl` is
+  now `false`, `ArrowRight`/`ArrowLeft` step navigation must be reimplemented in this package's own
+  capture-phase key handler (driving `moveNext()`/`movePrevious()`), under the same rules the Escape
+  guard follows: only while a tour is active, never when a visible competing modal is open on top
+  (D11/D12), and never leaking the key to the host editor. Do not re-enable
+  `allowKeyboardControl` — one listener per key, owned here (that is what B16 had to fix).
 
 ---
 
@@ -261,9 +267,23 @@ B9  | landings has no relaunch entry | builder42 HostToolbar (D9)            | e
 B9b | drop the anchor, keep the button| same files, minus the registry        | f229159 | green (chain back to green)
 B9c | button sits inside the history anchor | HostToolbar only                | 22fc29e | green
 F7  | docs + telemetry               | AGENTS.md, VENDOR.md, plan, engine doc | a31a1ef | green — **plan implemented**
-B16 | «×» / overlay click don't close | product-tour destroy paths           | —       | next (D15)
-B17 | email header steps: one per control | EditorHeader + EB anchors/steps/copy | —    | after B16 (D16/D17)
+B16 | «×» / overlay click don't close | product-tour destroy paths           | fdace56 | green (see finding B18)
+B17 | email header steps: one per control | EditorHeader + EB anchors/steps/copy | —    | next (D16/D17)
+B18 | arrow-key step navigation lost | product-tour key handler              | —       | after B17 (D18)
 ```
+
+Gate run for B16 (orchestrator, `105dde1..fdace56`): 3 files, all in scope; `57 8` on the engine (the
+8 removed lines are the stale re-entrancy comment and the `allowKeyboardControl: true` line), `235 0`
+and `80 0` pure additions. No deletions, history intact. Mutation-tested: restored `createTour.ts`
+from `105dde1` → **3 of 5** new unit cases failed (close button, overlay click, last-step gating);
+the Escape and Done cases pass both ways by design. Restored, 50/50 green. Re-measured: product-tour
+6 files/50 tests, `tsc` 0, email-builder 8/46, builder42 13/119, check 0/0/3, lint the same 3 by name,
+and `tour.spec.ts` **18 passed** (14 + 4 new: «×» and overlay click, in **both** editors).
+
+The root cause is now documented in the engine with the actual driver.js source read into the comment:
+`h(e=!0)` returns early when an `onDestroyStarted` is configured and the close came from driver.js
+itself, so the hook owns the teardown — while the public `destroy()` is `()=>{h(!1)}`, which is why it
+can never re-enter that hook. The old comment asserting the opposite is gone.
 
 Gate run for B9c (orchestrator, `1223782..22fc29e`): 2 files, `5 11` and `32 0`. The anchor moved onto
 a new inner wrapper so `pbx.toolbar.history` now contains only undo/redo, and the redundant
@@ -467,6 +487,16 @@ names alone and should have been in the contract, not discovered by the implemen
 **D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
 
 ## Findings
+
+**B18 — B16 fixed the «×» at the cost of arrow-key step navigation, and nobody asked for that
+trade.** Found by the orchestrator reading B16's diff. Setting `allowKeyboardControl: false` was the
+right call for the *conflict* it solved (with `onDestroyStarted` now destroying, driver.js's own
+bubble-phase Escape listener would close the tour in the D11 case where our guard deliberately lets the
+key through to a modal), but that flag also governs driver.js's `ArrowLeft`/`ArrowRight` step
+navigation, which is now gone. Keyboard users can still Tab to "Next" and press Enter, so nothing is
+unreachable — but a capability was removed as a side effect, which is exactly the kind of silent loss
+this log exists to catch. Per **D18**, the engine should own arrows the same way it already owns Escape.
+Owner: B18.
 
 **B16 — driver.js's own «×» (and the overlay click) never close the tour.** Reported by the user for
 the email editor. Cause, read in `packages/product-tour/src/createTour.ts`: when a consumer overrides
