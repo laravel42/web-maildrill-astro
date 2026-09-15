@@ -166,6 +166,16 @@ Known ignorable dirt in `git status`: `.cursor/hooks/`, `.kiro/` (untracked loca
   (treat an undecidable candidate as *not* competing), because "Escape does nothing" is the worse
   failure for a user than "Escape closed the tour". Still host-agnostic (D1): no class or component
   names.
+- **D14** (B9/B9b) — **`BUILDER42_TOUR_ANCHORS` is the set of *tour-step* anchors, and stays 1:1 with
+  the steps.** A control that no step highlights does **not** get a `data-tour` key: this package's
+  own tests bind the registry to the step list and to copy parity in every locale
+  (`tourSteps.flags.test.ts`, `tourSteps.i18n-parity.test.ts`), and that invariant is worth more than
+  stamping an attribute on a button nothing points at. So the landings relaunch button carries no
+  anchor; the e2e finds it by accessible name (`getByRole('button', { name: … })`), which is also the
+  stronger assertion — it proves the control is reachable the way a user reaches it. D2 is unchanged:
+  no `.tsx` may hardcode an anchor key; there simply is no key here. Corollary, if the tour should
+  ever *teach* the relaunch button, that is a step + copy in en/es/it and belongs in its own task, not
+  smuggled in through the registry.
 
 ---
 
@@ -220,7 +230,8 @@ B8  | Escape does not dismiss tour   | product-tour escape guard             | 4
 B10 | ⌘K palette relaunch entry red  | EB CommandPalette + EB tour hook      | 46c3a3f | green (closes B7B8's red; B11 fixed too)
 B12 | Escape vs an open host modal   | product-tour escape guard             | a0afd05 | green (closes the last red)
 B14 | modal detection counts hidden  | product-tour escape guard             | 46d9557 | green
-B9  | landings has no relaunch entry | builder42 HostToolbar (D9)            | —       | next
+B9  | landings has no relaunch entry | builder42 HostToolbar (D9)            | eb9b7bf | WIP/red: my contract was contradictory — see I2
+B9b | drop the anchor, keep the button| same files, minus the registry       | —       | next (D14)
 F7  | docs + telemetry               | docs/AGENTS.md, packages/VENDOR.md    | —       | pending
 ```
 
@@ -334,7 +345,27 @@ auditor subagent is launched.
 
 ---
 
+## Incidents (cont.)
+
+**I2 (2026-09-14, during B9) — the orchestrator wrote a self-contradictory contract, and the
+subagent was right to stop.** The handoff said both "every `data-tour` key must live in
+`app/tour/tourAnchors.ts`" (D2) and "do NOT add a tour step for the new control". But this package
+enforces a **1:1 mapping between registry keys and tour steps**: `tests/tourSteps.flags.test.ts`
+("emite exactamente las 12 anclas del registro…") and `tests/tourSteps.i18n-parity.test.ts` ("cada
+ancla del registro tiene un par `steps.<id>.title/description`…"). Adding a key without a step turns
+both red by construction, and every escape route was outside the authorised set. The subagent
+implemented the whole feature, hit the wall, committed `wip(B9): … blocked on tourSteps invariant`
+(`eb9b7bf`), left the two failures named, and asked which constraint yields — exactly what rule 6
+asks for. Verified by the orchestrator: `pnpm --filter builder42 test` → 2 files failed / 111 passed,
+those two tests by name.
+
+Lesson for future handoffs: before forbidding a file, check whether the package's own tests bind that
+file to something the task must change. The registry↔steps invariant was discoverable in the test
+names alone and should have been in the contract, not discovered by the implementer. Resolution:
+**D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
+
 ## Findings
+
 
 **B14 — B12's modal detection counts modals that are in the DOM but not open, which would silently
 disable Escape-dismiss.** Found by the orchestrator reading B12's diff. `hasCompetingModalOpen()`
