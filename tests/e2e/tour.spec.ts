@@ -793,4 +793,138 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
     }
   });
 
+  // --- T12 (B46/D50) --------------------------------------------------------------------
+  //
+  // Every assertion above checks WHICH element carries `.driver-active-element`, never
+  // WHERE driver.js actually drew the overlay's cut-out ("stage") around it. B46 was a step
+  // whose stage was drawn up to 329px below the element it was supposed to frame, in 4 of
+  // 15 steps — and every test above stayed green through it, both because none of them
+  // measures the stage's geometry, and because none of them seeds canvas content (3 of the
+  // 4 broken steps, including the reported one, only exist on a non-empty canvas).
+  //
+  // driver.js paints a single overlay SVG whose `<path d="…">` has two subpaths: the
+  // full-viewport rect, then the cut-out. The cut-out's opening command is
+  // `M<x>,<y> h<w> a5,5 0 0 1 5,5 v<h> …` — parsed below with a regex rather than a full SVG
+  // path parser, which is enough because this package always emits that exact shape (a
+  // rounded rect drawn via H/A/V/A/H/A/V/A/Z commands from a fixed top-left `M`).
+  test('T12: the overlay cut-out lines up with the highlighted element at every step, with content on the canvas (B46/D50)', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await resetLandingTourState(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoApp(page, '/dashboard/landings/editor');
+
+    const popover = tourPopover(page);
+    await expect(popover, 'tour popover appears on first visit').toHaveCount(1, { timeout: 45_000 });
+
+    // Dismiss the auto-started tour so the canvas can be seeded first — the reported step
+    // (and two others) only exist once the canvas has content.
+    await page.keyboard.press('Escape');
+    await expect(popover, 'Escape dismisses the auto-started tour').toHaveCount(0);
+
+    const seedButton = page.locator('.pbx-canvas-empty__primary');
+    if (await seedButton.count() > 0) {
+      await seedButton.click();
+      await expect(page.locator('.pbx-canvas-empty'), 'canvas content replaces the empty state').toHaveCount(0, {
+        timeout: 15_000,
+      });
+    }
+
+    // Relaunch from the toolbar's restart control — same locator the existing
+    // "relaunches from the toolbar tour-restart button" test above uses.
+    await page.getByRole('button', { name: 'View the guided tour' }).click();
+    await expect(popover, 'toolbar button relaunches the tour').toHaveCount(1, { timeout: 10_000 });
+
+    const nextBtn = tourNextButton(page);
+    const progressText = popover.locator('.driver-popover-progress-text');
+    const initialProgress = (await progressText.textContent())?.trim() ?? '';
+    const totalSteps = Number(initialProgress.match(/of\s+(\d+)/)?.[1] ?? 20);
+    const maxIterations = totalSteps + 5;
+
+    const visitedAnchors: string[] = [];
+
+    for (let i = 0; i < maxIterations; i++) {
+      await expect(popover, `exactly one popover mid-walk (step ${i})`).toHaveCount(1);
+      await expect(nextBtn).toBeVisible();
+
+      // Let the step settle (matches this file's own convention of a short pause after a
+      // transition before measuring — see the D36 popover-position tests above) before
+      // reading either rect: B46 was specifically a stale-measurement-at-mount defect, so
+      // reading too early would risk masking exactly the regression this test exists to
+      // catch instead of exercising the engine's own settle path.
+      await page.waitForTimeout(150);
+
+      const active = page.locator('.driver-active-element');
+      await expect(active, `exactly one highlighted element mid-walk (step ${i})`).toHaveCount(1);
+
+      const measured = await page.evaluate(() => {
+        const el = document.querySelector('.driver-active-element');
+        const overlay = document.querySelector('.driver-overlay path');
+        if (!el || !overlay) return null;
+        const rect = el.getBoundingClientRect();
+        const d = overlay.getAttribute('d') ?? '';
+        // `d` holds TWO subpaths — the full-viewport rect first, then the cut-out — so the
+        // cut-out is the SECOND `M` command, not the first. `M<x>,<y> h<w> a5,5 0 0 1 5,5
+        // v<h> …` on that second subpath gives the stage's own x/y/w/h directly (the
+        // `a5,5 0 0 1 5,5` corner arcs are the rounding, not additional size). Coordinates
+        // can be negative (an element flush against the viewport edge draws a stage with a
+        // negative x/y), hence `-?` on every captured number.
+        const subpaths = d.split(/(?=M)/).filter((s) => s.trim().length > 0);
+        const cutout = subpaths[1] ?? '';
+        const match = cutout.match(/M\s*(-?[\d.]+)[,\s]+(-?[\d.]+)\s*h\s*(-?[\d.]+)[^v]*v\s*(-?[\d.]+)/);
+        return {
+          anchor: el.getAttribute('data-tour'),
+          el: { x: rect.x, y: rect.y, w: rect.width, h: rect.height },
+          stage: match
+            ? { x: Number(match[1]), y: Number(match[2]), w: Number(match[3]), h: Number(match[4]) }
+            : null,
+          pathD: d,
+        };
+      });
+
+      expect(measured, `stage + element rects readable mid-walk (step ${i})`).not.toBeNull();
+      const { anchor, el, stage, pathD } = measured!;
+      expect(stage, `overlay path parsed to a stage rect (step ${i}, anchor ${anchor}) — d="${pathD}"`).not.toBeNull();
+
+      if (anchor) {
+        visitedAnchors.push(anchor);
+      }
+
+      const tolerance = 2;
+      const expectedX = Math.round(el.x) - 5;
+      const expectedY = Math.round(el.y) - 10;
+      const expectedW = Math.round(el.w) + 10;
+      const expectedH = Math.round(el.h) + 10;
+
+      const detail =
+        `step "${anchor}" — element rect ${JSON.stringify(el)}, ` +
+        `stage rect ${JSON.stringify(stage)}, expected {x:${expectedX}, y:${expectedY}, w:${expectedW}, h:${expectedH}}`;
+
+      expect(Math.abs(stage!.x - expectedX), `stage.x must line up with the element — ${detail}`).toBeLessThanOrEqual(tolerance);
+      expect(Math.abs(stage!.y - expectedY), `stage.y must line up with the element — ${detail}`).toBeLessThanOrEqual(tolerance);
+      expect(Math.abs(stage!.w - expectedW), `stage.w must line up with the element — ${detail}`).toBeLessThanOrEqual(tolerance);
+      expect(Math.abs(stage!.h - expectedH), `stage.h must line up with the element — ${detail}`).toBeLessThanOrEqual(tolerance);
+
+      const isDone = await nextBtn.evaluate((el) => el.classList.contains('driver-popover-done-btn'));
+      if (isDone) break;
+
+      const beforeClickProgress = await progressText.textContent();
+      await page.keyboard.press('ArrowRight');
+      await expect(
+        progressText,
+        `tour advanced past step "${beforeClickProgress}" (step ${i})`,
+      ).not.toHaveText(beforeClickProgress ?? '', { timeout: 5_000 });
+    }
+
+    // Prove the walk actually covered ground, including the three anchors that only exist
+    // with content on the canvas (one of them the originally reported step) — otherwise a
+    // future change that stops seeding content, or shortens the tour, would make this test
+    // vacuously green while covering none of the steps that were broken.
+    expect(visitedAnchors.length, `the walk visited more than a handful of steps — visited ${JSON.stringify(visitedAnchors)}`).toBeGreaterThan(5);
+    expect(visitedAnchors, 'the walk included pbx.inspector.breakpoints').toContain('pbx.inspector.breakpoints');
+    expect(visitedAnchors, 'the walk included pbx.settings.pages').toContain('pbx.settings.pages');
+    expect(visitedAnchors, 'the walk included pbx.settings.languages').toContain('pbx.settings.languages');
+  });
+
 });
