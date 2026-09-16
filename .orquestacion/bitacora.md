@@ -11,6 +11,65 @@ Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour
 
 # START HERE — next session
 
+**State at hand-off (2026-09-15, fourth session): `HEAD = c239d1e`, branch `feat/ui-polish-p1`, tree
+clean** except the untracked `.cursor/hooks/` and `.kiro/`. **Not pushed.**
+
+**The user reported: pressing the landing editor's tour button does nothing — the overlay/highlight
+lands on the name field, but no popover ever appears.** The email tour was believed done. Diagnosed
+by the orchestrator **in a real browser** (throwaway Playwright specs against the running dev
+server, since this is not reproducible in any headless unit environment): the popover WAS being
+created, with correct content (`Nombre y autoguardado`, `1 de 8`) — it was parked **outside the
+viewport**, at `[1280, 1242, 250, 164]` in a 1280x720 viewport, inline style
+`inset: auto auto -686px 1280px`, and never repositioned.
+
+Cause, measured at the exact moment driver.js inserts the node: `driver.css` (imported by this
+package's `theme.css`) **had not been applied yet** — the popover computed `position: static`,
+`padding: 0px`, rect `[0, 720, 1280, 126]`, an unstyled full-width block whose arrow `<div>` was
+also 1280px wide. driver.js's own positioning helper then produced, arithmetically exactly:
+`left = Math.max(Math.min(anchorLeft − padding, innerWidth − realWidth − arrowWidth), arrowWidth)`
+→ `1280`, and `bottom = Math.min(…, innerHeight − realHeight − arrowWidth)` → `720 − 126 − 1280`
+→ `−686`. Milliseconds later the stylesheet landed, `position: fixed` applied **with those inline
+offsets frozen in**, and nothing ever recomputed them (no scroll, no resize, no `refresh()`).
+
+Both call sites do `ensureTourThemeCss(); void tour.start();` where `ensureTourThemeCss()` is a
+fire-and-forget `void import('@md/product-tour/style.css')`, and `start()` only awaited
+`import('driver.js')` — a pre-bundled dep that resolves first. **So this was never landing-specific:
+measured the same day on `/dashboard/templates/email`, the email popover was equally off-screen
+(`inset: auto auto -677.953px 1280px`, `[1280, 1234, 250, 164]`).** It is a race, which is why the
+email tour looked "concluded" — a warm module cache wins it sometimes.
+
+| Task | What                                                                 | Scope                                              | Commit    | Gate  |
+| ---- | -------------------------------------------------------------------- | -------------------------------------------------- | --------- | ----- |
+| L1   | engine awaits its own stylesheet before `drive()` (**D36**)           | `packages/product-tour/src/createTour.ts`, new `tests/styleLoadOrdering.test.ts` | `c612d35` | green |
+| L2   | e2e: the popover must render INSIDE the viewport, both editors        | `tests/e2e/tour.spec.ts`, `tests/e2e/helpers/tour.ts` | `c239d1e` | green |
+
+**Measured by the orchestrator (re-run, not taken from any report):** `@md/product-tour` **10 files
+/ 81 tests** (was 9/79) · `pnpm --filter @md/product-tour typecheck` 0 errors · `builder42` 13/119
+unchanged · `email-builder-standalone` 13/123 unchanged · `pnpm check` **339 files, 0 errors / 0
+warnings / 3 hints** · `tests/e2e/tour.spec.ts` **22 passed** (baseline 20, and the landing «×» test
+was RED before L1 — "element is outside of the viewport", the first automated symptom of this bug).
+Browser proof after L1: landing popover `[452, 67, 340, 144]`, email `[372, 65, 340, 144]`, both
+inside the viewport, both «×»-clickable. Mutation-tested twice: reverting L1 to the fire-and-forget
+form turns the new unit test red at its exact assertion, and turns the new **email** e2e test red
+with the literal off-screen numbers.
+
+**New contract decision — D36: the ENGINE owns the guarantee that the tour is styled before it is
+positioned.** `createTour` takes `loadStyles?: () => Promise<unknown>` (default
+`() => import('./theme.css')`, injectable for tests) and `start()` awaits it **concurrently** with
+the driver.js import (`Promise.all`), re-checking the D7 generation right after. Rationale:
+`driver.css` is not optional for driver.js and `theme.css` lives inside this package, so a consumer
+cannot be trusted to sequence it — and the previous consumer-side `ensureTourThemeCss()` had no way
+to make `start()` wait. No post-`drive()` `refresh()`, `rAF` or `MutationObserver` net was added on
+purpose: with the ordering fixed, driver.js measures a styled popover the first time.
+
+**Owed to the user, now:** re-open BOTH editors' tours in the browser (hard reload). The popover
+should appear next to the highlighted control on step 1 in each. The dark-mode review (**B23**) and
+the light/dark popover review (**B3**) are still owed.
+
+---
+
+# Older hand-off (2026-09-15, third session, after the user's first browser test — superseded)
+
 **State at hand-off (2026-09-15, third session, after the user's first browser test): `HEAD = 0a6bb37`,
 branch `feat/ui-polish-p1`, tree clean** except the untracked `.cursor/hooks/` and `.kiro/`. **Not
 pushed.**
@@ -857,6 +916,30 @@ names alone and should have been in the contract, not discovered by the implemen
 **D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
 
 ## Findings
+
+**B28 — this environment can only run the authenticated e2e specs through the DEV-ONLY auth bypass,
+and `auth.setup.ts` always fails (refines B6).** Measured: `AUTH_SECRET` in `.env` is still just the
+hint comment (the line is 78 chars, contains `#` and spaces; the "value" is the comment text), so
+`GET /api/auth/csrf` → **500** and `[setup] auth.setup.ts › authenticate` times out on
+`/login?error=expired` — exactly B6, unresolved. The dashboard is reachable anyway because `.env`
+sets `SKIP_AUTH_FOR_BUILDER_WORK=true` (the TEMP dev bypass in `src/middleware.ts`, which injects a
+fake session). **So the working invocation for any editor spec here is
+`npx playwright test tests/e2e/<file>.spec.ts --project=chromium --no-deps --workers=1 --retries=0`**
+— `--no-deps` skips the failing setup project, and the exact path matters (`tour.spec.ts` alone also
+matches `workspace-tour.spec.ts` and drags in ~6 min of unrelated, baseline-red tests). Two
+consequences worth keeping: the suite is currently **not** exercising the real login path at all, and
+nothing here proves the tour works for a genuinely authenticated session. Owner: unassigned (the
+`.env` fix belongs to whoever runs this environment).
+
+**B27 — the new landing-side "inside the viewport" e2e test does not bite; only the email one does.**
+Measured while gating L2: with L1 reverted in the working tree, the EMAIL test fails with the literal
+off-screen rect (`{"left":1280,"top":1234,…}`), while the LANDING test passes — on that route the
+stylesheet happened to win the race. That is the same non-determinism that made the bug look
+editor-specific in the first place, so the landing assertion is real coverage but a weak probe: it
+will catch a permanent regression, not a re-introduced race. Closing it properly would need a
+test-only seam to delay the stylesheet (product code changed for a test's benefit), which is why it
+was not done. The unit test in `packages/product-tour/tests/styleLoadOrdering.test.ts` is the
+deterministic guard; treat the two e2e tests as the end-to-end smoke on top of it. Owner: unassigned.
 
 **B26 — T8b's two \"tour destroyed mid-transition\" tests do not bite, so that guard is covered only by
 reading.** Measured by the orchestrator: removing the liveness re-check from inside the D35.5
