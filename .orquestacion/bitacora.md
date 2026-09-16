@@ -11,10 +11,11 @@ Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour
 
 # START HERE — next session
 
-**NEXT ACTION, verbatim: run T6 (e2e coverage in `tests/e2e/tour.spec.ts` + `helpers/tour.ts` for
-what T1–T5 added — see "After T5" item 2 below). B35/B36 (the Next-button label/click routing bug
-in driver.js itself) needs an orchestrator decision before it is fixed — read both before doing
-anything else, but they do not block T6.**
+**NEXT ACTION, verbatim: decide how to fix B35/B36/B38 (driver.js's own Next-button routing
+consults a stale anchor check) — this is now confirmed to BREAK a pre-existing baseline test
+(B38), not just a cosmetic label issue. Re-measure B39 (and the email "full step walk" flake)
+against a freshly restarted dev server before trusting either verdict; do not restart it
+autonomously — ask the user. T6 is DONE.**
 
 **State at hand-off (2026-09-16, sixth session): `HEAD = 316c490`, branch `feat/ui-polish-p1`, tree
 clean** except the pre-existing untracked `.cursor/hooks/` and `.kiro/` (not this chain's).
@@ -46,7 +47,7 @@ without the bug's help.
 | Task | What                                                                          | Scope (files)                                                                                             | Commit    | Gate  |
 | ---- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- | --------- | ----- |
 | T5   | engine: wait for the incoming step's anchor after `before()` (**D43**)          | `packages/product-tour/src/createTour.ts` + `tests/anchorResolutionConcurrency.test.ts` (fixtures) + `tests/waitForStepAnchor.test.ts` (new) + `tests/stepActivation.test.ts` (one obsolete assertion, see B35) | `316c490` | green — 11 files / 84 tests (was 10/81) |
-| T6   | e2e: one control per toolbar step, templates tab really opens, sections open     | `tests/e2e/tour.spec.ts`, `tests/e2e/helpers/tour.ts`                                                     | —         | — (unblocked, not yet started) |
+| T6   | e2e: one control per toolbar step, templates tab really opens, sections open     | `tests/e2e/tour.spec.ts`                                                                                   | `d31b3bb` | green (3/3 new tests, stable across 6+ reruns) — see B37/B38/B39 for what surfaced while writing it |
 
 ## After T5
 
@@ -60,19 +61,37 @@ without the bug's help.
    `pbx.settings.*` steps T4 added are reached, each with its own tab open (title text matches the
    section). The tour genuinely ends at "Idiomas" (title stops advancing there), consistent with
    D42 (`pages.breadcrumb`/`profileMenu` are standalone-only, skipped in the embed). T4 is closed.
-2. **T6 — e2e coverage** for what this chain added, in `tests/e2e/tour.spec.ts` +
-   `tests/e2e/helpers/tour.ts`: the two toolbar steps highlight one control each (assert the
-   highlighted element contains Edit/Preview but NOT the viewport switch, and vice versa); the
-   templates step really shows the Templates tab; each site-section step reaches its anchor with the
-   matching tab active. The orchestrator verified all of these by throwaway probe this session (see
-   item 1 above and B36) — T6 is about making them permanent.
-3. **B35 (this session) needs a decision before it is fixed** — and is now CONFIRMED live, not just
-   read from source (see **B36**): driver.js's own popover Next-button click can still route to
+2. **T6 — DONE, this session.** Added three e2e tests to `tests/e2e/tour.spec.ts` (`d31b3bb`,
+   stable across 6+ reruns of the new tests alone): the view/screen-size split highlights exactly
+   one control each way (D37); the Templates step really flips the sidebar's own tab (asserts
+   `#pbx-side-tab-templates[aria-selected="true"]`, not just anchor presence); every
+   `pbx.settings.*` section reaches its anchor with the matching `#pbx-site-tab-<id>` selected
+   (D39/D41). All three navigate with `ArrowRight`, never the popover's own Next/Done button —
+   see B35/B36/B38 for why that button is currently unsafe to drive a scripted multi-step walk
+   with. Writing these surfaced three findings, in order:
+   - **B37** — driver.js leaves `.driver-active-element` on some EARLIER steps' elements after
+     moving past them on this route (cosmetic residue, not a navigation defect — the CURRENT
+     step's own anchor is always correctly, singularly highlighted). Fixed by scoping every
+     `waitForActiveElement` assertion to `[data-tour="<anchor>"]` instead of asserting global
+     uniqueness of the class.
+   - **B38** — confirmed the SAME root cause as B35/B36 actually BREAKS a pre-existing baseline
+     test (`"exactly one instance is ever active, and a full step walk finishes via the real Next
+     button"`, landing editor), deterministically (3/3), at exactly the step B36 already named
+     (`pbx.settings.pages`). Very likely a T1–T4 regression unmasked by T5 (the tour can now
+     reach that far at all), not something T5/T6 introduced into the button-label logic.
+   - **B39** — a SECOND, apparently unrelated baseline test (email editor, "Escape yields to the
+     send-test dialog…") also failed deterministically (3/3) this session, on a code path T5
+     never touches (verified against `316c490`'s full diff) — most likely this environment's own
+     documented timing degradation (B20), not a product regression. Needs a fresh measurement
+     against a newly started dev server before trusting either verdict either way.
+3. **B35/B36/B38 need a decision before they are fixed, and B38 raises the stakes: this is no**
+   **longer cosmetic-only.** driver.js's own popover Next-button click can still route to
    `onDoneClick` instead of this package's `onNextClick` when the next step's anchor is not yet
-   mounted — the same D43 bug, for clicks instead of arrow keys. Read B35's entry in full before
-   proposing a fix; it names two candidate approaches and neither is a small, obviously-safe change
-   (both touch how this package owns driver.js's popover button wiring, similar in spirit to
-   D8/D18's Escape/arrow takeover).
+   mounted — the same D43 bug, for clicks instead of arrow keys — and B38 proves it now silently
+   ends a real user's tour early on the landing editor's last two sections. Read B35's entry in
+   full before proposing a fix; it names two candidate approaches and neither is a small,
+   obviously-safe change (both touch how this package owns driver.js's popover button wiring,
+   similar in spirit to D8/D18's Escape/arrow takeover).
 4. **Owed to the user, still open:** **B33** (the tour speaks Spanish while the embedded editor
    speaks English — `tourSteps.ts` resolves copy from the global i18next singleton instead of the
    editor's per-instance i18n; fix shape recorded in the finding), **B23** and **B3** (eyes-on
@@ -1053,7 +1072,70 @@ names alone and should have been in the contract, not discovered by the implemen
 
 ## Findings
 
-**B36 — B35 (driver.js's Next-button label lying about "Done") is confirmed LIVE, in the real
+**B37 — driver.js does not always remove `.driver-active-element` from an EARLIER step's element
+after moving past it, on the landing tour.** Found writing T6's tests: `pbx.toolbar.history`,
+`pbx.toolbar.viewport`, `pbx.sidebar.tabs`, and `pbx.sidebar.palette` were repeatedly observed still
+carrying `.driver-active-element` several steps after the tour moved on — reproduced with a
+throwaway debug probe (deleted after use) that logged every `.driver-active-element`'s `data-tour`
+each 500 ms across a `pbx.settings.tabs` → `pbx.settings.layers` transition: the CORRECT new
+element gained the class within 500 ms every time (never the actual bottleneck), but 2–3 stale
+ones from earlier steps kept it too, for the rest of the run. Cosmetic only, confirmed by direct
+observation: the popover, the overlay, and `driverInstance.getActiveIndex()` were singular and
+correct throughout every probe run — nothing was double-highlighted on screen, and no test that
+checks the CURRENT step's own anchor (scoped by `data-tour`) is affected. Root cause not fully
+traced (this package's own code never removes the class directly — verified by `git grep` in
+`packages/product-tour/src`; it must be a driver.js@1.8.0 internal path this route triggers that
+skips its own cleanup, plausibly related to the D35.5 reconciliation branch calling `refresh()`),
+so T6's tests were written to assert only "this anchor IS highlighted" (`.driver-active-element[data-tour="X"]`),
+never "this is the ONLY highlighted element in the document" — the latter is not a safe assumption
+on this route until B37 is traced further. Owner: unassigned, low priority (no user-visible symptom
+found), read this before writing another `.driver-active-element` assertion for the landing tour.
+
+**B39 — a second, unrelated pre-existing baseline test now also fails deterministically:
+`tests/e2e/tour.spec.ts`'s email editor "Escape yields to the send-test dialog…" test.** Found
+running the full `tour.spec.ts` suite after T6. Fails 3/3 in isolation at
+`expect(highlightedActions, 'the eb.header.actions step highlights Send test').toHaveCount(1)` —
+the highlight is simply missing when the assertion runs, BEFORE any Escape is ever pressed; this
+test never calls `ArrowRight`/`onNextClick`/`transitionTo()` at all (it clicks a real DOM button,
+`sendTest.click()`), so none of T5's changed code paths in `createTour.ts` (`waitForStepAnchor`,
+the two `transitionTo()`/`start()` call sites, the D21 array-bounds fix) are on this test's
+execution path — read directly against T5's diff (`git show 316c490 --stat`/full diff) before
+concluding this, not assumed. Most likely cause, by elimination: this dev environment's own timing
+degradation under long-running, repeated heavy `client:only` React-island hydration (B20, already
+documented, already flagged as environment-owned, not autonomously fixable by restarting the
+user's dev server mid-session). Recorded here rather than silently ignored because it is
+DETERMINISTIC in this session (unlike the genuinely non-deterministic email "full step walk" flake
+also observed this session, 2/3 pass) — worth a fresh measurement at the start of the NEXT session,
+against a freshly started dev server, before trusting either verdict. Not this task's to fix.
+
+**B38 — B35/B36's misleading Next-button label is not just cosmetic: it BREAKS a pre-existing
+baseline e2e test by causing a premature "Done" click to actually end the tour early.**
+`tests/e2e/tour.spec.ts`'s "landing editor tour … exactly one instance is ever active, and a full
+step walk finishes via the real Next button" (present since before this session, untouched by
+T1–T6) now fails **deterministically** (3/3 runs) at step index 10 — `exactly one popover mid-walk
+(step 10)`, received 0 — meaning the tour was already gone by the time the loop got there. Step 10
+in this walk's fixed order (header identity(0)/views(1)/viewport(2)/history(3)/sidebarTabs(4)/
+palette(5)/templates(6)/canvas(7)/settingsTabs(8)/**layers(9)**/**pages(10)**) is exactly
+`pbx.settings.pages` — the SAME step B36 already found showing "Listo" (Done) one step early, live
+in the browser, this session. The test's own loop reads the button's `driver-popover-done-btn`
+class BEFORE clicking and breaks its loop right after a click where that class was present — so at
+`pbx.settings.pages` it believes (correctly, per the class) that this IS the last step, clicks once
+more, and the tour ends — but `pbx.settings.languages` was never shown, and the loop's next
+iteration finds no popover at all, which is exactly the observed failure. **This is very likely a
+regression from T1–T4** (which lengthened the landing tour enough to reach the buggy button-label
+zone) that was invisible until now only because, pre-T5/D43, the tour could not reliably reach that
+far at all (B34) — T5 unblocking real navigation is what exposed it, not something T5/T6 introduced
+into the button-label logic itself. **Not fixed in this session** — same root cause and same fix
+candidates as B35/B36 (an orchestrator decision on how this package should own driver.js's Next
+button, not a small patch), and this baseline test cannot be trusted green until that lands. Ruled
+out as environment noise before concluding this: re-ran 3× with no server restart, always the exact
+same step index; a genuinely unrelated flake (the EMAIL editor's sibling "full step walk" test,
+untouched by any tour work this session) was ALSO observed failing once in 3 runs during the same
+investigation, but that one is non-deterministic (2/3 pass, different step counts) — a separate,
+pre-existing, environment-level flake (B20's documented dev-server degradation), not this defect.
+Owner: same as B35/B36.
+
+
 browser, not just read from source.** Walking `/dashboard/landings/editor`'s tour with the throwaway
 probe (see "After T5" item 1): at the `pbx.settings.pages` step ("Páginas"), the popover's Next
 button already read "Listo" (Done) — one full step before the tour actually ends at
