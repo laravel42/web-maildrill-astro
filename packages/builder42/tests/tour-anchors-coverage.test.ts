@@ -137,6 +137,46 @@ describe("Builder42 tour anchors — coverage (F2b, static source scan)", () => 
     },
   );
 
+  // Guardia para el bug T2: un call-site `{...dataTourAttr(BUILDER42_TOUR_ANCHORS.x)}`
+  // puede colarse sin el `import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from
+  // "@/app/tour/tourAnchors"` correspondiente — el grep de arriba solo confirma que
+  // el texto del call-site existe, no que los identificadores estén en scope. Ese
+  // exacto defecto llegó a `ViewportDropdown.tsx` y solo se vio en el navegador
+  // (`ReferenceError: dataTourAttr is not defined`) porque el `tsconfig.json` raíz
+  // EXCLUYE `packages/`, este paquete no tiene script `typecheck`, y su entorno
+  // vitest es `node` sin jsdom (nada monta el componente). Este caso cierra ese
+  // hueco de forma estática: para cada archivo listado en `filesByAnchor`, exige
+  // que el import de `dataTourAttr` (aceptando un alias, p. ej. `dataTourAttr as
+  // dataTourAttrPbx` en `EditorHeader.tsx`) y el de `BUILDER42_TOUR_ANCHORS` estén
+  // presentes y vengan de un módulo cuya ruta termine en `tour/tourAnchors` (el
+  // alias interno `@/app/tour/tourAnchors`) o `builder42/tour` (el subpath público
+  // del `package.json` de este paquete, que resuelve al mismo `tourAnchors.ts` —
+  // el caso de `EditorHeader.tsx`, que vive fuera de `packages/builder42`).
+  it.each(
+    Object.values(filesByAnchor)
+      .flat()
+      .filter((file, index, all) => all.findIndex((f) => f.path === file.path) === index),
+  )("$path imports dataTourAttr and BUILDER42_TOUR_ANCHORS from tour/tourAnchors", (file) => {
+    const source = file.read();
+    const importLines = source.match(/^import\s*\{[^}]*\}\s*from\s*["'][^"']*["'];?/gms) ?? [];
+    const tourImportLine = importLines.find((line) => /tour\/tourAnchors["']|builder42\/tour["']/.test(line));
+
+    expect(
+      tourImportLine,
+      `${file.path} is missing an import from a "tour/tourAnchors" (or "builder42/tour") module`,
+    ).toBeTruthy();
+
+    const namedImports = tourImportLine!;
+    expect(
+      /\bdataTourAttr\b(\s+as\s+\w+)?/.test(namedImports),
+      `${file.path} calls dataTourAttr(...) but does not import "dataTourAttr" from tour/tourAnchors`,
+    ).toBe(true);
+    expect(
+      /\bBUILDER42_TOUR_ANCHORS\b/.test(namedImports),
+      `${file.path} uses BUILDER42_TOUR_ANCHORS but does not import it from tour/tourAnchors`,
+    ).toBe(true);
+  });
+
   it("EditorHeader gates pbx.header.identity to the landing identity only (no channel)", () => {
     const source = readHost("src/components/react/shared/EditorHeader.tsx");
     // No debe escribirse incondicionalmente — solo cuando no hay `channel` (Landings
