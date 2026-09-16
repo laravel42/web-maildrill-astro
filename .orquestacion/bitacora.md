@@ -1236,6 +1236,16 @@ file to something the task must change. The registry↔steps invariant was disco
 names alone and should have been in the contract, not discovered by the implementer. Resolution:
 **D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
 
+**Verification gap, stated plainly (owed to the user):** every e2e run above walks
+`/dashboard/landings/editor` after `resetLandingTourState`, i.e. on an **empty canvas** — so the
+browser evidence covers the 12-step embed order, NOT the 17-step order a landing WITH content
+produces, which is precisely the order in which the user hit the stall (B41). What IS verified for
+that path: the engine's Next/Done routing and engine-owned skipping (T7a, 5 unit tests, mutation-
+proven), the single-in-flight guard (T7b, including the literal 3-step jump reproduced and fixed),
+and the `inspectorTab` seam plus the `breakpoints` step's before/after round trip (T8a, unit). What
+is NOT verified in a browser: that the with-content walk now passes step 10 → 11 → 12 end to end. An
+e2e that seeds a node before starting the tour would close it; it needs its own task.
+
 ## Findings
 
 **B45 — D46 drops a Next click with no visible feedback, which is invisible to a human but breaks
