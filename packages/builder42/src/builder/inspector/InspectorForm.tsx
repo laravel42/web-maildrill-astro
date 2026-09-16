@@ -33,10 +33,13 @@
  * antiguo panel del modo simple (ambos borrados en este paso junto con el
  * flag `uiComplexity`, D1 opción (a): sin interruptor global).
  *
- * El estado de la tab es UI-state local (`useState`), no del documento (no
- * entra a undo/redo). Docs/39 §2.3: la tab "Interactividad" solo se renderiza
- * si el nodo tiene algo configurable ahí (behaviors posibles, click-action
- * permitido, o es un `modal`) — de lo contrario solo hay 2 tabs.
+ * El estado de la tab (`inspectorTab`/`setInspectorTab`) vive en el document
+ * store (`slices/ui.ts`), no en un `useState` local (D48): mismo motivo que
+ * `sidebarTab` (D38) — el `before()` de un paso del tour guiado necesita poder
+ * abrir la tab "style" desde fuera de React. Sigue sin entrar a undo/redo (no
+ * es parte del documento). Docs/39 §2.3: la tab "Interactividad" solo se
+ * renderiza si el nodo tiene algo configurable ahí (behaviors posibles,
+ * click-action permitido, o es un `modal`) — de lo contrario solo hay 2 tabs.
  *
  * El header y la tab bar son sticky vía `.pbx-inspector-sticky-bar` (docs/26 §1.1).
  *
@@ -44,7 +47,6 @@
  * Subcomponentes en `./form/` (PropsSection, …) y `./panel/` (StylePanel).
  */
 
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import { useDocumentStore } from "@/builder/store/documentStore";
@@ -66,7 +68,8 @@ import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 export function InspectorForm({ node }: { node: BuilderNode }) {
   const { t } = useTranslation("inspector");
   const def = getDefinition(node.type);
-  const [tab, setTab] = useState<InspectorTab>("props");
+  const tab = useDocumentStore((s) => s.inspectorTab);
+  const setTab = useDocumentStore((s) => s.setInspectorTab);
   // D3 (docs/41 §3, §5.2, §8 criterio 8): panel atenuado cuando el nodo está
   // oculto en el breakpoint activo. Atenuación SELECTIVA (nunca opacity global
   // — rompería AA): la clase la consumen encabezados/iconos/labels vía CSS,

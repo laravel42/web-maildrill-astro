@@ -20,6 +20,7 @@
 import type { TourStep } from "@md/product-tour";
 import i18n from "@/i18n";
 import { useDocumentStore, type SideTab } from "@/builder/store/documentStore";
+import type { InspectorTab } from "@/builder/inspector/form/types";
 import { readConfig, writeConfig } from "@/hooks/useLocalConfig";
 import { BUILDER42_TOUR_ANCHORS } from "./tourAnchors";
 
@@ -279,22 +280,41 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
   // anterior (nodo seleccionado + panel expandido) — `VisibilityStrip` solo se
   // monta dentro de la tab "style" del Inspector con un nodo activo. Igual que el
   // paso 10, el panel se expande con `writeConfig` (D40), no con `localStorage`
-  // directo.
-  steps.push({
-    anchorKey: BUILDER42_TOUR_ANCHORS.inspectorBreakpoints,
-    popover: {
-      title: t("steps.inspectorBreakpoints.title"),
-      description: t("steps.inspectorBreakpoints.description"),
-      side: "left",
-    },
-    when: () => firstRootChildId() !== null,
-    before: () => {
-      const childId = firstRootChildId();
-      if (childId) useDocumentStore.getState().select(childId);
-      writeConfig("inspectorCollapsed", false);
-    },
-    skipMissingElement: true,
-  });
+  // directo. Además fuerza la tab "style" del Inspector (D48: `inspectorTab`/
+  // `setInspectorTab`, `useDocumentStore`, NO `localStorage` — la tab del
+  // Inspector vive en el document store desde D48 por el mismo motivo que
+  // `sidebarTab`/D38): sin esto, cualquier nodo con tab "Props" deja el Inspector
+  // en esa tab y el ancla de `VisibilityStrip` (montada solo en "style") no
+  // existe — el defecto original que este paso no podía avanzar. `after`
+  // restaura la tab que estaba activa antes del paso, mismo patrón de
+  // snapshot-en-closure que el paso 7 usa para `sidebarTab`.
+  steps.push(
+    (() => {
+      let previousInspectorTab: InspectorTab = "props";
+      return {
+        anchorKey: BUILDER42_TOUR_ANCHORS.inspectorBreakpoints,
+        popover: {
+          title: t("steps.inspectorBreakpoints.title"),
+          description: t("steps.inspectorBreakpoints.description"),
+          side: "left",
+        },
+        when: () => firstRootChildId() !== null,
+        before: () => {
+          const childId = firstRootChildId();
+          if (childId) useDocumentStore.getState().select(childId);
+          writeConfig("inspectorCollapsed", false);
+
+          const { inspectorTab, setInspectorTab } = useDocumentStore.getState();
+          previousInspectorTab = inspectorTab;
+          setInspectorTab("style");
+        },
+        after: () => {
+          useDocumentStore.getState().setInspectorTab(previousInspectorTab);
+        },
+        skipMissingElement: true,
+      } satisfies TourStep;
+    })(),
+  );
 
   // 12. pbx.settings.tabs — SiteSettingsPanel.tsx (tabrow, siempre montado — solo el
   // body de abajo cambia según la tab). Presenta la fila completa de secciones de

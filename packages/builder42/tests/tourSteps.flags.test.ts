@@ -126,6 +126,42 @@ describe("buildBuilder42TourSteps — pasos dependientes de nodo seleccionado (�
   });
 });
 
+describe("buildBuilder42TourSteps — pbx.inspector.breakpoints abre la tab 'style' del Inspector y la restaura (D48)", () => {
+  it.each(["props", "behaviors"] as const)(
+    "before() cambia inspectorTab a 'style' y after() restaura desde '%s'",
+    (previousTab) => {
+      insertChildUnderRoot("child-1");
+      useDocumentStore.getState().setInspectorTab(previousTab);
+
+      const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+      const breakpointsStep = steps.find(
+        (s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.inspectorBreakpoints,
+      );
+      expect(breakpointsStep).toBeDefined();
+
+      breakpointsStep!.before?.();
+      expect(useDocumentStore.getState().inspectorTab).toBe("style");
+
+      breakpointsStep!.after?.();
+      expect(useDocumentStore.getState().inspectorTab).toBe(previousTab);
+    },
+  );
+
+  it("before() also selects the first root child (unchanged precondition)", () => {
+    insertChildUnderRoot("child-1");
+    useDocumentStore.getState().select(null);
+
+    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+    const breakpointsStep = steps.find(
+      (s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.inspectorBreakpoints,
+    );
+    expect(breakpointsStep).toBeDefined();
+
+    breakpointsStep!.before?.();
+    expect(useDocumentStore.getState().selectedId).toBe("child-1");
+  });
+});
+
 describe("buildBuilder42TourSteps — pbx.toolbar.views fuerza view === 'edit' (§1.4.2)", () => {
   it("before() cambia a 'edit' si el editor estaba en preview", () => {
     useDocumentStore.getState().setView("preview");
