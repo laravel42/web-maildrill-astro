@@ -30,6 +30,10 @@
       "title": "Trascina sulla tela",
       "description": "Trascina un qualsiasi elemento o sezione da qui direttamente sulla pagina."
     },
+    "sidebarTemplates": {
+      "title": "Template di pagina",
+      "description": "Questa tab contiene pagine intere pronte da usare come punto di partenza. Applicarne una sostituisce la pagina attuale, perciò ti chiede prima una conferma."
+    },
     "canvasFrame": {
       "title": "La tela",
       "description": "Clicca un elemento per selezionarlo, oppure trascinane uno dal pannello per aggiungerlo."

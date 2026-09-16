@@ -17,6 +17,7 @@ import { useDocumentStore } from "@/builder/store/documentStore";
 import { PageTemplateCard } from "./TemplateCard";
 import { SimpleModal, IconButton, CloseIcon } from "@/components";
 import { AiSectionGenerator } from "@/builder/inspector/AiSectionGenerator";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 function PageLayoutConfirmModal({
   layoutId,
@@ -104,7 +105,7 @@ export function TemplatesPanel() {
   return (
     <>
       {pageLayouts.length > 0 ? (
-        <div className="pbx-template__group">
+        <div className="pbx-template__group" {...dataTourAttr(BUILDER42_TOUR_ANCHORS.sidebarTemplates)}>
           <div className="pbx-template__grid">
             {pageLayouts.map((layout) => (
               <PageTemplateCard

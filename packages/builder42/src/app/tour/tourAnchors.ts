@@ -37,6 +37,8 @@ export const BUILDER42_TOUR_ANCHORS = {
   sidebarTabs: 'pbx.sidebar.tabs',
   /** `app/layout/Sidebar.tsx` — paleta arrastrable de secciones y elementos. */
   sidebarPalette: 'pbx.sidebar.palette',
+  /** `app/layout/TemplatesPanel.tsx` — tarjetas de plantillas de página (solo con la tab Plantillas activa). */
+  sidebarTemplates: 'pbx.sidebar.templates',
   /** `app/layout/Canvas.tsx` (`.pbx-canvas__frame`) — el lienzo y su ancho por dispositivo. */
   canvasFrame: 'pbx.canvas.frame',
   /** `builder/dnd/NodeActionsRail.tsx` — duplicar/borrar el nodo seleccionado. */

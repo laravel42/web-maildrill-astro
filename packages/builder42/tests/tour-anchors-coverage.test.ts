@@ -91,6 +91,9 @@ describe("Builder42 tour anchors — coverage (F2b, static source scan)", () => 
     [BUILDER42_TOUR_ANCHORS.sidebarPalette]: [
       { path: "src/app/layout/Sidebar.tsx", read: () => read("src/app/layout/Sidebar.tsx") },
     ],
+    [BUILDER42_TOUR_ANCHORS.sidebarTemplates]: [
+      { path: "src/app/layout/TemplatesPanel.tsx", read: () => read("src/app/layout/TemplatesPanel.tsx") },
+    ],
     [BUILDER42_TOUR_ANCHORS.canvasFrame]: [
       { path: "src/app/layout/Canvas.tsx", read: () => read("src/app/layout/Canvas.tsx") },
     ],

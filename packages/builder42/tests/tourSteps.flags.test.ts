@@ -153,7 +153,7 @@ describe("buildBuilder42TourSteps — siempre emite las anclas sin precondición
     );
   });
 
-  it("emite exactamente las 13 anclas del registro cuando todo está disponible y hay un nodo seleccionable", () => {
+  it("emite exactamente las 14 anclas del registro cuando todo está disponible y hay un nodo seleccionable", () => {
     insertChildUnderRoot("child-1");
 
     const anchors = buildBuilder42TourSteps(ADVANCED_CONFIG).map((s) => s.anchorKey);
@@ -177,4 +177,34 @@ describe("getBuilder42TourLabels", () => {
     expect(labels.doneBtnText).toBeTruthy();
     expect(labels.progressText).toBeTruthy();
   });
+});
+
+describe("buildBuilder42TourSteps — pbx.sidebar.palette pins the components tab (D38)", () => {
+  it("before() leaves sidebarTab === 'components' even if templates was active", () => {
+    useDocumentStore.getState().setSidebarTab("templates");
+    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+    const paletteStep = steps.find((s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.sidebarPalette);
+    expect(paletteStep).toBeDefined();
+    paletteStep!.before?.();
+    expect(useDocumentStore.getState().sidebarTab).toBe("components");
+  });
+});
+
+describe("buildBuilder42TourSteps — pbx.sidebar.templates opens the Templates tab and restores it (D38/D40)", () => {
+  it.each(["components", "tokens"] as const)(
+    "before() switches sidebarTab to 'templates' and after() restores it from '%s'",
+    (previousTab) => {
+      useDocumentStore.getState().setSidebarTab(previousTab);
+
+      const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+      const templatesStep = steps.find((s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.sidebarTemplates);
+      expect(templatesStep).toBeDefined();
+
+      templatesStep!.before?.();
+      expect(useDocumentStore.getState().sidebarTab).toBe("templates");
+
+      templatesStep!.after?.();
+      expect(useDocumentStore.getState().sidebarTab).toBe(previousTab);
+    },
+  );
 });

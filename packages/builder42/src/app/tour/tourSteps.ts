@@ -19,7 +19,8 @@
 
 import type { TourStep } from "@md/product-tour";
 import i18n from "@/i18n";
-import { useDocumentStore } from "@/builder/store/documentStore";
+import { useDocumentStore, type SideTab } from "@/builder/store/documentStore";
+import { readConfig, writeConfig } from "@/hooks/useLocalConfig";
 import { BUILDER42_TOUR_ANCHORS } from "./tourAnchors";
 
 /**
@@ -163,6 +164,10 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
   // elementos). Puramente descriptivo: el overlay de driver.js pone
   // `pointer-events: none` sobre todo menos el elemento resaltado (§1.4.4), así que
   // el paso no promete "arrastra esto aquí" como acción ejecutable dentro del tour.
+  // `before` fija la tab "components" (D38: `useDocumentStore().setSidebarTab`) —
+  // sin esto el paso resaltaría cualquier tab que estuviera activa, incluida
+  // Plantillas, y este paso habla de arrastrar elementos/secciones, no de
+  // plantillas de página (ese es el paso 7, simétrico, que fija "templates").
   steps.push({
     anchorKey: BUILDER42_TOUR_ANCHORS.sidebarPalette,
     popover: {
@@ -170,10 +175,55 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
       description: t("steps.sidebarPalette.description"),
       side: "right",
     },
+    before: () => {
+      useDocumentStore.getState().setSidebarTab("components");
+    },
     skipMissingElement: true,
   });
 
-  // 7. pbx.canvas.frame — Canvas.tsx (`.pbx-canvas__frame`, el lienzo y su ancho por
+  // 7. pbx.sidebar.templates — TemplatesPanel.tsx (tarjetas de plantillas de
+  // página). Solo existe en el DOM con la tab "templates" activa Y el sidebar
+  // abierto (mismo requisito de `sidebarMode` que el paso 5) — `before` fuerza
+  // ambos y `after` los restaura a lo que encontró, siguiendo el mismo patrón de
+  // snapshot-en-closure que el paso 5 usa para `sidebarMode`. La tab activa vive
+  // en el document store desde D38 (`sidebarTab`/`setSidebarTab`, NO en
+  // localStorage): se lee/escribe con esa API, nunca con `localStorage` directo.
+  // `sidebarMode` sí vive en localStorage, pero se lee/escribe con
+  // `readConfig`/`writeConfig` (`@/hooks/useLocalConfig`) y no con
+  // `localStorage.setItem` — a diferencia del paso 5 (D40, finding B29): un
+  // `setItem` crudo persiste el valor pero no notifica a los suscriptores del
+  // hook, así que el panel no se abriría a tiempo para que driver.js encuentre
+  // el ancla.
+  steps.push(
+    (() => {
+      let previousSidebarTab: SideTab = "components";
+      let sidebarModeChanged = false;
+      return {
+        anchorKey: BUILDER42_TOUR_ANCHORS.sidebarTemplates,
+        popover: {
+          title: t("steps.sidebarTemplates.title"),
+          description: t("steps.sidebarTemplates.description"),
+          side: "right",
+        },
+        before: () => {
+          const { sidebarTab, setSidebarTab } = useDocumentStore.getState();
+          previousSidebarTab = sidebarTab;
+          setSidebarTab("templates");
+
+          const previousSidebarMode = readConfig("sidebarMode");
+          sidebarModeChanged = previousSidebarMode !== "open";
+          if (sidebarModeChanged) writeConfig("sidebarMode", "open");
+        },
+        after: () => {
+          useDocumentStore.getState().setSidebarTab(previousSidebarTab);
+          if (sidebarModeChanged) writeConfig("sidebarMode", "compact");
+        },
+        skipMissingElement: true,
+      } satisfies TourStep;
+    })(),
+  );
+
+  // 8. pbx.canvas.frame — Canvas.tsx (`.pbx-canvas__frame`, el lienzo y su ancho por
   // dispositivo). Siempre visible en modo edit (ya forzado en el paso 2).
   steps.push({
     anchorKey: BUILDER42_TOUR_ANCHORS.canvasFrame,
@@ -184,7 +234,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     },
   });
 
-  // 8. pbx.canvas.nodeActions — NodeActionsRail.tsx (duplicar/borrar el nodo
+  // 9. pbx.canvas.nodeActions — NodeActionsRail.tsx (duplicar/borrar el nodo
   // seleccionado). Requiere un nodo seleccionado que NO sea el root (el rail se
   // posiciona junto al nodo, §1.4.5): si el lienzo está vacío no hay nada que
   // seleccionar, así que el paso se omite por completo vía `when` (no solo se salta
@@ -204,7 +254,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     skipMissingElement: true,
   });
 
-  // 9. pbx.inspector.tabs — InspectorForm.tsx (tabs Contenido/Estilo/Interactividad).
+  // 10. pbx.inspector.tabs — InspectorForm.tsx (tabs Contenido/Estilo/Interactividad).
   // Requiere nodo seleccionado (el Inspector solo monta `InspectorForm` con un nodo
   // activo) y el panel expandido (`inspectorCollapsed = false`, §1.4.5).
   steps.push({
@@ -225,7 +275,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     skipMissingElement: true,
   });
 
-  // 10. pbx.inspector.breakpoints — InspectorForm.tsx tab "style" (segmented de
+  // 11. pbx.inspector.breakpoints — InspectorForm.tsx tab "style" (segmented de
   // breakpoints, montado por `VisibilityStrip`). Misma precondición que el paso
   // anterior (nodo seleccionado + panel expandido) — `VisibilityStrip` solo se
   // monta dentro de la tab "style" del Inspector con un nodo activo.
@@ -247,7 +297,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     skipMissingElement: true,
   });
 
-  // 11. pbx.pages.breadcrumb — PageBreadcrumb.tsx. Siempre visible: el breadcrumb de
+  // 12. pbx.pages.breadcrumb — PageBreadcrumb.tsx. Siempre visible: el breadcrumb de
   // páginas existe con o sin más de una página en el sitio. El copy transmite el
   // concepto clave de que una landing es un sitio multipágina (§3.2).
   steps.push({
@@ -259,7 +309,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     },
   });
 
-  // 12. pbx.publish — PublishPanel.tsx (publicar y subdominio). Solo si el adapter de
+  // 13. pbx.publish — PublishPanel.tsx (publicar y subdominio). Solo si el adapter de
   // publicación del host está disponible (§3.2 precondición, §1.4.6): con
   // `publishAvailable = false`, `PublishPanel` sigue montado pero solo muestra el
   // mensaje de "deshabilitado" (`publish.disabledTitle`) — un paso de tour ahí sería
@@ -277,7 +327,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     });
   }
 
-  // 13. pbx.profileMenu — ProfileMenu.tsx (tema, idioma, nivel simple/avanzado,
+  // 14. pbx.profileMenu — ProfileMenu.tsx (tema, idioma, nivel simple/avanzado,
   // controles de reorden). Siempre visible: el trigger del menú de preferencias no
   // depende de ningún flag del embed.
   steps.push({

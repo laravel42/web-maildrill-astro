@@ -102,6 +102,7 @@ describe("builder42 tour i18n — paridad de claves", () => {
       [BUILDER42_TOUR_ANCHORS.toolbarHistory]: "toolbarHistory",
       [BUILDER42_TOUR_ANCHORS.sidebarTabs]: "sidebarTabs",
       [BUILDER42_TOUR_ANCHORS.sidebarPalette]: "sidebarPalette",
+      [BUILDER42_TOUR_ANCHORS.sidebarTemplates]: "sidebarTemplates",
       [BUILDER42_TOUR_ANCHORS.canvasFrame]: "canvasFrame",
       [BUILDER42_TOUR_ANCHORS.canvasNodeActions]: "canvasNodeActions",
       [BUILDER42_TOUR_ANCHORS.inspectorTabs]: "inspectorTabs",

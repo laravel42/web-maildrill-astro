@@ -30,6 +30,10 @@
       "title": "Drag onto the canvas",
       "description": "Drag any element or section from here straight onto the page."
     },
+    "sidebarTemplates": {
+      "title": "Page templates",
+      "description": "This tab holds whole pages ready to use as a starting point. Applying one replaces the current page, so it asks you to confirm first."
+    },
     "canvasFrame": {
       "title": "The canvas",
       "description": "Click an element to select it, or drop one in from the panel to add it."

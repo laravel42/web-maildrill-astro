@@ -30,6 +30,10 @@
       "title": "Arrastra al lienzo",
       "description": "Arrastra cualquier elemento o sección desde aquí directamente a la página."
     },
+    "sidebarTemplates": {
+      "title": "Plantillas de página",
+      "description": "Esta pestaña guarda páginas completas listas para usar como punto de partida. Aplicar una reemplaza la página actual, así que primero te pide confirmación."
+    },
     "canvasFrame": {
       "title": "El lienzo",
       "description": "Haz clic en un elemento para seleccionarlo, o suelta uno desde el panel para añadirlo."
