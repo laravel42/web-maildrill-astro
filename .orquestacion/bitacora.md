@@ -11,11 +11,15 @@ Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour
 
 # START HERE — next session
 
-**NEXT ACTION, verbatim: run the T7a → T7b → T8a → T8b chain below (decisions D44–D49), in that
-order, one subagent at a time. It closes B35/B36/B38 and the user-reported "step 10 of the landing
-tour won't advance, then jumps to 12 or 13" (B41). Read B40 FIRST: B34 is factually wrong and D43's
-premise with it. Re-measure B39 against a freshly restarted dev server before trusting it; do not
-restart it autonomously — ask the user. T5/T6 are DONE.**
+**NEXT ACTION, verbatim: nothing is pending on the reported defect — the T7a→T7b→T8a→T8b→T10 chain
+is DONE and gated green (D44–D49), and B35/B36/B38 plus the user's "step 10 won't advance, then jumps
+to 12 or 13" are closed with e2e proof. The chain is NOT pushed. Remaining open items, in priority
+order: B39 (the one still-red e2e test, `Escape yields to the send-test dialog`, pre-existing, needs a
+fresh dev server before trusting it — do not restart it autonomously, ask the user), B45 (D46 drops a
+click with no visible feedback), B40 (the plan doc still repeats the false B34 claim), B33 (the tour
+speaks Spanish while the embedded editor speaks English), B42, B43, B23, B3.**
+
+**Read B40 first if you touch the engine: B34 was factually wrong and D43's stated premise with it.**
 
 **User report (2026-09-16, seventh session), diagnosed and source-verified by the orchestrator
 before any delegation:** "en el tour de la landing, al llegar al step 10 no deja avanzar; después de
@@ -114,7 +118,16 @@ T8a/T8b share `tourSteps.ts`, so they are ordered, never parallel):**
 | T7b  | at most one transition in flight; extra clicks/arrows dropped — **DONE `f7c4d5c`, green** | `packages/product-tour/src/createTour.ts` + `tests/transitionInFlight.test.ts` | D46         |
 | T8a  | inspector element tab in the document store + `breakpoints` step opens it — **DONE `ce66b97`, green** | `builder42` `slices/ui.ts` + `InspectorForm.tsx` + `app/tour/tourSteps.ts` + 2 tests | D48         |
 | T8b  | breadcrumb/profileMenu steps gated out of the embed — **DONE `e3a0f25`, green** | `builder42` `tourSteps.ts` + `App.tsx` + `Builder42Editor.tsx` + 2 tests            | D49         |
-| T10  | e2e: the two "full step walk" click tests must wait for the step to change before clicking again (**B44**) | `tests/e2e/tour.spec.ts`                                        | —           |
+| T10  | e2e: the two "full step walk" click tests wait for the step to change (**B44**) — **DONE `b2c8db7`, green** | `tests/e2e/tour.spec.ts`                          | —           |
+
+**T10 gate (orchestrator, `6f6326b..b2c8db7`):** one file, `38 2` — and the two deleted lines are
+exactly the two `for (let i = 0; i < 20; i++)` headers, replaced by a bound derived from the "of N"
+the popover itself reports. Read the whole diff: every pre-existing assertion survives verbatim (one
+popover and one overlay per iteration, `nextBtn` visible, a real click with no `force`/`.first()`,
+both closing `toHaveCount(0)` checks) and the change ADDS one — a bounded wait for the progress text
+to change after each non-final click. Nothing weakened. Re-measured by the orchestrator with the
+exact command from the handoff: **6 passed of 6** (`--repeat-each=3` over both editors' walk tests),
+where before the change the email one failed 2 of 3.
 
 **T8b gate (orchestrator, `ce66b97..e3a0f25`):** scope respected (5 files), zero deletions, history
 intact, `pnpm --filter builder42 test` **16 files / 163 tests green** (was 15/159). New spec is a
