@@ -50,6 +50,22 @@
       "title": "Style per screen size",
       "description": "Fine-tune how the selected element looks at each breakpoint, from mobile to desktop."
     },
+    "settingsTabs": {
+      "title": "The page's settings",
+      "description": "This is where the whole page is configured: layers, pages, themes, SEO, languages, publishing, and settings. Each tab opens a different section."
+    },
+    "settingsLayers": {
+      "title": "Layers",
+      "description": "This is the full structure of the page, as a tree. Use it to select an element that's nested inside another one."
+    },
+    "settingsPages": {
+      "title": "Pages",
+      "description": "This is where a page becomes a multi-page site. Add a new page, rename it, or switch to another one whenever you want."
+    },
+    "settingsLanguages": {
+      "title": "Languages",
+      "description": "This is where the site's content languages live. Add a language, then translate the page's content into it."
+    },
     "pagesBreadcrumb": {
       "title": "A page is one of many",
       "description": "A single project can hold multiple pages — use this breadcrumb to jump between them."

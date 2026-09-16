@@ -142,18 +142,16 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
         },
         before: () => {
           // `sidebarMode` vive en `useLocalConfig` (localStorage `pb:sidebarMode`),
-          // no en `useDocumentStore` — se lee/escribe directamente para no acoplar
-          // este módulo a un hook de React (`before` corre fuera del árbol React).
-          const raw = typeof localStorage === "undefined" ? null : localStorage.getItem("pb:sidebarMode");
-          wasCompactBeforeStep = raw === "compact";
-          if (wasCompactBeforeStep && typeof localStorage !== "undefined") {
-            localStorage.setItem("pb:sidebarMode", "open");
-          }
+          // no en `useDocumentStore` — se lee/escribe con `readConfig`/`writeConfig`
+          // (D40, finding B29) y NUNCA con `localStorage` directo: un `setItem`
+          // crudo persiste el valor pero no notifica a los suscriptores del hook,
+          // así que el sidebar no se abriría a tiempo para que driver.js encuentre
+          // el ancla.
+          wasCompactBeforeStep = readConfig("sidebarMode") === "compact";
+          if (wasCompactBeforeStep) writeConfig("sidebarMode", "open");
         },
         after: () => {
-          if (wasCompactBeforeStep && typeof localStorage !== "undefined") {
-            localStorage.setItem("pb:sidebarMode", "compact");
-          }
+          if (wasCompactBeforeStep) writeConfig("sidebarMode", "compact");
         },
         skipMissingElement: true,
       } satisfies TourStep;
@@ -256,7 +254,10 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
 
   // 10. pbx.inspector.tabs — InspectorForm.tsx (tabs Contenido/Estilo/Interactividad).
   // Requiere nodo seleccionado (el Inspector solo monta `InspectorForm` con un nodo
-  // activo) y el panel expandido (`inspectorCollapsed = false`, §1.4.5).
+  // activo) y el panel expandido (`inspectorCollapsed = false`, §1.4.5). Se expande
+  // con `writeConfig` (D40, finding B29) — nunca con `localStorage.setItem` directo,
+  // que persistiría el valor sin notificar a los suscriptores del hook y dejaría el
+  // panel colapsado a tiempo para este paso.
   steps.push({
     anchorKey: BUILDER42_TOUR_ANCHORS.inspectorTabs,
     popover: {
@@ -268,9 +269,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     before: () => {
       const childId = firstRootChildId();
       if (childId) useDocumentStore.getState().select(childId);
-      if (typeof localStorage !== "undefined") {
-        localStorage.setItem("pb:inspectorCollapsed", "false");
-      }
+      writeConfig("inspectorCollapsed", false);
     },
     skipMissingElement: true,
   });
@@ -278,7 +277,9 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
   // 11. pbx.inspector.breakpoints — InspectorForm.tsx tab "style" (segmented de
   // breakpoints, montado por `VisibilityStrip`). Misma precondición que el paso
   // anterior (nodo seleccionado + panel expandido) — `VisibilityStrip` solo se
-  // monta dentro de la tab "style" del Inspector con un nodo activo.
+  // monta dentro de la tab "style" del Inspector con un nodo activo. Igual que el
+  // paso 10, el panel se expande con `writeConfig` (D40), no con `localStorage`
+  // directo.
   steps.push({
     anchorKey: BUILDER42_TOUR_ANCHORS.inspectorBreakpoints,
     popover: {
@@ -290,14 +291,134 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     before: () => {
       const childId = firstRootChildId();
       if (childId) useDocumentStore.getState().select(childId);
-      if (typeof localStorage !== "undefined") {
-        localStorage.setItem("pb:inspectorCollapsed", "false");
-      }
+      writeConfig("inspectorCollapsed", false);
     },
     skipMissingElement: true,
   });
 
-  // 12. pbx.pages.breadcrumb — PageBreadcrumb.tsx. Siempre visible: el breadcrumb de
+  // 12. pbx.settings.tabs — SiteSettingsPanel.tsx (tabrow, siempre montado — solo el
+  // body de abajo cambia según la tab). Presenta la fila completa de secciones de
+  // configuración del sitio (capas, páginas, temas, SEO, idiomas, publicación,
+  // ajustes) ANTES de entrar a cada una en detalle en los tres pasos siguientes.
+  // Precondición doble (D39/D40/D41): (a) ningún nodo seleccionado — si hay uno, el
+  // body del panel muestra el formulario del elemento (`tab === "element"`) en vez
+  // del strip de tabs, así que `before` deselecciona con `select(null)` sin forzar
+  // ninguna tab en particular; (b) el panel derecho expandido, igual que los pasos
+  // 10-11 (`writeConfig("inspectorCollapsed", false)`, D40). El closure-scoped
+  // helper `expandInspectorPanel` (definido más abajo, reutilizado por los tres
+  // pasos de sección y por `pbx.publish`) encapsula "expandir y recordar si hubo
+  // que hacerlo" para no repetir el snapshot-and-restore cuatro veces — mismo
+  // patrón que los pasos 5 y 7 ya usan para `sidebarMode`/`sidebarTab`.
+  const expandInspectorPanel = (): (() => void) => {
+    const wasCollapsed = readConfig("inspectorCollapsed");
+    if (wasCollapsed) writeConfig("inspectorCollapsed", false);
+    return () => {
+      if (wasCollapsed) writeConfig("inspectorCollapsed", true);
+    };
+  };
+
+  steps.push(
+    (() => {
+      let restoreInspectorPanel: (() => void) | null = null;
+      return {
+        anchorKey: BUILDER42_TOUR_ANCHORS.settingsTabs,
+        popover: {
+          title: t("steps.settingsTabs.title"),
+          description: t("steps.settingsTabs.description"),
+          side: "left",
+        },
+        before: () => {
+          restoreInspectorPanel = expandInspectorPanel();
+          useDocumentStore.getState().select(null);
+        },
+        after: () => {
+          restoreInspectorPanel?.();
+          restoreInspectorPanel = null;
+        },
+        skipMissingElement: true,
+      } satisfies TourStep;
+    })(),
+  );
+
+  // 13. pbx.settings.layers — SiteSettingsPanel.tsx, sección que envuelve
+  // `LayersTree` (D41: se estampa en la propia sección, no en un wrapper nuevo).
+  // `before` reutiliza el seam del store (D39): `openSiteSettings("layers")`
+  // deselecciona el nodo Y fija `requestedSiteTab`, que `SiteSettingsPanel` consume
+  // para poner la tab "layers" activa y limpiar la petición.
+  steps.push(
+    (() => {
+      let restoreInspectorPanel: (() => void) | null = null;
+      return {
+        anchorKey: BUILDER42_TOUR_ANCHORS.settingsLayers,
+        popover: {
+          title: t("steps.settingsLayers.title"),
+          description: t("steps.settingsLayers.description"),
+          side: "left",
+        },
+        before: () => {
+          restoreInspectorPanel = expandInspectorPanel();
+          useDocumentStore.getState().openSiteSettings("layers");
+        },
+        after: () => {
+          restoreInspectorPanel?.();
+          restoreInspectorPanel = null;
+        },
+        skipMissingElement: true,
+      } satisfies TourStep;
+    })(),
+  );
+
+  // 14. pbx.settings.pages — PageManager.tsx (raíz). Mismo patrón que el paso 13,
+  // con `openSiteSettings("pages")`.
+  steps.push(
+    (() => {
+      let restoreInspectorPanel: (() => void) | null = null;
+      return {
+        anchorKey: BUILDER42_TOUR_ANCHORS.settingsPages,
+        popover: {
+          title: t("steps.settingsPages.title"),
+          description: t("steps.settingsPages.description"),
+          side: "left",
+        },
+        before: () => {
+          restoreInspectorPanel = expandInspectorPanel();
+          useDocumentStore.getState().openSiteSettings("pages");
+        },
+        after: () => {
+          restoreInspectorPanel?.();
+          restoreInspectorPanel = null;
+        },
+        skipMissingElement: true,
+      } satisfies TourStep;
+    })(),
+  );
+
+  // 15. pbx.settings.languages — I18nSettings.tsx (raíz). Mismo patrón que los
+  // pasos 13-14, con `openSiteSettings("languages")`.
+  steps.push(
+    (() => {
+      let restoreInspectorPanel: (() => void) | null = null;
+      return {
+        anchorKey: BUILDER42_TOUR_ANCHORS.settingsLanguages,
+        popover: {
+          title: t("steps.settingsLanguages.title"),
+          description: t("steps.settingsLanguages.description"),
+          side: "left",
+        },
+        before: () => {
+          restoreInspectorPanel = expandInspectorPanel();
+          useDocumentStore.getState().openSiteSettings("languages");
+        },
+        after: () => {
+          restoreInspectorPanel?.();
+          restoreInspectorPanel = null;
+        },
+        skipMissingElement: true,
+      } satisfies TourStep;
+    })(),
+  );
+
+  // 16. pbx.pages.breadcrumb — PageBreadcrumb.tsx. Siempre visible: el breadcrumb de
   // páginas existe con o sin más de una página en el sitio. El copy transmite el
   // concepto clave de que una landing es un sitio multipágina (§3.2).
   steps.push({
@@ -309,25 +430,42 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     },
   });
 
-  // 13. pbx.publish — PublishPanel.tsx (publicar y subdominio). Solo si el adapter de
+  // 17. pbx.publish — PublishPanel.tsx (publicar y subdominio). Solo si el adapter de
   // publicación del host está disponible (§3.2 precondición, §1.4.6): con
   // `publishAvailable = false`, `PublishPanel` sigue montado pero solo muestra el
   // mensaje de "deshabilitado" (`publish.disabledTitle`) — un paso de tour ahí sería
-  // un tour explicando una superficie apagada, así que se omite entero.
+  // un tour explicando una superficie apagada, así que se omite entero. `before`
+  // abre su propia tab (`openSiteSettings("publish")`, mismo seam D39 que los pasos
+  // 13-15) porque `PublishPanel` solo existe en el DOM dentro de la tab "publish" de
+  // `SiteSettingsPanel` — sin esto, este paso quedaba silenciosamente saltado en el
+  // embed (ninguna otra navegación previa del tour deja esa tab activa).
   if (config.publishAvailable) {
-    steps.push({
-      anchorKey: BUILDER42_TOUR_ANCHORS.publish,
-      popover: {
-        title: t("steps.publish.title"),
-        description: t("steps.publish.description"),
-        side: "left",
-      },
-      when: () => config.publishAvailable,
-      skipMissingElement: true,
-    });
+    steps.push(
+      (() => {
+        let restoreInspectorPanel: (() => void) | null = null;
+        return {
+          anchorKey: BUILDER42_TOUR_ANCHORS.publish,
+          popover: {
+            title: t("steps.publish.title"),
+            description: t("steps.publish.description"),
+            side: "left",
+          },
+          when: () => config.publishAvailable,
+          before: () => {
+            restoreInspectorPanel = expandInspectorPanel();
+            useDocumentStore.getState().openSiteSettings("publish");
+          },
+          after: () => {
+            restoreInspectorPanel?.();
+            restoreInspectorPanel = null;
+          },
+          skipMissingElement: true,
+        } satisfies TourStep;
+      })(),
+    );
   }
 
-  // 14. pbx.profileMenu — ProfileMenu.tsx (tema, idioma, nivel simple/avanzado,
+  // 18. pbx.profileMenu — ProfileMenu.tsx (tema, idioma, nivel simple/avanzado,
   // controles de reorden). Siempre visible: el trigger del menú de preferencias no
   // depende de ningún flag del embed.
   steps.push({

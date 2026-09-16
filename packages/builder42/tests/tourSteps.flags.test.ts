@@ -7,7 +7,7 @@
  * referencia una superficie apagada en el embed `experienceLevel = "simple"`
  * (Tokens, Código, export zip, JSON — ninguna tiene ancla propia en el registro).
  */
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildBuilder42TourSteps,
@@ -16,6 +16,7 @@ import {
 } from "@/app/tour/tourSteps";
 import { BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 import { useDocumentStore } from "@/builder/store/documentStore";
+import { readConfig, writeConfig, subscribeConfig } from "@/hooks/useLocalConfig";
 
 /** Anclas de superficies apagadas en el embed simple (§3.2 "Excluidos") — ninguna
  * existe en `BUILDER42_TOUR_ANCHORS`, así que la garantía real es que el registro
@@ -153,7 +154,7 @@ describe("buildBuilder42TourSteps — siempre emite las anclas sin precondición
     );
   });
 
-  it("emite exactamente las 14 anclas del registro cuando todo está disponible y hay un nodo seleccionable", () => {
+  it("emite exactamente las 18 anclas del registro cuando todo está disponible y hay un nodo seleccionable", () => {
     insertChildUnderRoot("child-1");
 
     const anchors = buildBuilder42TourSteps(ADVANCED_CONFIG).map((s) => s.anchorKey);
@@ -207,4 +208,115 @@ describe("buildBuilder42TourSteps — pbx.sidebar.templates opens the Templates 
       expect(useDocumentStore.getState().sidebarTab).toBe(previousTab);
     },
   );
+});
+
+
+describe("buildBuilder42TourSteps — pbx.settings.* section steps open their own tab (D39/D41)", () => {
+  it.each([
+    ["settingsLayers", BUILDER42_TOUR_ANCHORS.settingsLayers, "layers"] as const,
+    ["settingsPages", BUILDER42_TOUR_ANCHORS.settingsPages, "pages"] as const,
+    ["settingsLanguages", BUILDER42_TOUR_ANCHORS.settingsLanguages, "languages"] as const,
+  ])(
+    "before() of %s leaves requestedSiteTab === '%s' and selectedId === null, even with a node selected",
+    (_label, anchorKey, tab) => {
+      insertChildUnderRoot("child-1");
+      useDocumentStore.getState().select("child-1");
+      expect(useDocumentStore.getState().selectedId).toBe("child-1");
+
+      const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+      const step = steps.find((s) => s.anchorKey === anchorKey);
+      expect(step).toBeDefined();
+
+      step!.before?.();
+      expect(useDocumentStore.getState().requestedSiteTab).toBe(tab);
+      expect(useDocumentStore.getState().selectedId).toBeNull();
+    },
+  );
+
+  it("before() of pbx.publish leaves requestedSiteTab === 'publish'", () => {
+    insertChildUnderRoot("child-1");
+    useDocumentStore.getState().select("child-1");
+
+    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+    const publishStep = steps.find((s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.publish);
+    expect(publishStep).toBeDefined();
+
+    publishStep!.before?.();
+    expect(useDocumentStore.getState().requestedSiteTab).toBe("publish");
+    expect(useDocumentStore.getState().selectedId).toBeNull();
+  });
+});
+
+describe("buildBuilder42TourSteps — D40 correction: inspector expansion notifies subscribers, not just localStorage", () => {
+  // Este paquete corre los tests con `environment: "node"` (sin jsdom/happy-dom,
+  // ver la nota de cabecera de `tour-anchors-coverage.test.ts`): Node no expone
+  // `localStorage` por defecto, así que `readConfig`/`writeConfig` necesitan un
+  // polyfill mínimo — mismo patrón (`MemoryStorage`, sin dependencia nueva) que
+  // `useBuilder42Tour.persistence.test.ts` ya usa para el mismo problema.
+  class MemoryStorage implements Storage {
+    private store = new Map<string, string>();
+    get length(): number {
+      return this.store.size;
+    }
+    clear(): void {
+      this.store.clear();
+    }
+    getItem(key: string): string | null {
+      return this.store.has(key) ? this.store.get(key)! : null;
+    }
+    key(index: number): string | null {
+      return [...this.store.keys()][index] ?? null;
+    }
+    removeItem(key: string): void {
+      this.store.delete(key);
+    }
+    setItem(key: string, value: string): void {
+      this.store.set(key, value);
+    }
+  }
+
+  beforeEach(() => {
+    (globalThis as { localStorage?: Storage }).localStorage = new MemoryStorage();
+  });
+
+  it("before() of pbx.inspector.tabs notifies inspectorCollapsed listeners", () => {
+    writeConfig("inspectorCollapsed", true);
+    expect(readConfig("inspectorCollapsed")).toBe(true);
+
+    const listener = vi.fn();
+    const unsubscribe = subscribeConfig("inspectorCollapsed", listener);
+
+    insertChildUnderRoot("child-1");
+    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+    const inspectorTabsStep = steps.find((s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.inspectorTabs);
+    expect(inspectorTabsStep).toBeDefined();
+
+    inspectorTabsStep!.before?.();
+
+    expect(listener).toHaveBeenCalled();
+    expect(readConfig("inspectorCollapsed")).toBe(false);
+
+    unsubscribe();
+    writeConfig("inspectorCollapsed", false);
+  });
+
+  it("before() of a section step (pbx.settings.layers) notifies inspectorCollapsed listeners", () => {
+    writeConfig("inspectorCollapsed", true);
+    expect(readConfig("inspectorCollapsed")).toBe(true);
+
+    const listener = vi.fn();
+    const unsubscribe = subscribeConfig("inspectorCollapsed", listener);
+
+    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+    const layersStep = steps.find((s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.settingsLayers);
+    expect(layersStep).toBeDefined();
+
+    layersStep!.before?.();
+
+    expect(listener).toHaveBeenCalled();
+    expect(readConfig("inspectorCollapsed")).toBe(false);
+
+    unsubscribe();
+    writeConfig("inspectorCollapsed", false);
+  });
 });

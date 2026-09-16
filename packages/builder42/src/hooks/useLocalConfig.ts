@@ -213,6 +213,19 @@ function notify(key: keyof ConfigMap): void {
   for (const l of getListeners(key)) l();
 }
 
+/**
+ * Suscribe `listener` a las notificaciones de una clave sin pasar por React —
+ * mismo `Set` de listeners que consume el hook (`getListeners`), expuesto para
+ * callers que corren fuera del árbol de componentes (p. ej. el `before()` de un
+ * paso del tour guiado, o un test que quiere comprobar que `writeConfig` notificó
+ * de verdad y no solo persistió el valor). Devuelve la función de "unsubscribe".
+ */
+export function subscribeConfig<K extends keyof ConfigMap>(key: K, listener: () => void): () => void {
+  const listeners = getListeners(key);
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
 // Cache de snapshot por clave (bug real, feedback de usuario: "Maximum update
 // depth exceeded" / "getSnapshot should be cached"). `useSyncExternalStore`
 // exige que `getSnapshot` devuelva la MISMA referencia si el valor no cambió

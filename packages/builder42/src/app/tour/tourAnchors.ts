@@ -47,6 +47,14 @@ export const BUILDER42_TOUR_ANCHORS = {
   inspectorTabs: 'pbx.inspector.tabs',
   /** `builder/inspector/panel/VisibilityStrip.tsx` — segmented de breakpoints (montado por InspectorForm). */
   inspectorBreakpoints: 'pbx.inspector.breakpoints',
+  /** `builder/inspector/SiteSettingsPanel.tsx` (tabrow) — la fila de tabs de configuración del sitio; precondición: ningún nodo seleccionado (si no, el body muestra el formulario del elemento en vez del strip). */
+  settingsTabs: 'pbx.settings.tabs',
+  /** `builder/inspector/SiteSettingsPanel.tsx` (sección que envuelve `LayersTree`) — precondición: tab "layers" activa (`requestedSiteTab = "layers"`). */
+  settingsLayers: 'pbx.settings.layers',
+  /** `builder/inspector/PageManager.tsx` (raíz) — precondición: tab "pages" activa (`requestedSiteTab = "pages"`). */
+  settingsPages: 'pbx.settings.pages',
+  /** `builder/inspector/I18nSettings.tsx` (raíz) — precondición: tab "languages" activa (`requestedSiteTab = "languages"`). */
+  settingsLanguages: 'pbx.settings.languages',
   /** `app/layout/PageBreadcrumb.tsx` — una landing es un sitio multipágina. */
   pagesBreadcrumb: 'pbx.pages.breadcrumb',
   /** `builder/inspector/PublishPanel.tsx` — publicar y subdominio. */

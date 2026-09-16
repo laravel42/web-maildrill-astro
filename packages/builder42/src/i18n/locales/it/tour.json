@@ -50,6 +50,22 @@
       "title": "Stile per dimensione di schermo",
       "description": "Regola come appare l'elemento selezionato a ogni breakpoint, da mobile a desktop."
     },
+    "settingsTabs": {
+      "title": "Le impostazioni della pagina",
+      "description": "Qui si configura tutta la pagina: livelli, pagine, temi, SEO, lingue, pubblicazione e impostazioni. Ogni tab apre una sezione diversa."
+    },
+    "settingsLayers": {
+      "title": "Livelli",
+      "description": "Questa è la struttura completa della pagina, in forma di albero. Usala per selezionare un elemento annidato dentro un altro."
+    },
+    "settingsPages": {
+      "title": "Pagine",
+      "description": "Qui una pagina diventa un sito con più pagine. Aggiungi una nuova pagina, rinominala o passa a un'altra quando vuoi."
+    },
+    "settingsLanguages": {
+      "title": "Lingue",
+      "description": "Qui vivono le lingue del contenuto del sito. Aggiungi una lingua e poi traduci il contenuto della pagina in quella lingua."
+    },
     "pagesBreadcrumb": {
       "title": "Una pagina è una tra tante",
       "description": "Uno stesso progetto può avere più pagine — usa questo percorso per passare dall'una all'altra."

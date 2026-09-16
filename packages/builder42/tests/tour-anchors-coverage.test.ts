@@ -106,6 +106,18 @@ describe("Builder42 tour anchors — coverage (F2b, static source scan)", () => 
     [BUILDER42_TOUR_ANCHORS.inspectorBreakpoints]: [
       { path: "src/builder/inspector/panel/VisibilityStrip.tsx", read: () => read("src/builder/inspector/panel/VisibilityStrip.tsx") },
     ],
+    [BUILDER42_TOUR_ANCHORS.settingsTabs]: [
+      { path: "src/builder/inspector/SiteSettingsPanel.tsx", read: () => read("src/builder/inspector/SiteSettingsPanel.tsx") },
+    ],
+    [BUILDER42_TOUR_ANCHORS.settingsLayers]: [
+      { path: "src/builder/inspector/SiteSettingsPanel.tsx", read: () => read("src/builder/inspector/SiteSettingsPanel.tsx") },
+    ],
+    [BUILDER42_TOUR_ANCHORS.settingsPages]: [
+      { path: "src/builder/inspector/PageManager.tsx", read: () => read("src/builder/inspector/PageManager.tsx") },
+    ],
+    [BUILDER42_TOUR_ANCHORS.settingsLanguages]: [
+      { path: "src/builder/inspector/I18nSettings.tsx", read: () => read("src/builder/inspector/I18nSettings.tsx") },
+    ],
     [BUILDER42_TOUR_ANCHORS.pagesBreadcrumb]: [
       { path: "src/app/layout/PageBreadcrumb.tsx", read: () => read("src/app/layout/PageBreadcrumb.tsx") },
     ],

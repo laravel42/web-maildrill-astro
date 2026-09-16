@@ -50,6 +50,22 @@
       "title": "Estilo por tamaño de pantalla",
       "description": "Ajusta cómo se ve el elemento seleccionado en cada breakpoint, de móvil a escritorio."
     },
+    "settingsTabs": {
+      "title": "La configuración de la página",
+      "description": "Aquí se configura toda la página: capas, páginas, temas, SEO, idiomas, publicación y ajustes. Cada pestaña abre una sección distinta."
+    },
+    "settingsLayers": {
+      "title": "Capas",
+      "description": "Esta es la estructura completa de la página, en forma de árbol. Úsala para seleccionar un elemento que esté anidado dentro de otro."
+    },
+    "settingsPages": {
+      "title": "Páginas",
+      "description": "Aquí una página se convierte en un sitio de varias páginas. Añade una página nueva, renómbrala o cambia a otra cuando quieras."
+    },
+    "settingsLanguages": {
+      "title": "Idiomas",
+      "description": "Aquí viven los idiomas del contenido del sitio. Añade un idioma y luego traduce el contenido de la página a ese idioma."
+    },
     "pagesBreadcrumb": {
       "title": "Una página es una de varias",
       "description": "Un mismo proyecto puede tener múltiples páginas — usa esta ruta para saltar entre ellas."
