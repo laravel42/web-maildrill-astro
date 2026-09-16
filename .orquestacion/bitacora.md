@@ -11,9 +11,10 @@ Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour
 
 # START HERE — next session
 
-**NEXT ACTION, verbatim: re-verify T4 in the browser (see "After T5" below, item 1), then run T6.
-B35 (mouse-click variant of the D43 bug, in driver.js's OWN Next-button routing) needs an
-orchestrator decision before it is fixed — read it before doing anything else.**
+**NEXT ACTION, verbatim: run T6 (e2e coverage in `tests/e2e/tour.spec.ts` + `helpers/tour.ts` for
+what T1–T5 added — see "After T5" item 2 below). B35/B36 (the Next-button label/click routing bug
+in driver.js itself) needs an orchestrator decision before it is fixed — read both before doing
+anything else, but they do not block T6.**
 
 **State at hand-off (2026-09-16, sixth session): `HEAD = 316c490`, branch `feat/ui-polish-p1`, tree
 clean** except the pre-existing untracked `.cursor/hooks/` and `.kiro/` (not this chain's).
@@ -49,24 +50,29 @@ without the bug's help.
 
 ## After T5
 
-1. **Re-verify T4 in the browser** (this is what T5 unblocks): walk the landing tour to the end and
-   confirm the four `pbx.settings.*` steps are reached with their own section open — Layers, Pages,
-   Languages. Before ANY browser check, bump the mtimes of the changed package files or the dev
-   server serves a stale transform (**B32**, learned the hard way this session). Working invocation
-   in this environment: `npx playwright test tests/e2e/<file>.spec.ts --project=chromium --no-deps
-   --workers=1 --retries=0` (**B28**).
+1. **T4 re-verified in the browser — DONE, this session.** Threw away a probe spec (deleted after
+   use, per its own doc comment) that walked `/dashboard/landings/editor` with `ArrowRight` against
+   the live dev server (mtimes bumped first, per B32). Confirmed by the actual step order/anchors
+   logged: `pbx.header.identity` → `pbx.toolbar.views` → `pbx.toolbar.viewport` →
+   `pbx.toolbar.history` → `pbx.sidebar.tabs` → `pbx.sidebar.palette` → `pbx.sidebar.templates` →
+   `pbx.canvas.frame` → `pbx.settings.tabs` → **`pbx.settings.layers`** ("Capas") →
+   **`pbx.settings.pages`** ("Páginas") → **`pbx.settings.languages`** ("Idiomas", B33) — all four
+   `pbx.settings.*` steps T4 added are reached, each with its own tab open (title text matches the
+   section). The tour genuinely ends at "Idiomas" (title stops advancing there), consistent with
+   D42 (`pages.breadcrumb`/`profileMenu` are standalone-only, skipped in the embed). T4 is closed.
 2. **T6 — e2e coverage** for what this chain added, in `tests/e2e/tour.spec.ts` +
    `tests/e2e/helpers/tour.ts`: the two toolbar steps highlight one control each (assert the
    highlighted element contains Edit/Preview but NOT the viewport switch, and vice versa); the
    templates step really shows the Templates tab; each site-section step reaches its anchor with the
-   matching tab active. The orchestrator verified all of these by throwaway probe this session —
-   T6 is about making them permanent.
-3. **B35 (new, this session) needs a decision before it is fixed:** driver.js's own popover
-   Next-button click can still route to `onDoneClick` instead of this package's `onNextClick` when
-   the next step's anchor is not yet mounted — the same D43 bug, for clicks instead of arrow keys.
-   Read B35's entry in full before proposing a fix; it names two candidate approaches and neither
-   is a small, obviously-safe change (both touch how this package owns driver.js's popover
-   button wiring, similar in spirit to D8/D18's Escape/arrow takeover).
+   matching tab active. The orchestrator verified all of these by throwaway probe this session (see
+   item 1 above and B36) — T6 is about making them permanent.
+3. **B35 (this session) needs a decision before it is fixed** — and is now CONFIRMED live, not just
+   read from source (see **B36**): driver.js's own popover Next-button click can still route to
+   `onDoneClick` instead of this package's `onNextClick` when the next step's anchor is not yet
+   mounted — the same D43 bug, for clicks instead of arrow keys. Read B35's entry in full before
+   proposing a fix; it names two candidate approaches and neither is a small, obviously-safe change
+   (both touch how this package owns driver.js's popover button wiring, similar in spirit to
+   D8/D18's Escape/arrow takeover).
 4. **Owed to the user, still open:** **B33** (the tour speaks Spanish while the embedded editor
    speaks English — `tourSteps.ts` resolves copy from the global i18next singleton instead of the
    editor's per-instance i18n; fix shape recorded in the finding), **B23** and **B3** (eyes-on
@@ -1046,6 +1052,18 @@ names alone and should have been in the contract, not discovered by the implemen
 **D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
 
 ## Findings
+
+**B36 — B35 (driver.js's Next-button label lying about "Done") is confirmed LIVE, in the real
+browser, not just read from source.** Walking `/dashboard/landings/editor`'s tour with the throwaway
+probe (see "After T5" item 1): at the `pbx.settings.pages` step ("Páginas"), the popover's Next
+button already read "Listo" (Done) — one full step before the tour actually ends at
+`pbx.settings.languages` ("Idiomas"). `ArrowRight` still correctly advanced past it (because this
+package's own keyboard handler never consults driver.js's button label, only `currentDriveSteps`
+array bounds — the D21 fix from T5), so keyboard navigation is unaffected. A real user reading the
+button, though, sees "Done" one step early and could stop there believing the tour finished, or —
+per B35's still-open half — click it and have driver.js route to `onDoneClick` for real, ending the
+tour a step short. Same root cause as B35 (`B()`'s `nextBtnText: o ? undefined : c`, `o` computed
+from a synchronous, anchor-existence-dependent `I()`/`F()` walk), same fix candidates, same owner.
 
 **B35 — driver.js@1.8.0's `isLastStep()` (and its internal Next-button click routing, `L()`) is
 NOT a plain index-bounds check: it synchronously re-evaluates whether the NEXT step's anchor
