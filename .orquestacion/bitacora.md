@@ -11,22 +11,72 @@ Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour
 
 # START HERE — next session
 
-**Chain in flight (2026-09-15/16, fourth session): landing tour step redesign, requested by the user
-in these words:** «separa los steps de modo de vista y tamaño de pantalla. deja un step donde
-muestres las plantillas en su pestaña presenta las secciones del sidebar, layers, pages, languages,
-etc.» Baseline for this chain: `HEAD = 22d2b10`, branch `feat/ui-polish-p1`, tree clean except the
-untracked `.cursor/hooks/` and `.kiro/`. Baselines measured at that commit: `builder42` **13 files /
-119 tests**, `@md/product-tour` 10/81, `email-builder-standalone` 13/123, `pnpm check` 339 files
-0 errors / 0 warnings / 3 hints, `pnpm lint` the 3 known errors by name, `tests/e2e/tour.spec.ts`
-**22 passed** (`--project=chromium --no-deps --workers=1 --retries=0`, see **B28** for why
-`--no-deps`).
+**NEXT ACTION, verbatim: relaunch T5 (the engine wait, D43) with the handoff written out in
+"T5 \u2014 ready-to-send contract" below, then re-verify T4 in the browser, then T6.** Nothing else in
+this chain is open.
 
-**Reading of the request (verified against the source, not guessed):** "layers / pages / languages"
-are not sidebar tabs at all — they are tabs of `SiteSettingsPanel` (`SITE_TABS` =
-layers · pages · themes · seo · languages · publish · settings), rendered in the RIGHT panel
-(`Inspector.tsx`) whenever no node is selected. The left sidebar has only
-components · tokens · templates (`SideTab`), with tokens hidden in the simple embed. So the chain
-touches both panels.
+**State at hand-off (2026-09-16, fifth session): `HEAD = bb4a320`, branch `feat/ui-polish-p1`, tree
+clean** except the untracked `.cursor/hooks/` and `.kiro/`. **Not pushed.** Measured at that commit:
+`builder42` **14 files / 153 tests**, `@md/product-tour` **10 files / 81 tests**,
+`email-builder-standalone` 13/123, `pnpm check` 339 files 0 errors / 0 warnings / 3 hints,
+`tests/e2e/tour.spec.ts` 22 passed at `22d2b10` (not re-run since T1\u2013T4 \u2014 re-measure before trusting).
+
+**What the user asked for, verbatim:** \u00absepara los steps de modo de vista y tama\u00f1o de pantalla. deja
+un step donde muestres las plantillas en su pesta\u00f1a presenta las secciones del sidebar, layers,
+pages, languages, etc.\u00bb \u2014 delivered by T2 (split), T3 (Templates tab) and T4 (site sections), with
+T4 currently unreachable in the browser until T5 lands.
+
+## T5 — ready-to-send contract (the previous attempt stopped on a conflict the orchestrator has since resolved)
+
+The first attempt STOPPED, correctly (rule 7), because `packages/product-tour/tests/anchorResolutionConcurrency.test.ts`
+builds tours where EVERY anchor is missing, installs fake timers, and requires `start()` to activate
+without the clock being advanced \u2014 incompatible with waiting for the first step's anchor.
+**Resolution (orchestrator's, already decided): those two FIXTURES are obsolete, not their
+guarantees.** In both cases the FIRST step's anchor must be stamped into `document.body` while the
+remaining steps stay missing with their large `waitForElementMs`; both assertions then stand
+unchanged and still prove what D35 promised (no cross-step timeout sweep in `start()`, and
+`callOrder === ['a']`). Assertions may not be weakened, deleted or skipped; the report must show the
+before/after of every touched line.
+
+Everything else the relaunch needs: scope = `packages/product-tour/src/createTour.ts` +
+`tests/anchorResolutionConcurrency.test.ts` (fixtures only) + ONE new test file. Contract: a
+`waitForStepAnchor(step)` helper that checks `resolveAnchor(root, step.anchorKey)` synchronously
+first, then polls every 25 ms until `step.waitForElementMs ?? 2000` and resolves anyway (never
+throws); called in exactly two places \u2014 in `transitionTo()` after `await incomingStep.before()` and
+its liveness re-check, and in `start()` after `await firstStep.before()` before `drive()` \u2014 each
+followed by the same fresh-`driverInstance` + `isCurrentGeneration` liveness re-check the file
+already does after every `await`. No up-front resolution of all anchors, no `before()` moved, no new
+public option, no dependency, no event/payload change. Keep passing `waitForElement` to driver.js
+with a comment saying driver.js@1.8.0 ignores it. New tests (happy-dom, REAL driver.js, real timers,
+style of `stepActivation.test.ts`): (a) second step's anchor inserted ~150 ms from its own
+`before()` \u2192 the tour lands ON that step instead of being skipped and destroyed \u2014 this is the case
+that must bite; (b) an anchor that never appears with `waitForElementMs: 60` is still skipped and
+does not hang; (c) the first step's anchor inserted ~100 ms after `start()` \u2192 the tour shows it.
+Baseline to beat: 10 files / 81 tests all green, `typecheck` 0 errors. Commit message:
+`fix(T5): the engine waits for the incoming step's anchor before moving (D43)`.
+
+**`bb4a320` already landed the DOC half of T5** (the D35 block now states the truth about
+`waitForElement`, per B34) \u2014 the relaunch must implement the CODE and may leave those comments as
+they are, only adding the D43 entry if it is still missing.
+
+## After T5
+
+1. **Re-verify T4 in the browser** (this is what T5 unblocks): walk the landing tour to the end and
+   confirm the four `pbx.settings.*` steps are reached with their own section open \u2014 Layers, Pages,
+   Languages. Before ANY browser check, bump the mtimes of the changed package files or the dev
+   server serves a stale transform (**B32**, learned the hard way this session). Working invocation
+   in this environment: `npx playwright test tests/e2e/<file>.spec.ts --project=chromium --no-deps
+   --workers=1 --retries=0` (**B28**).
+2. **T6 \u2014 e2e coverage** for what this chain added, in `tests/e2e/tour.spec.ts` +
+   `tests/e2e/helpers/tour.ts`: the two toolbar steps highlight one control each (assert the
+   highlighted element contains Edit/Preview but NOT the viewport switch, and vice versa); the
+   templates step really shows the Templates tab; each site-section step reaches its anchor with the
+   matching tab active. The orchestrator verified all of these by throwaway probe this session \u2014 T6
+   is about making them permanent.
+3. **Owed to the user, still open:** **B33** (the tour speaks Spanish while the embedded editor
+   speaks English \u2014 `tourSteps.ts` resolves copy from the global i18next singleton instead of the
+   editor's per-instance i18n; fix shape recorded in the finding), **B23** and **B3** (eyes-on
+   dark-mode / popover review).
 
 | Task | What                                                                          | Scope (files)                                                                                             | Commit    | Gate  |
 | ---- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------- | ----- |
@@ -35,8 +85,23 @@ touches both panels.
 | T2b  | guard test: every anchor call-site file must import `dataTourAttr` (see **B32**) | `tests/tour-anchors-coverage.test.ts`                                                                     | `f02ca70` | green |
 | T3   | Templates-tab step (`sidebar.templates`), palette step pins the components tab  | `tourAnchors.ts`, `tourSteps.ts`, `app/layout/TemplatesPanel.tsx`, `tour.json` ×3, 2 tests                | `bb5616e` | green (browser-verified: step 7 opens the Templates tab) |
 | T4   | site sections: `settings.tabs/layers/pages/languages` (D39/D40/D41) + publish `before()` | `tourAnchors.ts`, `tourSteps.ts`, `inspector/SiteSettingsPanel.tsx`, `PageManager.tsx`, `I18nSettings.tsx`, `tour.json` ×3, 2 tests | `33ac950` | unit green; **blocked in the browser by B34** — kept, not reverted: the steps are correct, the ENGINE cannot deliver them yet |
-| T5   | engine: wait for the incoming step's anchor after `before()` (**D43**)          | `packages/product-tour/src/createTour.ts` + tests                                                         | —         | —     |
-| T6   | e2e: one control per toolbar step, templates tab really opens, sections open     | `tests/e2e/tour.spec.ts`, `tests/e2e/helpers/tour.ts`                                                     | —         | —     |
+| T5   | engine: wait for the incoming step's anchor after `before()` (**D43**)          | `packages/product-tour/src/createTour.ts` + tests                                                         | `bb4a320` (docs half only) | **OPEN — code not written**; first attempt stopped on a test conflict, now resolved above |
+| T6   | e2e: one control per toolbar step, templates tab really opens, sections open     | `tests/e2e/tour.spec.ts`, `tests/e2e/helpers/tour.ts`                                                     | —         | — (blocked on T5) |
+
+**Reading of the request (verified against the source, not guessed):** "layers / pages / languages"
+are not sidebar tabs at all — they are tabs of `SiteSettingsPanel` (`SITE_TABS` =
+layers · pages · themes · seo · languages · publish · settings), rendered in the RIGHT panel
+(`Inspector.tsx`) whenever no node is selected. The left sidebar has only
+components · tokens · templates (`SideTab`), with tokens hidden in the simple embed. So the chain
+touches both panels.
+
+**The landing tour is now 18 registered anchors / 14 eligible steps in the embed** (18 − 3 that need
+a selected node on an empty canvas − `publish` while the host reports it disabled), in this order:
+header identity · **view mode** · **screen size** · history · sidebar tabs · palette ·
+**page templates** · canvas · node actions · inspector tabs · inspector breakpoints ·
+**site sections** · **layers** · **pages** · **languages** · pages breadcrumb · publish · profile
+menu. The last two of that list plus the breadcrumb are standalone-only surfaces (**B9**) and are
+skipped in the embed by design (**D42**).
 
 **Contract decisions for this chain (orchestrator's, not delegable):**
 
