@@ -1,4 +1,4 @@
-# Orchestration log — product tours (driver.js)
+﻿# Orchestration log — product tours (driver.js)
 
 Protocol: [`SKILLS/orquestation.md`](../SKILLS/orquestation.md) — serial, one subagent at a
 time, one commit per task, orchestrator runs the gate.
@@ -11,82 +11,66 @@ Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour
 
 # START HERE — next session
 
-**NEXT ACTION, verbatim: relaunch T5 (the engine wait, D43) with the handoff written out in
-"T5 \u2014 ready-to-send contract" below, then re-verify T4 in the browser, then T6.** Nothing else in
-this chain is open.
+**NEXT ACTION, verbatim: re-verify T4 in the browser (see "After T5" below, item 1), then run T6.
+B35 (mouse-click variant of the D43 bug, in driver.js's OWN Next-button routing) needs an
+orchestrator decision before it is fixed — read it before doing anything else.**
 
-**State at hand-off (2026-09-16, fifth session): `HEAD = bb4a320`, branch `feat/ui-polish-p1`, tree
-clean** except the untracked `.cursor/hooks/` and `.kiro/`. **Not pushed.** Measured at that commit:
-`builder42` **14 files / 153 tests**, `@md/product-tour` **10 files / 81 tests**,
-`email-builder-standalone` 13/123, `pnpm check` 339 files 0 errors / 0 warnings / 3 hints,
-`tests/e2e/tour.spec.ts` 22 passed at `22d2b10` (not re-run since T1\u2013T4 \u2014 re-measure before trusting).
+**State at hand-off (2026-09-16, sixth session): `HEAD = 316c490`, branch `feat/ui-polish-p1`, tree
+clean** except the pre-existing untracked `.cursor/hooks/` and `.kiro/` (not this chain's).
+**Not pushed.** T5 landed green: `@md/product-tour` **11 files / 84 tests** (was 10/81 — +3 new
+tests in `waitForStepAnchor.test.ts`, per T5's DONE WHEN), `builder42` **14 files / 153 tests**
+(unchanged), `email-builder-standalone` **13 files / 123 tests** (unchanged), `pnpm check` 339
+files 0 errors / 0 warnings / 3 hints (unchanged). `tests/e2e/tour.spec.ts` NOT re-run this session
+— still last measured 22 passed at `22d2b10`, before T1–T5. Re-measure before trusting.
 
-**What the user asked for, verbatim:** \u00absepara los steps de modo de vista y tama\u00f1o de pantalla. deja
-un step donde muestres las plantillas en su pesta\u00f1a presenta las secciones del sidebar, layers,
-pages, languages, etc.\u00bb \u2014 delivered by T2 (split), T3 (Templates tab) and T4 (site sections), with
-T4 currently unreachable in the browser until T5 lands.
+**T5, what actually happened (read before touching this area again):** the relaunch went smoothly
+for the code T5's contract described (`waitForStepAnchor()`, wired at both call sites, using the
+already-exported `waitForAnchor()` from `anchors.ts` with a 25 ms interval per the contract). The
+two obsolete fixtures in `anchorResolutionConcurrency.test.ts` were fixed exactly as the
+orchestrator had pre-decided (first step's anchor stamped into the DOM, the rest left missing) —
+both assertions stand unchanged. **What the contract did NOT anticipate, found while writing test
+(a) of the three new DONE WHEN cases:** this package's own D21 keyboard guard
+(`if (driverInstance.isLastStep()) return;`) reads a driver.js internal that is NOT a plain
+bounds check — see **B35** below, now fixed for the keyboard path (same commit, same file, still
+inside T5's declared scope: `createTour.ts`) but NOT for driver.js's own popover Next-button
+click, which is a separate, not-yet-fixed instance of the same defect shape. A pre-existing
+baseline test (`stepActivation.test.ts`, the "D35.5 reconciliation poll loop" T8b test) had to be
+corrected as a result — documented inline in that file and in the log entry for T5, per rule 7:
+its old assertion (`before(never-appears-landing)` must be ABSENT) was silently passing for the
+wrong reason (the D21 bug swallowing the ArrowRight before `transitionTo()` ever ran), not for the
+reconciliation guarantee its comment described. The corrected assertion
+(`expect(log).toEqual(['before(never-appears-landing)'])`) still proves that guarantee, just
+without the bug's help.
 
-## T5 — ready-to-send contract (the previous attempt stopped on a conflict the orchestrator has since resolved)
-
-The first attempt STOPPED, correctly (rule 7), because `packages/product-tour/tests/anchorResolutionConcurrency.test.ts`
-builds tours where EVERY anchor is missing, installs fake timers, and requires `start()` to activate
-without the clock being advanced \u2014 incompatible with waiting for the first step's anchor.
-**Resolution (orchestrator's, already decided): those two FIXTURES are obsolete, not their
-guarantees.** In both cases the FIRST step's anchor must be stamped into `document.body` while the
-remaining steps stay missing with their large `waitForElementMs`; both assertions then stand
-unchanged and still prove what D35 promised (no cross-step timeout sweep in `start()`, and
-`callOrder === ['a']`). Assertions may not be weakened, deleted or skipped; the report must show the
-before/after of every touched line.
-
-Everything else the relaunch needs: scope = `packages/product-tour/src/createTour.ts` +
-`tests/anchorResolutionConcurrency.test.ts` (fixtures only) + ONE new test file. Contract: a
-`waitForStepAnchor(step)` helper that checks `resolveAnchor(root, step.anchorKey)` synchronously
-first, then polls every 25 ms until `step.waitForElementMs ?? 2000` and resolves anyway (never
-throws); called in exactly two places \u2014 in `transitionTo()` after `await incomingStep.before()` and
-its liveness re-check, and in `start()` after `await firstStep.before()` before `drive()` \u2014 each
-followed by the same fresh-`driverInstance` + `isCurrentGeneration` liveness re-check the file
-already does after every `await`. No up-front resolution of all anchors, no `before()` moved, no new
-public option, no dependency, no event/payload change. Keep passing `waitForElement` to driver.js
-with a comment saying driver.js@1.8.0 ignores it. New tests (happy-dom, REAL driver.js, real timers,
-style of `stepActivation.test.ts`): (a) second step's anchor inserted ~150 ms from its own
-`before()` \u2192 the tour lands ON that step instead of being skipped and destroyed \u2014 this is the case
-that must bite; (b) an anchor that never appears with `waitForElementMs: 60` is still skipped and
-does not hang; (c) the first step's anchor inserted ~100 ms after `start()` \u2192 the tour shows it.
-Baseline to beat: 10 files / 81 tests all green, `typecheck` 0 errors. Commit message:
-`fix(T5): the engine waits for the incoming step's anchor before moving (D43)`.
-
-**`bb4a320` already landed the DOC half of T5** (the D35 block now states the truth about
-`waitForElement`, per B34) \u2014 the relaunch must implement the CODE and may leave those comments as
-they are, only adding the D43 entry if it is still missing.
+| Task | What                                                                          | Scope (files)                                                                                             | Commit    | Gate  |
+| ---- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- | --------- | ----- |
+| T5   | engine: wait for the incoming step's anchor after `before()` (**D43**)          | `packages/product-tour/src/createTour.ts` + `tests/anchorResolutionConcurrency.test.ts` (fixtures) + `tests/waitForStepAnchor.test.ts` (new) + `tests/stepActivation.test.ts` (one obsolete assertion, see B35) | `316c490` | green — 11 files / 84 tests (was 10/81) |
+| T6   | e2e: one control per toolbar step, templates tab really opens, sections open     | `tests/e2e/tour.spec.ts`, `tests/e2e/helpers/tour.ts`                                                     | —         | — (unblocked, not yet started) |
 
 ## After T5
 
 1. **Re-verify T4 in the browser** (this is what T5 unblocks): walk the landing tour to the end and
-   confirm the four `pbx.settings.*` steps are reached with their own section open \u2014 Layers, Pages,
+   confirm the four `pbx.settings.*` steps are reached with their own section open — Layers, Pages,
    Languages. Before ANY browser check, bump the mtimes of the changed package files or the dev
    server serves a stale transform (**B32**, learned the hard way this session). Working invocation
    in this environment: `npx playwright test tests/e2e/<file>.spec.ts --project=chromium --no-deps
    --workers=1 --retries=0` (**B28**).
-2. **T6 \u2014 e2e coverage** for what this chain added, in `tests/e2e/tour.spec.ts` +
+2. **T6 — e2e coverage** for what this chain added, in `tests/e2e/tour.spec.ts` +
    `tests/e2e/helpers/tour.ts`: the two toolbar steps highlight one control each (assert the
    highlighted element contains Edit/Preview but NOT the viewport switch, and vice versa); the
    templates step really shows the Templates tab; each site-section step reaches its anchor with the
-   matching tab active. The orchestrator verified all of these by throwaway probe this session \u2014 T6
-   is about making them permanent.
-3. **Owed to the user, still open:** **B33** (the tour speaks Spanish while the embedded editor
-   speaks English \u2014 `tourSteps.ts` resolves copy from the global i18next singleton instead of the
+   matching tab active. The orchestrator verified all of these by throwaway probe this session —
+   T6 is about making them permanent.
+3. **B35 (new, this session) needs a decision before it is fixed:** driver.js's own popover
+   Next-button click can still route to `onDoneClick` instead of this package's `onNextClick` when
+   the next step's anchor is not yet mounted — the same D43 bug, for clicks instead of arrow keys.
+   Read B35's entry in full before proposing a fix; it names two candidate approaches and neither
+   is a small, obviously-safe change (both touch how this package owns driver.js's popover
+   button wiring, similar in spirit to D8/D18's Escape/arrow takeover).
+4. **Owed to the user, still open:** **B33** (the tour speaks Spanish while the embedded editor
+   speaks English — `tourSteps.ts` resolves copy from the global i18next singleton instead of the
    editor's per-instance i18n; fix shape recorded in the finding), **B23** and **B3** (eyes-on
    dark-mode / popover review).
-
-| Task | What                                                                          | Scope (files)                                                                                             | Commit    | Gate  |
-| ---- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------- | ----- |
-| T1   | `sidebarTab` into the document store (D38)                                     | `builder/store/slices/ui.ts`, `app/layout/Sidebar.tsx`, new test                                          | `a5623e9` | green |
-| T2   | split view mode / screen size (D37): re-point `toolbar.views`, add `toolbar.viewport` | `app/tour/tourAnchors.ts`, `tourSteps.ts`, `app/layout/HostToolbar.tsx`, `ViewportDropdown.tsx`, `tour.json` ×3, 2 tests | `79aa504` | green (browser-verified: `views` wraps only Edit/Preview, `viewport` only the size switch) |
-| T2b  | guard test: every anchor call-site file must import `dataTourAttr` (see **B32**) | `tests/tour-anchors-coverage.test.ts`                                                                     | `f02ca70` | green |
-| T3   | Templates-tab step (`sidebar.templates`), palette step pins the components tab  | `tourAnchors.ts`, `tourSteps.ts`, `app/layout/TemplatesPanel.tsx`, `tour.json` ×3, 2 tests                | `bb5616e` | green (browser-verified: step 7 opens the Templates tab) |
-| T4   | site sections: `settings.tabs/layers/pages/languages` (D39/D40/D41) + publish `before()` | `tourAnchors.ts`, `tourSteps.ts`, `inspector/SiteSettingsPanel.tsx`, `PageManager.tsx`, `I18nSettings.tsx`, `tour.json` ×3, 2 tests | `33ac950` | unit green; **blocked in the browser by B34** — kept, not reverted: the steps are correct, the ENGINE cannot deliver them yet |
-| T5   | engine: wait for the incoming step's anchor after `before()` (**D43**)          | `packages/product-tour/src/createTour.ts` + tests                                                         | `bb4a320` (docs half only) | **OPEN — code not written**; first attempt stopped on a test conflict, now resolved above |
-| T6   | e2e: one control per toolbar step, templates tab really opens, sections open     | `tests/e2e/tour.spec.ts`, `tests/e2e/helpers/tour.ts`                                                     | —         | — (blocked on T5) |
 
 **Reading of the request (verified against the source, not guessed):** "layers / pages / languages"
 are not sidebar tabs at all — they are tabs of `SiteSettingsPanel` (`SITE_TABS` =
@@ -1063,7 +1047,37 @@ names alone and should have been in the contract, not discovered by the implemen
 
 ## Findings
 
-**B34 — `waitForElement` does not exist in driver.js@1.8.0, so any step whose anchor is not ALREADY in
+**B35 — driver.js@1.8.0's `isLastStep()` (and its internal Next-button click routing, `L()`) is
+NOT a plain index-bounds check: it synchronously re-evaluates whether the NEXT step's anchor
+currently exists.** Found while writing T5's test (a) — an ArrowRight dispatched toward a step
+whose anchor genuinely does not exist yet (the exact D43 scenario) was silently swallowed, never
+reaching `transitionTo()`. Traced to `dist/driver.js.mjs`: `isLastStep()` calls `I(t, activeIndex+1,
+1)`, which walks forward calling `F(e, step)` — `F` returns "skip this candidate" based on
+`skipMissingElement` AND a synchronous `f(step.element)` resolution — for every candidate, live,
+right now. The SAME `I()`/`F()` pair backs driver.js's own Next-button click routing (`L()`,
+called both by the popover's built-in click handler and by `B()`, which additionally uses it to
+choose the button's label — Next vs Done). This package's own D21 guard
+(`if (driverInstance.isLastStep()) return;`, written under D35, before D43 existed) inherited that
+same anchor-dependent read, so on the very steps D43 exists to fix, ArrowRight was dropped BEFORE
+D43's wait ever ran — masking the bug this task was meant to close. Fixed in `316c490` (T5) by
+replacing the D21 check with the plain array-bounds test this package already uses everywhere else
+(`activeIndex + 1 >= currentDriveSteps.length`), independent of anchor existence. **Not yet fixed,
+and out of T5's scope (arrow-key navigation only, per the T5 handoff): the same defect shape for
+MOUSE clicks on driver.js's own popover Next button.** Read directly in `dist/driver.js.mjs`: the
+click handler recomputes `L(t, activeStep)` itself, at click time, and if `I()` says "no reachable
+next step right now" it invokes `onDoneClick` INSTEAD of this package's `onNextClick` — meaning a
+real user clicking "Next" toward a step whose anchor a slow `before()` hasn't mounted yet would
+complete/destroy the tour instead of transitioning, with no code of this package's ever running to
+prevent it (D43's `waitForStepAnchor()` lives inside `transitionTo()`, called FROM `onNextClick` —
+but `onNextClick` is never invoked in that case). Not proven against a live click in this session
+(T5's contract scoped the new tests to keyboard navigation, matching the contract's own DONE WHEN
+list) — this is a reading of `dist/driver.js.mjs`, not yet an executed repro. Needs a decision from
+the orchestrator before any fix: candidates include disabling driver.js's built-in
+`nextBtnText`/click wiring entirely and routing the popover's Next button through this package's
+own click listener (mirroring how Escape/arrows already bypass driver.js's internals per D8/D18),
+or eagerly warming the anchor check some other way. Owner: **B35**, follow-up to D43/T5.
+
+
 the DOM when the engine calls `moveNext()` is skipped instantly \u2014 and if all remaining steps are
 missing, the tour reports itself COMPLETED.** Measured by the orchestrator while gating T4, first in the
 browser and then by reading `driver.js@1.8.0`'s `dist/driver.js.mjs` directly:
