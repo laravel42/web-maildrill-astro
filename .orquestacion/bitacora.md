@@ -44,8 +44,24 @@ repeats the false B34 claim), B33, B42, B43, B23, B3.**
 
 | Task | What                                                                     | Scope                                                     | Decisions |
 | ---- | ------------------------------------------------------------------------ | --------------------------------------------------------- | --------- |
-| T11  | the engine waits for a settled rect and refreshes the stage after moving  | `packages/product-tour/src/createTour.ts` + its `tests/`   | D50       |
+| T11  | the engine waits for a settled rect and refreshes the stage after moving — **`d592db6`, unit-green but INERT in the browser, see B47** | `packages/product-tour/src/createTour.ts` + `tests/anchorRectSettle.test.ts` | D50 |
+| T11b | make the settle wait real (always sleep between samples) and refresh unconditionally after the move | `packages/product-tour/src/createTour.ts` + its `tests/`   | D50b      |
 | T12  | e2e guard: the stage lines up with the anchor at every landing step       | `tests/e2e/tour.spec.ts`                                   | —         |
+
+- **D50b — corrects D50 after B47, and simplifies it where the measurement says to.** Three points:
+  1. **A settle sample pair must be separated in TIME.** `waitForRectToSettle()` must always
+     `await` the sample interval before taking its second and subsequent samples, and must never
+     compare two reads taken in the same task. Two synchronous `getBoundingClientRect()` calls are
+     equal by construction, which is exactly what made D50 inert.
+  2. **The post-move `refresh()` becomes unconditional.** D50 made it conditional on "the rect
+     changed", and that condition is what silently disabled it. Measurement says `refresh()` produces
+     a correct stage at all four bad steps and there is nothing to gain from guessing when it is
+     needed: after the move, wait for the anchor's rect to settle (real, time-separated samples,
+     bounded ~400 ms) and then call `driverInstance.refresh()` exactly once, always.
+  3. **Any test stub for `getBoundingClientRect` must vary with TIME, not with call count**, and one
+     test must explicitly pin the real-browser rule: two reads inside the same task are identical, so
+     they must NOT be accepted as "settled". Without that case the same regression walks straight
+     back in.
 
 **User report (2026-09-16, seventh session), diagnosed and source-verified by the orchestrator
 before any delegation:** "en el tour de la landing, al llegar al step 10 no deja avanzar; después de
@@ -1273,6 +1289,37 @@ is NOT verified in a browser: that the with-content walk now passes step 10 → 
 e2e that seeds a node before starting the tour would close it; it needs its own task.
 
 ## Findings
+
+**B47 — T11 shipped a settle wait that is INERT in a real browser, and its unit tests passed because
+their stub models `getBoundingClientRect` wrongly.** Found by the orchestrator when the post-T11
+browser re-measurement came back **byte-identical to the pre-fix numbers** (step 9 +40 px, 11 +137,
+14 +329, 15 +228 — not one pixel better), despite `pnpm --filter @md/product-tour test` reporting
+14 files / 101 tests green and the subagent reporting 4 of 5 new tests red against the pre-fix code.
+The defect is in `waitForRectToSettle()`:
+
+```js
+let previous = readRectSafely(element);
+let current  = readRectSafely(element);   // same task, no delay in between
+if (ratesEqual(previous, current)) return element;   // always true in a real browser
+```
+
+Two **synchronous** `getBoundingClientRect()` reads cannot differ: no layout can be committed between
+two statements of the same task. So the early-return always fires, the polling loop below it is dead
+code, and the wait resolves instantly at whatever (wrong) position the anchor currently has. The same
+inertness disables half 2, which decides whether to `refresh()` by comparing rects around a settle
+that never actually waits — so it concludes "nothing moved" and skips the refresh. Both halves of D50
+were therefore no-ops in production. The unit tests did not catch it because they stub
+`getBoundingClientRect` to return a **different value on each call**, which makes the two synchronous
+reads differ — the one thing a real browser never does. Lesson worth keeping, and it is the same
+shape as B25/B26/B27 in this log: a test whose fixture is more permissive than reality will certify
+inert code as working. Any stub for this API must vary with **time**, not with call count.
+
+**Ruled in and ruled out by measurement (do not re-litigate these):** the anchors are NOT duplicated
+(`matchCount === 1` at all four bad steps, and the first match IS the `.driver-active-element`), and
+the mechanism IS recompute-staleness — dispatching a bare `window` `resize` event, which is the only
+recompute path driver.js subscribes to itself, snaps the cut-out onto the element at **all four**
+steps (`dy` goes from +35/+132/+324/+223 to the correct −5 in every case). So the cure is proven; only
+T11's trigger was broken.
 
 **B46 — the overlay cut-out ("stage") is drawn at the position the anchor had BEFORE its panel
 finished re-laying out, and driver.js never re-measures, so 4 of the landing tour's 15 steps
