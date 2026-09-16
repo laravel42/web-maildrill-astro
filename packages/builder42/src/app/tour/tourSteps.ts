@@ -37,12 +37,23 @@ import { BUILDER42_TOUR_ANCHORS } from "./tourAnchors";
  *    publicación del host responde `enabled` (ver `fetchHealth().publish.enabled`,
  *    igual que consulta `EditorPreferences`/`PublishPanel` — este módulo no llama a la
  *    red directamente, recibe el resultado ya resuelto).
+ *  - `standaloneChrome`: `pbx.pages.breadcrumb` (`PageBreadcrumb.tsx`) y
+ *    `pbx.profileMenu` (`ProfileMenu.tsx`) solo existen en el DOM cuando el editor
+ *    renderiza su propio `Header` (el shell standalone, `app/App.tsx`) — el embed
+ *    (`Builder42Editor.tsx`) nunca monta `Header`; el host le da su propio
+ *    header/toolbar en su lugar. `tourSteps.ts` no es un componente de React y no
+ *    puede leer `useEmbeddedChrome` (el context que distingue standalone de embed en
+ *    tiempo de render), así que cada caller resuelve el valor y lo pasa explícito,
+ *    igual que `publishAvailable`: `app/App.tsx` pasa `true`, `Builder42Editor.tsx`
+ *    pasa `false` (D49).
  */
 export interface Builder42TourStepsConfig {
   /** Nivel de experiencia actual (`useLocalConfig("experienceLevel")`). */
   experienceLevel: "simple" | "advanced";
   /** `true` si el adapter/servidor de publicación está disponible (`fetchHealth().publish.enabled`). */
   publishAvailable: boolean;
+  /** `true` si el editor renderiza su propio `Header` (shell standalone); `false` en el embed (D49). */
+  standaloneChrome: boolean;
 }
 
 /** Namespace i18n de este registro — ver `src/i18n/locales/<lang>/tour.json`. */
@@ -438,17 +449,24 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     })(),
   );
 
-  // 16. pbx.pages.breadcrumb — PageBreadcrumb.tsx. Siempre visible: el breadcrumb de
-  // páginas existe con o sin más de una página en el sitio. El copy transmite el
-  // concepto clave de que una landing es un sitio multipágina (§3.2).
-  steps.push({
-    anchorKey: BUILDER42_TOUR_ANCHORS.pagesBreadcrumb,
-    popover: {
-      title: t("steps.pagesBreadcrumb.title"),
-      description: t("steps.pagesBreadcrumb.description"),
-      side: "bottom",
-    },
-  });
+  // 16. pbx.pages.breadcrumb — PageBreadcrumb.tsx. Solo existe en el DOM cuando el
+  // editor renderiza su propio Header (shell standalone) — el embed nunca monta
+  // `Header` (§ doc del `Builder42TourStepsConfig` de arriba, D49). Con
+  // `standaloneChrome = false` el paso se omite entero, mismo patrón que
+  // `pbx.publish` (paso 17) usa para `publishAvailable`: push condicional +
+  // `when()` como garantía redundante en runtime. El copy transmite el concepto
+  // clave de que una landing es un sitio multipágina (§3.2).
+  if (config.standaloneChrome) {
+    steps.push({
+      anchorKey: BUILDER42_TOUR_ANCHORS.pagesBreadcrumb,
+      popover: {
+        title: t("steps.pagesBreadcrumb.title"),
+        description: t("steps.pagesBreadcrumb.description"),
+        side: "bottom",
+      },
+      when: () => config.standaloneChrome,
+    });
+  }
 
   // 17. pbx.publish — PublishPanel.tsx (publicar y subdominio). Solo si el adapter de
   // publicación del host está disponible (§3.2 precondición, §1.4.6): con
@@ -486,17 +504,24 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
   }
 
   // 18. pbx.profileMenu — ProfileMenu.tsx (tema, idioma, nivel simple/avanzado,
-  // controles de reorden). Siempre visible: el trigger del menú de preferencias no
-  // depende de ningún flag del embed.
-  steps.push({
-    anchorKey: BUILDER42_TOUR_ANCHORS.profileMenu,
-    popover: {
-      title: t("steps.profileMenu.title"),
-      description: t("steps.profileMenu.description"),
-      side: "bottom",
-      align: "end",
-    },
-  });
+  // controles de reorden). Solo existe en el DOM cuando el editor renderiza su
+  // propio Header (shell standalone) — el embed nunca monta `Header` (§ doc del
+  // `Builder42TourStepsConfig` de arriba, D49). Con `standaloneChrome = false` el
+  // paso se omite entero, mismo patrón que `pbx.publish` (paso 17) usa para
+  // `publishAvailable`: push condicional + `when()` como garantía redundante en
+  // runtime.
+  if (config.standaloneChrome) {
+    steps.push({
+      anchorKey: BUILDER42_TOUR_ANCHORS.profileMenu,
+      popover: {
+        title: t("steps.profileMenu.title"),
+        description: t("steps.profileMenu.description"),
+        side: "bottom",
+        align: "end",
+      },
+      when: () => config.standaloneChrome,
+    });
+  }
 
   return steps;
 }

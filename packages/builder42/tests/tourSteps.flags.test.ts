@@ -37,11 +37,13 @@ function insertChildUnderRoot(childId: string): void {
 const ADVANCED_CONFIG: Builder42TourStepsConfig = {
   experienceLevel: "advanced",
   publishAvailable: true,
+  standaloneChrome: true,
 };
 
 const SIMPLE_CONFIG: Builder42TourStepsConfig = {
   experienceLevel: "simple",
   publishAvailable: true,
+  standaloneChrome: true,
 };
 
 function resetDocumentState() {

@@ -263,7 +263,7 @@ function Builder42EditorInner({
   }, []);
 
   useBuilder42Tour({
-    config: { experienceLevel, publishAvailable },
+    config: { experienceLevel, publishAvailable, standaloneChrome: false },
     onboardingResolved: tourEnabled && experienceLevelChosen,
     onTourEvent,
     i18nInstance,
