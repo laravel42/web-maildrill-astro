@@ -106,6 +106,36 @@
  * - Respeta `prefers-reduced-motion` desactivando la animación de driver.js.
  * - Persistencia y analítica conectadas vía las factories de persistence.ts / analytics.ts,
  *   ambas inyectadas por el consumidor (nunca defaults con conocimiento de dominio).
+ * - **D36 — `start()` espera su propia hoja de estilos antes de que driver.js dibuje el
+ *   popover.** Defecto medido en navegador real por el orquestador: ambos editores vendorizados
+ *   llaman `ensureTourThemeCss(); void tour.start();`, donde `ensureTourThemeCss()` es un
+ *   `void import('@md/product-tour/style.css')` fire-and-forget — y `start()`, antes de D36,
+ *   solo `await`eaba `import('driver.js')`. Ese import (dependencia pre-bundleada) resuelve
+ *   ANTES de que la hoja de estilos llegue, así que driver.js insertaba y POSICIONABA el
+ *   popover con `driver.css` (importado por `theme.css`, D36) todavía sin aplicar — el popover
+ *   se medía `position: static`, ancho completo del viewport, y el cálculo de posición de
+ *   driver.js (que usa esas medidas erróneas) dejaba offsets inline absurdos que la hoja de
+ *   estilos, al llegar milisegundos después, congelaba en un `position: fixed` fuera de
+ *   pantalla — el usuario veía el overlay y el resaltado, pero nunca el popover. Bajo D36, el
+ *   MOTOR es dueño de garantizar el orden — no el consumidor — porque `driver.css` no es
+ *   opcional para driver.js y `theme.css` (que lo `@import`ea) vive dentro de este paquete:
+ *     1. `CreateTourOptions.loadStyles?: () => Promise<unknown>` — inyectable para tests: por
+ *        defecto, `() => import('./theme.css')`.
+ *     2. En `start()`, se espera CONCURRENTEMENTE con el import de driver.js —
+ *        `const [{ driver }] = await Promise.all([import('driver.js'), loadStyles()])` — para
+ *        no añadir latencia nueva: la hoja de estilos se carga en paralelo, nunca en serie.
+ *     3. El re-chequeo `isCurrentGeneration(options.tourId, generation)` (D7) sigue corriendo
+ *        inmediatamente después de este await combinado, exactamente donde antes corría tras
+ *        el import de driver.js a secas — una generación más nueva puede haber reclamado el
+ *        registro mientras este `start()` seguía suspendido.
+ *     4. D36 es puramente una garantía de ORDEN: no añade `refresh()` posterior a `drive()`, ni
+ *        `MutationObserver`, ni `rAF`, ni ninguna otra red de reposicionamiento — si el orden es
+ *        correcto, driver.js mide y posiciona el popover ya con sus estilos aplicados, y no
+ *        hace falta corregir nada después.
+ *     5. Bajo Vitest (entorno de test de este paquete, sin bundler real de CSS), el import de
+ *        `./theme.css` resuelve a un módulo inerte — el `loadStyles` por defecto funciona igual
+ *        de bien ahí que en producción, sin necesitar la opción inyectada salvo para probar
+ *        explícitamente la garantía de orden (ver `tests/`).
  */
 
 import type { Driver, DriveStep } from 'driver.js';
@@ -301,6 +331,11 @@ export interface CreateTourOptions {
    * en producción se detecta automáticamente.
    */
   forceAnimate?: boolean;
+  /**
+   * Resuelve cuando la hoja de estilos del tour ya está aplicada; inyectable para tests (D36).
+   * Por defecto, `() => import('./theme.css')`.
+   */
+  loadStyles?: () => Promise<unknown>;
 }
 
 export interface Tour {
@@ -665,7 +700,12 @@ export function createTour(options: CreateTourOptions): Tour {
     const generation = claimTourGeneration(options.tourId);
     ownGeneration = generation;
 
-    const { driver } = await import('driver.js');
+    // D36: la hoja de estilos del tour se espera CONCURRENTEMENTE con el import de driver.js —
+    // nunca en serie después — así el motor garantiza que `driver.css` (importado por
+    // `theme.css`) ya está aplicado cuando driver.js mida y posicione el popover, sin añadir
+    // latencia nueva (ver el bloque D36 al inicio de este archivo).
+    const loadStyles = options.loadStyles ?? (() => import('./theme.css'));
+    const [{ driver }] = await Promise.all([import('driver.js'), loadStyles()]);
 
     // Una generación más nueva pudo haber reclamado el registro mientras esperábamos el
     // import — abortar sin construir nada ni tocar el DOM.
