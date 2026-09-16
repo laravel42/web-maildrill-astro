@@ -11,15 +11,41 @@ Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour
 
 # START HERE — next session
 
-**NEXT ACTION, verbatim: nothing is pending on the reported defect — the T7a→T7b→T8a→T8b→T10 chain
-is DONE and gated green (D44–D49), and B35/B36/B38 plus the user's "step 10 won't advance, then jumps
-to 12 or 13" are closed with e2e proof. The chain is NOT pushed. Remaining open items, in priority
-order: B39 (the one still-red e2e test, `Escape yields to the send-test dialog`, pre-existing, needs a
-fresh dev server before trusting it — do not restart it autonomously, ask the user), B45 (D46 drops a
-click with no visible feedback), B40 (the plan doc still repeats the false B34 claim), B33 (the tour
-speaks Spanish while the embedded editor speaks English), B42, B43, B23, B3.**
+**NEXT ACTION, verbatim: run T11 then T12 (decision D50) to close B46 — the overlay cut-out is drawn
+against a stale anchor position on 4 of the landing tour's 15 steps, reported by the user for the
+style step. Read B46 for the measurements before touching anything. The earlier
+T7a→T7b→T8a→T8b→T10 chain is DONE and gated green (D44–D49): B35/B36/B38 and the "step 10 won't
+advance, then jumps to 12 or 13" report are closed with e2e proof. Nothing is pushed (31 commits
+ahead). Other open items, in priority order: B39 (the one still-red e2e test, pre-existing, needs a
+fresh dev server — do not restart it autonomously, ask the user), B45, B40 (the plan doc still
+repeats the false B34 claim), B33, B42, B43, B23, B3.**
 
 **Read B40 first if you touch the engine: B34 was factually wrong and D43's stated premise with it.**
+
+**Contract decision for the B46 chain (orchestrator's, not delegable):**
+
+- **D50 — an anchor is not "ready" when it exists, it is ready when its rect has STOPPED MOVING, and
+  the engine must verify that on both sides of the move.** Two halves, both in
+  `packages/product-tour/src/createTour.ts`:
+  1. **Before the move.** `waitForStepAnchor()` currently resolves the instant `resolveAnchor()`
+     finds the element. It must additionally sample `getBoundingClientRect()` and only resolve once
+     two consecutive samples, taken ~50 ms apart, are equal within half a pixel — still bounded by
+     the step's own `waitForElementMs`, still resolving (never throwing, never hanging) when the
+     budget runs out. This is what makes the FIRST paint correct, so there is no visible jump.
+  2. **After the move.** driver.js recomputes the stage only on its own window scroll/resize
+     listeners (verified: its public `refresh()` is the only other path, and nothing in this engine
+     called it after `moveTo`), so anything that moves the anchor after `moveTo()` — driver.js's own
+     `scrollIntoView`, a late layout pass — leaves the cut-out behind for good. After `moveTo()`,
+     re-sample the anchor's rect against the value it had at move time, bounded (~400 ms), and if it
+     changed, call `driverInstance.refresh()` exactly once. Belt to half 1's braces, and the only
+     thing that can cover a post-draw scroll.
+  Why not just half 2 on its own: it draws the stage wrong and then corrects it, which the user sees
+  as a flicker. Why not just half 1: it cannot cover anything driver.js itself does after the draw.
+
+| Task | What                                                                     | Scope                                                     | Decisions |
+| ---- | ------------------------------------------------------------------------ | --------------------------------------------------------- | --------- |
+| T11  | the engine waits for a settled rect and refreshes the stage after moving  | `packages/product-tour/src/createTour.ts` + its `tests/`   | D50       |
+| T12  | e2e guard: the stage lines up with the anchor at every landing step       | `tests/e2e/tour.spec.ts`                                   | —         |
 
 **User report (2026-09-16, seventh session), diagnosed and source-verified by the orchestrator
 before any delegation:** "en el tour de la landing, al llegar al step 10 no deja avanzar; después de
@@ -1247,6 +1273,41 @@ is NOT verified in a browser: that the with-content walk now passes step 10 → 
 e2e that seeds a node before starting the tour would close it; it needs its own task.
 
 ## Findings
+
+**B46 — the overlay cut-out ("stage") is drawn at the position the anchor had BEFORE its panel
+finished re-laying out, and driver.js never re-measures, so 4 of the landing tour's 15 steps
+highlight the wrong rectangle.** Reported by the user for the style step ("el step 11 de estilo no
+hace correctamente el overlay en la sección de estilos") and then measured by the orchestrator with a
+throwaway probe (deleted after use) that walked the tour **with content on the canvas** (seeded via
+`.pbx-canvas-empty__primary`, the embed's starter-template button — the empty canvas is why no
+earlier session ever saw this) and, at every step after a 900 ms settle, compared the highlighted
+element's live `getBoundingClientRect()` against the cut-out rect parsed out of driver.js's overlay
+`<path d="…">`. A correctly-drawn stage measures `stage.x = el.x - 5`, `stage.w = el.w + 10`,
+`stage.y = el.y - 10`, `stage.h = el.h + 10`. Literal results (offset = how far the stage sits below
+where it belongs):
+
+| step | anchor                      | vertical offset |
+| ---- | --------------------------- | --------------- |
+| 1–8, 10, 12 | —                    | correct         |
+| 9    | `pbx.canvas.nodeActions`    | **+40 px**      |
+| 11   | `pbx.inspector.breakpoints` | **+137 px**     |
+| 13   | `pbx.settings.layers`       | +4 px (marginal)|
+| 14   | `pbx.settings.pages`        | **+329 px**     |
+| 15   | `pbx.settings.languages`    | **+228 px**     |
+
+Diagnosis, from the same measurements: the WIDTH and HEIGHT are always exactly right, only Y is
+wrong, and it never self-corrects (re-measured 1200 ms later: byte-identical path). `bodyScrollTop`
+was **0**, so the first hypothesis — driver.js's own `scrollIntoView` inside
+`.pbx-inspector__body { overflow: auto }` moving the element after the draw — is **ruled out by
+measurement**, not by argument. What is left, and what the pattern fits exactly: every misaligned
+step is one whose `before()` changes what the target panel renders (switch the inspector tab, switch
+the site-settings tab, select a node), and the engine's `waitForStepAnchor()` resolves the instant
+the anchor EXISTS — which is the frame where the outgoing panel content is still mounted, so the
+incoming anchor is measured sitting below it. Then React commits the removal, the anchor jumps up by
+the height of the outgoing content, and nothing recomputes the stage. Note this reproduced under
+`prefers-reduced-motion: reduce`, so it is a LAYOUT settle, not the framer-motion `y: 4 → 0`
+transition on `.pbx-inspector-tabpanel` (that transition can only add ~4 px, which is plausibly the
+step-13 residue). Closed by **D50** (T11), with an e2e guard in T12.
 
 **B45 — D46 drops a Next click with no visible feedback, which is invisible to a human but breaks
 any scripted walk that clicks as fast as it can.** Measured while gating T8b (see the e2e block
