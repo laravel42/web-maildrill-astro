@@ -11,6 +11,55 @@ Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour
 
 # START HERE — next session
 
+**State at hand-off (2026-09-15, third session, after the user's first browser test): `HEAD = 0a6bb37`,
+branch `feat/ui-polish-p1`, tree clean** except the untracked `.cursor/hooks/` and `.kiro/`. **Not
+pushed.**
+
+**The user opened the tour and reported a real bug: the command palette appeared immediately and its
+full-screen overlay covered the controls the first steps point at** (the preview/edit tab group, the
+desktop/mobile switch). Diagnosed by the orchestrator: the engine ran **every** step's `before()`
+inside `start()` (the loop over `eligibleSteps` that also resolved anchors), so every precondition —
+palette open, library drawer open, inspector forced open — was applied before the first popover
+rendered. This was **not** new to this session (F1 built it that way); the palette step added in T5
+just made it impossible to miss. A second, latent instance of the same defect: the four library steps
+each opened the drawer on their own tab in `before()`, so the last one won and the *blocks* group
+anchors resolved to nodes React had already unmounted.
+
+- **T8 (`b2b2885`) — D35: `before()` runs when the tour reaches the step, and anchors resolve
+  lazily.** Each `DriveStep.element` is now a function (`() => resolveAnchor(...)`), so driver.js
+  resolves it at drive time and does its own waiting/skipping (`waitForElement` +
+  `skipMissingElement` are real per-step driver.js features — read in `driver.js@1.8.0`'s internals
+  `f()`, `m()`, `p()`, `F()`). The engine owns transitions through one `transitionTo(intendedIndex,
+  move)` helper shared by the global `onNextClick`/`onPrevClick` and the arrow-key handler: it runs
+  the outgoing `after()`, then awaits the incoming `before()`, then calls `moveNext()`/
+  `movePrevious()`. `after()` still fires from `onDeselected` (that is what covers ×, overlay,
+  Escape, `stop()`, Done) with a marker so it never runs twice. **D35 supersedes D23/D24 entirely**:
+  there is no start-time anchor resolution left to make concurrent.
+- **T8b (`0a6bb37`)** — two defects the orchestrator found gating T8: `transitionTo()` dereferenced
+  `driverInstance` after its awaits (a tour closed mid-transition would throw inside a `void`-called
+  async function), now re-checked after every await together with the generation; and
+  `tour_step_viewed` had been emitting **`stepIndex: -1` since F1**, because driver.js hands hooks a
+  *clone* of the step (`{...step, popover:{…}}`), so `driveSteps.indexOf(driveStep)` never matched.
+  The index now resolves through the stable `data.tourStep` reference. The orchestrator reproduced
+  the telemetry bug independently (`AssertionError: expected -1 to be +0`).
+
+**Measured by the orchestrator at `0a6bb37`:** `@md/product-tour` **9 files / 79 tests** (was 8/68) ·
+`tsc -p packages/product-tour` 0 errors · `builder42` 13/119 unchanged · `email-builder-standalone`
+13/123 unchanged · `pnpm check` 339 files 0/0/3 · `pnpm lint` the same 3 pre-existing errors by name.
+Mutation-tested: restoring the eager `before()` loop turns **4** of the new tests red (in both
+`stepActivation.test.ts` and the rewritten `anchorResolutionConcurrency.test.ts`); removing the
+duplicate-`after()` suppression turns 1 red; reverting the step-index fix reproduces `expected -1 to
+be +0`.
+
+**Owed to the user, now:** re-open the email editor tour in the browser. Expected after T8: nothing
+opens at step 1 — the palette appears only when the tour reaches its own step (17 of 18), the library
+drawer only from the library steps onwards, and the *Basics* / *Structure* groups highlight while the
+drawer is actually on the Blocks tab. The dark-mode review (finding **B23**) is still owed too.
+
+---
+
+# Older hand-off (2026-09-15, third session, before the browser test — superseded)
+
 **State at hand-off (2026-09-15, third session): `HEAD = 63c26f4`, branch `feat/ui-polish-p1`,
 tree clean** except the known untracked `.cursor/hooks/` and `.kiro/`. Nothing is half-finished:
 every task has its own commit and the chain is green end to end. **Not pushed** — the branch stays
@@ -808,6 +857,30 @@ names alone and should have been in the contract, not discovered by the implemen
 **D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
 
 ## Findings
+
+**B26 — T8b's two \"tour destroyed mid-transition\" tests do not bite, so that guard is covered only by
+reading.** Measured by the orchestrator: removing the liveness re-check from inside the D35.5
+reconciliation poll loop (`instance = driverInstance; if (!instance || !isLive()) return;`) leaves
+`stepActivation.test.ts` **15/15 green**, and no `TypeError` appears anywhere in the output — i.e. the
+test never actually reaches the state where the loop polls while `driverInstance` has already been
+nulled by `onDestroyed`. The guard itself is correct and cheap (verified by reading: every dereference
+after an `await` now reads the closure variable into a local and checks it plus the generation), but
+the assertion protecting it is theatre, so a future refactor could delete it and stay green. The
+consequence of the unguarded code was modest — an unhandled promise rejection from a `void`-called
+async function, plus a `before()` mutating host UI for a tour that no longer exists — which is why
+this was not sent back for a third round. To close it properly, a test would have to hold the
+transition open at a known point (a `before()` that never resolves until the test says so) and close
+the tour precisely while the loop is polling. Owner: unassigned.
+
+**B25 — `tour_step_viewed` had been reporting `stepIndex: -1` since F1** (fixed in `0a6bb37`, recorded
+because it says something about the coverage, not just the bug). `onHighlighted` compared the object
+driver.js hands back against the array this package configured, but driver.js's internal `B()` builds
+a fresh `{...step, popover: {…}}` clone per drive, so `indexOf` never matched. Nothing caught it for
+three sessions because no test asserted that event's payload — `closeAndOverlayDismissal.test.ts`
+asserts `stepIndex: 0` only for `tour_dismissed`, which is emitted by this package's own code path with
+an index read from `getActiveIndex()`. Lesson worth keeping: telemetry that nothing asserts is
+telemetry nobody can trust, and the same clone behaviour also invalidated the first
+`alreadyHandledAfterStep` implementation in T8 — the same trap twice in one file.
 
 **B24 — the tour i18n parity test cannot tell a translated string from an untranslated one, and it
 let three English titles through into Spanish and Italian.** Found by the orchestrator reading T4's
