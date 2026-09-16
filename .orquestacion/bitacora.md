@@ -111,9 +111,24 @@ T8a/T8b share `tourSteps.ts`, so they are ordered, never parallel):**
 | Task | What                                                                       | Scope                                                                        | Decisions   |
 | ---- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------- |
 | T7a  | engine owns Next/Done routing and step skipping — **DONE `04b429a`, green** | `packages/product-tour/src/createTour.ts` + `tests/engineOwnedRouting.test.ts` | D44/D45/D45b/D47 |
-| T7b  | at most one transition in flight; extra clicks/arrows dropped               | `packages/product-tour/src/createTour.ts` + its `tests/`                      | D46         |
+| T7b  | at most one transition in flight; extra clicks/arrows dropped — **DONE `f7c4d5c`, green** | `packages/product-tour/src/createTour.ts` + `tests/transitionInFlight.test.ts` | D46         |
 | T8a  | inspector element tab in the document store + `breakpoints` step opens it   | `builder42` store slice + `InspectorForm.tsx` + `app/tour/tourSteps.ts` + tests | D48         |
 | T8b  | breadcrumb/profileMenu steps gated out of the embed                         | `builder42` `app/tour/tourSteps.ts` + `useBuilder42Tour.ts` + tests            | D49         |
+
+**T7b gate (orchestrator, `c241457..f7c4d5c`):** scope respected (2 files), zero deletions, history
+intact, `pnpm --filter @md/product-tour test` **13 files / 96 tests green** (was 12/89), `typecheck`
+0 errors. The new test file is a pure addition (`283 0`); the 37 deleted lines in `createTour.ts` are
+re-indentation of the existing body into the new `try` block — verified by reading the diff, no
+logic and no comment removed. Guard placement verified by reading the source: the arrow branches
+call `stopPropagation()`/`preventDefault()` and only THEN check the flag (drop-but-consume, per D46
+detail 1), the D21/D22/D11/D12 bail-outs all still run before it, and Escape is not gated at all.
+Mutation-tested by the orchestrator: restored `createTour.ts` from `c241457` → **2 of 7 new tests
+red**, and they are the two that matter — `(a)` "three rapid Next clicks … advance exactly ONE step"
+(`expected "vi.fn()" to be called 1 times, but got 3 times`) and `(a-arrows)` the same with
+ArrowRight (`expected 'Step D' to be 'Step B'`). **That second failure is the user's reported
+symptom, reproduced deterministically at the unit level: three presses, three stacked walks, a
+three-step jump.** The other 5 are regression guards for behaviour that already held (the subagent
+said so explicitly rather than claiming they bit). Tree restored, clean.
 
 **T7a gate (orchestrator, `a959d44..04b429a`):** scope respected (2 files), zero deletions, history
 intact, `pnpm --filter @md/product-tour test` **12 files / 89 tests green** (baseline 11/84),
