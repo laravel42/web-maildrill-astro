@@ -11,6 +11,77 @@ Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour
 
 # START HERE — next session
 
+**Chain in flight (2026-09-15/16, fourth session): landing tour step redesign, requested by the user
+in these words:** «separa los steps de modo de vista y tamaño de pantalla. deja un step donde
+muestres las plantillas en su pestaña presenta las secciones del sidebar, layers, pages, languages,
+etc.» Baseline for this chain: `HEAD = 22d2b10`, branch `feat/ui-polish-p1`, tree clean except the
+untracked `.cursor/hooks/` and `.kiro/`. Baselines measured at that commit: `builder42` **13 files /
+119 tests**, `@md/product-tour` 10/81, `email-builder-standalone` 13/123, `pnpm check` 339 files
+0 errors / 0 warnings / 3 hints, `pnpm lint` the 3 known errors by name, `tests/e2e/tour.spec.ts`
+**22 passed** (`--project=chromium --no-deps --workers=1 --retries=0`, see **B28** for why
+`--no-deps`).
+
+**Reading of the request (verified against the source, not guessed):** "layers / pages / languages"
+are not sidebar tabs at all — they are tabs of `SiteSettingsPanel` (`SITE_TABS` =
+layers · pages · themes · seo · languages · publish · settings), rendered in the RIGHT panel
+(`Inspector.tsx`) whenever no node is selected. The left sidebar has only
+components · tokens · templates (`SideTab`), with tokens hidden in the simple embed. So the chain
+touches both panels.
+
+| Task | What                                                                          | Scope (files)                                                                                             | Commit    | Gate  |
+| ---- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------- | ----- |
+| T1   | `sidebarTab` into the document store (D38)                                     | `builder/store/slices/ui.ts`, `app/layout/Sidebar.tsx`, new test                                          | —         | —     |
+| T2   | split view mode / screen size (D37): re-point `toolbar.views`, add `toolbar.viewport` | `app/tour/tourAnchors.ts`, `tourSteps.ts`, `app/layout/HostToolbar.tsx`, `ViewportDropdown.tsx`, `tour.json` ×3, 2 tests | —         | —     |
+| T3   | Templates-tab step (`sidebar.templates`), palette step pins the components tab  | `tourAnchors.ts`, `tourSteps.ts`, `app/layout/TemplatesPanel.tsx`, `tour.json` ×3, 2 tests                | —         | —     |
+| T4   | site sections: `settings.tabs/layers/pages/languages` (D39/D40/D41) + publish `before()` | `tourAnchors.ts`, `tourSteps.ts`, `inspector/SiteSettingsPanel.tsx`, `PageManager.tsx`, `I18nSettings.tsx`, `tour.json` ×3, 2 tests | —         | —     |
+| T5   | e2e: one control per toolbar step, templates tab really opens, sections open    | `tests/e2e/tour.spec.ts`, `tests/e2e/helpers/tour.ts`                                                     | —         | —     |
+
+**Contract decisions for this chain (orchestrator's, not delegable):**
+
+- **D37 — the landing tour highlights one control per step** (extends D16/D17, won for the email
+  editor under B17). `pbx.toolbar.views` is re-pointed from the whole centre block of
+  `HostCanvasToolbar` (which contains Edit/Preview **and** the viewport dropdown) to the
+  Edit/Preview group alone; the viewport switch gets its own anchor `pbx.toolbar.viewport` and its
+  own step. Same defect shape B17 described for `eb.header.identity`.
+- **D38 — the sidebar's active tab moves into the document store** (`sidebarTab: SideTab`,
+  `setSidebarTab`), mirroring **D28** in the email editor. A tour `before()` runs outside React and
+  cannot touch a component's `useState`, so "show the Templates tab" is unreachable while
+  `Sidebar.tsx` owns that state locally. The `SideTab` type moves to the ui slice, next to `SiteTab`.
+- **D39 — the site sections reuse the store's EXISTING one-shot seam, `openSiteSettings(tab)`; no
+  second mechanism is introduced.** `SiteSettingsPanel`'s own `tab` stays local `useState`: the store
+  already exposes `openSiteSettings(tab)` (deselects the node **and** sets `requestedSiteTab`), and
+  the panel already consumes it and calls `clearRequestedSiteTab()`. Deselecting is not incidental —
+  the panel switches to `"element"` whenever `selectedId` is set, so a section step MUST deselect or
+  it lands on the element form.
+- **D40 — a tour step that flips an editor preference must go through `writeConfig`, never
+  `localStorage.setItem`.** Read in `hooks/useLocalConfig.ts`: subscribers are notified ONLY from
+  `writeConfig` (`notify(key)`), so the existing `before()` hooks that raw-set `pb:sidebarMode` and
+  `pb:inspectorCollapsed` do not re-render anything in the live session — they only take effect on a
+  later mount (finding **B29**). Corrected in T4, same file.
+- **D41 — section anchors are stamped on each section's own root, never on a wrapper added for the
+  tour**: `pbx.settings.tabs` → the `role="tablist"` in `SiteSettingsPanel`; `pbx.settings.layers` →
+  the existing `<section>` around `LayersTree`; `pbx.settings.pages` → `PageManager`'s root
+  `<section>`; `pbx.settings.languages` → `I18nSettings`'s root `<section>`. No new DOM nodes.
+- **D42 — nothing is removed from the existing tour.** `pbx.pages.breadcrumb` and `pbx.profileMenu`
+  live in `app/layout/Header.tsx`/`ProfileMenu.tsx`, which the embed never mounts (**B9**), so both
+  are silently skipped there; they stay untouched for the standalone editor, and the new
+  `pbx.settings.pages` covers "pages" for the embed. The resulting redundancy is a product call for
+  the user, not an agent's to make.
+
+**Three bindings every task in this chain must respect (this is what incident I2 was about):** the
+package enforces a 1:1 registry↔steps mapping through its own tests, so an anchor and its step and
+its copy MUST land in the SAME commit — `tests/tourSteps.flags.test.ts` compares
+`buildBuilder42TourSteps(...)` against `Object.values(BUILDER42_TOUR_ANCHORS)`;
+`tests/tourSteps.i18n-parity.test.ts` carries a hardcoded `stepIdByAnchor` map that must gain an
+entry per new anchor, and demands `steps.<id>.title/description` in **es, en and it** (see **B24**:
+that test cannot tell an untranslated string from a translated one — translate for real);
+`tests/tour-anchors-coverage.test.ts` carries a `filesByAnchor` map and asserts each anchor's
+`dataTourAttr(BUILDER42_TOUR_ANCHORS.x)` call-site appears exactly once in the file(s) listed.
+
+---
+
+# Older hand-off (2026-09-15, fourth session, D36 popover fix — done, superseded)
+
 **State at hand-off (2026-09-15, fourth session): `HEAD = c239d1e`, branch `feat/ui-polish-p1`, tree
 clean** except the untracked `.cursor/hooks/` and `.kiro/`. **Not pushed.**
 
@@ -916,6 +987,17 @@ names alone and should have been in the contract, not discovered by the implemen
 **D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
 
 ## Findings
+
+**B29 — every tour `before()` that opens a panel by writing `localStorage` directly is a no-op in the
+live session.** Found by the orchestrator reading `hooks/useLocalConfig.ts` while planning the landing
+step redesign. That hook is a shared external store: instances subscribe per key and are woken ONLY by
+`notify(key)`, which only `writeConfig()` calls. `app/tour/tourSteps.ts` sets
+`localStorage.setItem("pb:sidebarMode", "open")` and `localStorage.setItem("pb:inspectorCollapsed",
+"false")` in three `before()` hooks — the value persists, but no mounted component re-reads it, so the
+sidebar stays compact and the inspector stays collapsed until the next mount. The steps only appeared
+to work because the panels are usually already open. Closed for those hooks by T4 under **D40**; worth
+remembering as a shape: in this package, "write the preference" and "the UI reacts" are the same call
+only if it is `writeConfig`.
 
 **B28 — this environment can only run the authenticated e2e specs through the DEV-ONLY auth bypass,
 and `auth.setup.ts` always fails (refines B6).** Measured: `AUTH_SECRET` in `.env` is still just the
