@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { gotoApp } from './helpers/app';
 import { blockOutbound } from './helpers/no-outbound';
 import {
+  expectTourPopoverInsideViewport,
   markEmailTourSeen,
   markLandingTourSeen,
   resetEmailTourState,
@@ -382,6 +383,29 @@ test.describe('email editor tour (/dashboard/templates/email)', () => {
       'the status step does not also highlight the Send test button',
     ).toHaveCount(0);
   });
+
+  test('the popover renders inside the viewport, not parked off-screen (D36)', async ({ page }) => {
+    // Deliberately NOT emulating reduced motion here: D36 only reproduced with
+    // driver.js's default step-transition animation (the bug was in the
+    // measure-before-styles-apply timing of that path), so this test must run
+    // the default, unmodified animation path rather than the reduced-motion
+    // shortcut the other multi-step tests above use.
+    await resetEmailTourState(page);
+    await gotoApp(page, '/dashboard/templates/email');
+
+    const popover = tourPopover(page).first();
+    await expect(popover, 'tour popover appears on first visit').toBeVisible({ timeout: 45_000 });
+    // Lets the default reposition animation settle before measuring — D36's bogus
+    // offsets were written at the initial positioning, but only a settled popover
+    // gives a stable rect to assert against.
+    await page.waitForTimeout(500);
+    await expectTourPopoverInsideViewport(page, 'first step popover must be inside the viewport');
+
+    await tourNextButton(page).first().click();
+    await expect(popover, 'popover is still present after Next').toBeVisible();
+    await page.waitForTimeout(500);
+    await expectTourPopoverInsideViewport(page, 'second step popover must be inside the viewport');
+  });
 });
 
 test.describe('landing editor tour (/dashboard/landings/editor)', () => {
@@ -533,5 +557,27 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
 
     await expect(page).toHaveURL(/\/dashboard\/landings\/editor/);
     await expect(page.locator('[data-tour="pbx.canvas.frame"]')).toBeVisible();
+  });
+
+  test('the popover renders inside the viewport, not parked off-screen (D36)', async ({ page }) => {
+    // Deliberately NOT emulating reduced motion here: D36 only reproduced with
+    // driver.js's default step-transition animation, so this test must run the
+    // default, unmodified animation path rather than the reduced-motion shortcut
+    // the other multi-step tests above use.
+    await resetLandingTourState(page);
+    await gotoApp(page, '/dashboard/landings/editor');
+
+    const popover = tourPopover(page);
+    await expect(popover, 'tour popover appears on first visit').toHaveCount(1, { timeout: 45_000 });
+    // Lets the default reposition animation settle before measuring — D36's bogus
+    // offsets were written at the initial positioning, but only a settled popover
+    // gives a stable rect to assert against.
+    await page.waitForTimeout(500);
+    await expectTourPopoverInsideViewport(page, 'first step popover must be inside the viewport');
+
+    await tourNextButton(page).click();
+    await expect(popover, 'popover is still present after Next').toHaveCount(1);
+    await page.waitForTimeout(500);
+    await expectTourPopoverInsideViewport(page, 'second step popover must be inside the viewport');
   });
 });

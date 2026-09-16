@@ -1,4 +1,4 @@
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
  * Helpers for the guided-tour e2e coverage (F6,
@@ -78,4 +78,51 @@ export function tourHighlightedElement(page: Page): Locator {
 /** driver.js's "Next"/"Done" footer button inside the popover. */
 export function tourNextButton(page: Page): Locator {
   return tourPopover(page).locator('.driver-popover-next-btn');
+}
+
+/**
+ * Asserts the currently-visible tour popover's `getBoundingClientRect()` sits
+ * entirely within the viewport (D36): driver.js positioned `.driver-popover`
+ * before its own stylesheet was applied, so it measured an unstyled full-width
+ * popover and wrote bogus inline offsets that parked the real, styled popover
+ * off-screen — e.g. `[1280, 1242, 250, 164]` in a 1280x720 viewport. Every
+ * existing content/visibility assertion (`toHaveCount(1)`, `toHaveClass`,
+ * `toBeVisible()`, computed colours) stayed green through that, because
+ * Playwright's `toBeVisible()` only checks that an element has a non-empty
+ * bounding box and is not hidden by CSS — it does NOT fail for an element
+ * whose box lies entirely outside the viewport. This helper is the one check
+ * that actually looks at where the box is.
+ */
+export async function expectTourPopoverInsideViewport(page: Page, message?: string): Promise<void> {
+  const measured = await page.evaluate(() => {
+    const popover = document.querySelector('.driver-popover.md-tour');
+    if (!popover) {
+      return null;
+    }
+    const rect = popover.getBoundingClientRect();
+    return {
+      left: rect.left,
+      top: rect.top,
+      right: rect.right,
+      bottom: rect.bottom,
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+    };
+  });
+
+  expect(measured, message ?? 'tour popover is present to measure').not.toBeNull();
+  const rect = measured!;
+  const insideViewport =
+    rect.left >= 0 &&
+    rect.top >= 0 &&
+    rect.right <= rect.viewportWidth &&
+    rect.bottom <= rect.viewportHeight;
+
+  // Assert on the measured object itself (not just the boolean) so a future
+  // regression's report includes the actual numbers — the rect and the
+  // viewport size — instead of just "false is not true".
+  expect(
+    insideViewport,
+    `${message ?? 'tour popover must render inside the viewport'} — measured ${JSON.stringify(rect)}`,
+  ).toBe(true);
 }
