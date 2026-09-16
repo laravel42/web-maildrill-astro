@@ -11,11 +11,100 @@ Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour
 
 # START HERE — next session
 
-**NEXT ACTION, verbatim: decide how to fix B35/B36/B38 (driver.js's own Next-button routing
-consults a stale anchor check) — this is now confirmed to BREAK a pre-existing baseline test
-(B38), not just a cosmetic label issue. Re-measure B39 (and the email "full step walk" flake)
-against a freshly restarted dev server before trusting either verdict; do not restart it
-autonomously — ask the user. T6 is DONE.**
+**NEXT ACTION, verbatim: run the T7a → T7b → T8a → T8b chain below (decisions D44–D49), in that
+order, one subagent at a time. It closes B35/B36/B38 and the user-reported "step 10 of the landing
+tour won't advance, then jumps to 12 or 13" (B41). Read B40 FIRST: B34 is factually wrong and D43's
+premise with it. Re-measure B39 against a freshly restarted dev server before trusting it; do not
+restart it autonomously — ask the user. T5/T6 are DONE.**
+
+**User report (2026-09-16, seventh session), diagnosed and source-verified by the orchestrator
+before any delegation:** "en el tour de la landing, al llegar al step 10 no deja avanzar; después de
+unos segundos y varios clicks se brinca hasta el 12 o 13, es inconsistente". This is **not** a new
+defect: it is B35/B36/B38 firing one step EARLIER than the bitácora had ever seen, because every
+previous browser walk was done on an **empty canvas** — where `when: () => firstRootChildId() !==
+null` removes `canvas.nodeActions`, `inspector.tabs` and `inspector.breakpoints` from the array
+entirely. On a landing **with content** those three become eligible, so the eligible order is
+1 headerIdentity · 2 toolbarViews · 3 toolbarViewport · 4 toolbarHistory · 5 sidebarTabs ·
+6 sidebarPalette · 7 sidebarTemplates · 8 canvasFrame · 9 canvasNodeActions · **10 inspectorTabs** ·
+11 inspectorBreakpoints · 12 settingsTabs · 13 settingsLayers · 14 settingsPages ·
+15 settingsLanguages · 16 pagesBreadcrumb · 17 profileMenu. **Step 10 is `pbx.inspector.tabs`** —
+exactly the step the user names — and from there every single remaining anchor is absent from the
+DOM at that instant (see B41 for each one and why). Full mechanism, all four links read directly in
+`node_modules/.pnpm/driver.js@1.8.0/.../dist/driver.js.mjs`:
+
+1. `L(e,t)` (the Next-button router) = `let n=activeIndex, r = n!==void 0 && I(e,n+1,1)===void 0,
+   i = onDoneClick; return r&&i ? i : onNextClick`. With no reachable next step, a Next **click**
+   invokes `onDoneClick` — this engine's `onDoneClick` persists completion, emits `tour_completed`
+   and destroys. That is "no deja avanzar": the tour ends.
+2. `B()` sets `nextBtnText: o?void 0:c` with `o = I(e,t+1,1)!==void 0` — so the button already reads
+   "Listo" at step 10 in that state (B36's mechanism, one step earlier than B36 measured).
+3. When some anchor *does* momentarily resolve, `L()` routes to `onNextClick` → `transitionTo()` →
+   `before()` + up to 2 s of D43's wait → `moveNext()` → driver.js's `m(index)`. There,
+   `if(!n && a>0 && i.element && !f(i.element)){ p(i,a,()=>m(e,!0)); return }` waits ANOTHER `a` ms
+   (2000, the value this engine passes) via `p()`'s MutationObserver+setTimeout, then on retry
+   `F(t,i)` skips and hops **one** index: `r[e+i]?m(e+i)` — called WITHOUT the retry flag, so the
+   next missing anchor costs a full 2 s again. Several seconds of a frozen popover, then the tour
+   surfaces 2–3 indices later. That is "se brinca hasta el 12 o 13", and it is inconsistent because
+   the landing index depends on which anchors happened to be mounted and on how many clicks queued.
+4. `transitionTo()` has **no in-flight guard**, so each extra click starts an independent walk from
+   the same stale `activeIndex`, and each one eventually issues its own `moveNext()`. Repeated
+   clicks therefore *add* hops. This link is new — the bitácora had not recorded it.
+
+**Contract decisions for this chain (orchestrator's, not delegable):**
+
+- **D44 — every `DriveStep` handed to driver.js sets `skipMissingElement: false`** (driver.js's own
+  default, per its `ne()` defaults object), unconditionally. This is the single change that kills
+  B35/B36/B38 at the root: `F(e,t)` returns "skip" only when that flag is truthy, so with it off
+  `I(e,n+1,1)` degenerates to a plain forward/backward bounds walk. Consequences, all read in the
+  bundle: `L()` can never route a Next click into `onDoneClick`; `B()` can never label the button
+  "Done" early; `isLastStep()` becomes the plain bounds check T5 already had to hand-roll; and
+  `m()`'s one-index skip cascade (`r[e+i]?m(e+i)`) can never fire, so a run of missing anchors can
+  no longer end the tour as "completed". The public `TourStep.skipMissingElement` field keeps its
+  documented meaning but is consumed by the **engine** (D45), never forwarded to driver.js.
+- **D45 — `transitionTo()` resolves the target index itself, and the engine owns skipping.** From
+  `fromIndex + direction`, for each candidate in that direction: run `before()`, `await
+  waitForStepAnchor()`. Anchor resolved → `driverInstance.moveTo(candidate)`, done. Not resolved and
+  `step.skipMissingElement !== false` → the ENGINE skips it and tries the next candidate in the same
+  direction. Not resolved and `skipMissingElement === false` → move to it anyway (driver.js renders
+  a centred popover on its `driver-dummy-element`). Direction exhausted: forward → the tour is
+  genuinely over, take the same terminal path as Done (persist + `tour_completed` + destroy);
+  backward → no-op, stay on the current step. `moveTo(index)` replaces
+  `moveNext()`/`movePrevious()` so the engine's decision is the one that lands. Why this and not
+  just D44: D44 removes a capability (skip-a-missing-anchor) that the tour genuinely relies on;
+  removing it without replacing it is precisely the trade B18 exists to forbid.
+- **D46 — at most one transition in flight per tour instance.** While `transitionTo()` is pending,
+  further Next/Prev clicks and ArrowRight/ArrowLeft presses are **dropped, not queued**. This is
+  what fixes link 4 above (the multi-step jump from repeated clicks). The arrow branches still
+  consume the key (`stopPropagation`/`preventDefault`) while a transition is in flight, so the host
+  editor never sees it — dropping the navigation must not leak the key to the host.
+- **D47 — `waitForElement` keeps being passed per step, but nothing may rely on it.** It is NOT
+  dead config (B40 corrects B34), yet after D45 the engine has already awaited the anchor itself
+  before calling `moveTo`, so driver.js's own wait is only ever a redundant second net.
+- **D48 — `InspectorForm`'s element tab moves from local `useState` into the document store**
+  (`inspectorTab` + `setInspectorTab`), exactly as T1/D38 did for `sidebarTab`: a seam the tour's
+  `before()` can drive from outside React. Forced by B41: `pbx.inspector.breakpoints` is stamped on
+  `VisibilityStrip`, which `InspectorForm` mounts **only inside `activeTab === "style"`**
+  (`InspectorForm.tsx:181`), while the tab state is a plain `useState<InspectorTab>("props")`
+  (`InspectorForm.tsx:69`) with no way in from outside. "style" is unconditional in the `tabs` array,
+  so the seam is always satisfiable for any node.
+- **D49 — `pbx.pages.breadcrumb` and `pbx.profileMenu` must be filtered out of the embed by
+  `when()`, not left to be skipped silently.** Both live in `app/layout/Header.tsx`, which only
+  `app/App.tsx:61` (standalone) renders — `Builder42Editor.tsx` (embed) never mounts it (verified by
+  grep: `<Header` has exactly one call site). D42 already called them standalone-only; after D45 a
+  silent skip costs a full anchor wait each (~2 s of frozen popover before the tour ends), so the
+  exclusion has to become structural. The embed flag travels through `Builder42TourStepsConfig` as a
+  new field resolved by the caller — the same shape `publishAvailable` already uses — because
+  `tourSteps.ts` is not a component and cannot read the `useEmbeddedChrome` context.
+
+**Task chain (serial, one subagent at a time, strictly ordered — T7a/T7b share `createTour.ts` and
+T8a/T8b share `tourSteps.ts`, so they are ordered, never parallel):**
+
+| Task | What                                                                       | Scope                                                                        | Decisions   |
+| ---- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------- |
+| T7a  | engine owns Next/Done routing and step skipping                             | `packages/product-tour/src/createTour.ts` + its `tests/`                     | D44/D45/D47 |
+| T7b  | at most one transition in flight; extra clicks/arrows dropped               | `packages/product-tour/src/createTour.ts` + its `tests/`                      | D46         |
+| T8a  | inspector element tab in the document store + `breakpoints` step opens it   | `builder42` store slice + `InspectorForm.tsx` + `app/tour/tourSteps.ts` + tests | D48         |
+| T8b  | breadcrumb/profileMenu steps gated out of the embed                         | `builder42` `app/tour/tourSteps.ts` + `useBuilder42Tour.ts` + tests            | D49         |
 
 **State at hand-off (2026-09-16, sixth session): `HEAD = 455ee07`, branch `feat/ui-polish-p1`, tree
 clean** except the pre-existing untracked `.cursor/hooks/` and `.kiro/` (not this chain's).
@@ -1073,6 +1162,57 @@ names alone and should have been in the contract, not discovered by the implemen
 **D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
 
 ## Findings
+
+**B40 — B34 is factually WRONG: driver.js@1.8.0 DOES read `waitForElement`, and D43's stated
+premise ("the option is never read anywhere else", "the waiting is fiction") is false.** Measured by
+the orchestrator with a throwaway node probe over
+`node_modules/.pnpm/driver.js@1.8.0/node_modules/driver.js/dist/driver.js.mjs` (probe deleted after
+use). The string does occur exactly **3** times — B34's count is right — but only **one** of them is
+the `ne()` defaults entry (`waitForElement:0`). The other **two are the live read**, inside the
+step-mount function `m(e=0,n=!1)`:
+`let i=r[e], a=i.waitForElement ?? t.getConfig('waitForElement') ?? 0;
+if(!n && a>0 && i.element && !f(i.element)){ p(i,a,()=>m(e,!0)); return }`.
+And `p(e,n,r)` is a real wait: `new MutationObserver(()=>{ f(e.element)&&i() })` plus
+`window.setTimeout(i,n)`, observing `document.documentElement` with `{childList:true,subtree:true,
+attributes:true}`, cancellable through `__pendingWaitCancel` (which `d()` clears at the top of every
+`m()`). So the ORIGINAL D35 comment block was correct all along and the T5-era "correction" that
+replaced it introduced the error. Whoever measured B34 apparently matched the count and assumed all
+three hits were the defaults object without reading their contexts. What this does and does not
+change: **D43's implementation stays correct and worth keeping** (the engine awaiting the incoming
+anchor after `before()` is still the right ownership, and it is what D45 now builds on), but the
+justification written into `createTour.ts` and into `docs/product-tour-driverjs-plan.md` must be
+rewritten — and, more importantly, the real shape of driver.js's wait is what explains the user's
+"unos segundos" (link 3 of the START HERE mechanism): each missing anchor costs a full
+`waitForElement` before driver.js hops one index, and the hop re-enters `m()` WITHOUT the retry flag,
+so the next missing anchor costs another full wait. Comment/doc correction is in T7a's scope for
+`createTour.ts`; the plan doc is owed a separate docs task. Owner: **B40**.
+
+**B41 — the landing tour's step 10 is genuinely unreachable-past on a non-empty canvas, and the
+cause is a step-precondition bug, not only driver.js's routing.** Found by the orchestrator reading
+the source while diagnosing the user's report. At `pbx.inspector.tabs` (step 10 with content on the
+canvas) a node IS selected, and from there EVERY later anchor is absent from the DOM at that instant:
+- `pbx.inspector.breakpoints` — stamped on `VisibilityStrip`'s breakpoint row
+  (`VisibilityStrip.tsx:141`), and `InspectorForm` mounts `VisibilityStrip` **only** inside
+  `activeTab === "style"` (`InspectorForm.tsx:181`). The step's `before()` selects a node and expands
+  the panel but never opens that tab — and it *cannot*, because the tab lives in
+  `useState<InspectorTab>("props")` (`InspectorForm.tsx:69`), local React state with no seam from
+  outside. For any node with editable props the active tab is "props", so this anchor never exists.
+  The step only ever appeared to work for nodes that happen to have **no** props tab, where
+  `activeTab` falls back to `tabs[0]` = "style" — which is exactly the inconsistency the user
+  describes. Closed by **D48** (T8a).
+- `pbx.settings.tabs` / `.layers` / `.pages` / `.languages` — `SiteSettingsPanel` is not mounted at
+  all while a node is selected (`Inspector.tsx` renders it only with no selection; the panel's own
+  `useEffect` also forces `setTab("element")` when `selectedId` is set — `SiteSettingsPanel.tsx:99`).
+  Their own `before()` calls `select(null)`/`openSiteSettings(...)` and does fix this **once the
+  step is actually entered** — so these four are fine; they are simply invisible to driver.js's
+  synchronous forward walk at the moment of the click. Closed by D44/D45 (T7a).
+- `pbx.pages.breadcrumb` / `pbx.profileMenu` — never in the DOM in the embed at all: both are
+  rendered from `app/layout/Header.tsx`, whose only call site is `app/App.tsx:61` (standalone).
+  Closed by **D49** (T8b).
+Net effect: `I(e, 10+1, 1)` returns `undefined`, which is the precondition for every one of
+B35/B36/B38 to fire. This is why the empty-canvas walks of T4/T6 never saw it — `when()` had removed
+steps 9–11 from the array, so the tour went straight from `canvas.frame` to the `settings.*` band
+whose `before()`s work.
 
 **B37 — driver.js does not always remove `.driver-active-element` from an EARLIER step's element
 after moving past it, on the landing tour.** Found writing T6's tests: `pbx.toolbar.history`,
