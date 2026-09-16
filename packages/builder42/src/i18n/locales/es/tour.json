@@ -12,7 +12,11 @@
     },
     "toolbarViews": {
       "title": "Editar o previsualizar",
-      "description": "Cambia entre el editor y una vista previa en vivo, y revisa cómo se ve la página en cada tamaño de pantalla."
+      "description": "Cambia entre el editor y una vista previa en vivo de la página."
+    },
+    "toolbarViewport": {
+      "title": "Prueba cada tamaño de pantalla",
+      "description": "Revisa y ajusta cómo se ve la página en móvil, tablet y escritorio."
     },
     "toolbarHistory": {
       "title": "Deshacer sin miedo",

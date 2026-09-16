@@ -12,7 +12,11 @@
     },
     "toolbarViews": {
       "title": "Edit or preview",
-      "description": "Switch between the editor and a live preview, and check how the page looks at each screen size."
+      "description": "Switch between the editor and a live preview of the page."
+    },
+    "toolbarViewport": {
+      "title": "Check every screen size",
+      "description": "Review and fine-tune how the page looks on mobile, tablet, and desktop."
     },
     "toolbarHistory": {
       "title": "Undo anytime",

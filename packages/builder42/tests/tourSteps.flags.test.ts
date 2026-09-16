@@ -153,11 +153,19 @@ describe("buildBuilder42TourSteps — siempre emite las anclas sin precondición
     );
   });
 
-  it("emite exactamente las 12 anclas del registro cuando todo está disponible y hay un nodo seleccionable", () => {
+  it("emite exactamente las 13 anclas del registro cuando todo está disponible y hay un nodo seleccionable", () => {
     insertChildUnderRoot("child-1");
 
     const anchors = buildBuilder42TourSteps(ADVANCED_CONFIG).map((s) => s.anchorKey);
     expect(anchors.sort()).toEqual([...Object.values(BUILDER42_TOUR_ANCHORS)].sort());
+  });
+
+  it("pbx.toolbar.views y pbx.toolbar.viewport son anclas distintas y consecutivas, en ese orden (D37)", () => {
+    const anchors = buildBuilder42TourSteps(ADVANCED_CONFIG).map((s) => s.anchorKey);
+    const viewsIndex = anchors.indexOf(BUILDER42_TOUR_ANCHORS.toolbarViews);
+    const viewportIndex = anchors.indexOf(BUILDER42_TOUR_ANCHORS.toolbarViewport);
+    expect(viewsIndex).toBeGreaterThanOrEqual(0);
+    expect(viewportIndex).toBe(viewsIndex + 1);
   });
 });
 

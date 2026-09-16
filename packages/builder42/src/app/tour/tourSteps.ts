@@ -79,12 +79,13 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
       },
     },
 
-    // 2. pbx.toolbar.views — HostToolbar.tsx (Editar/Previsualizar + breakpoints).
+    // 2. pbx.toolbar.views — HostToolbar.tsx (grupo Editar/Previsualizar).
     // §1.4.2: el preview renderiza un iframe donde driver.js no puede resaltar nada,
     // así que el tour fuerza `view === "edit"` ANTES de este primer paso de canvas —
     // es el paso más temprano con ancla dentro de la banda de canvas, y forzar la
     // vista aquí garantiza que el resto del recorrido (sidebar, canvas, inspector)
-    // encuentre sus anclas montadas.
+    // encuentre sus anclas montadas. El `before` que fuerza `view` debe seguir en
+    // ESTE paso (el primero de la banda de toolbar) y no en el siguiente.
     {
       anchorKey: BUILDER42_TOUR_ANCHORS.toolbarViews,
       popover: {
@@ -98,7 +99,21 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
       },
     },
 
-    // 3. pbx.toolbar.history — HostToolbar.tsx (deshacer/rehacer).
+    // 3. pbx.toolbar.viewport — ViewportDropdown.tsx (selector de tamaño de
+    // pantalla). Separado del paso anterior (D37/B17-B18): cada paso resalta un
+    // único control. Sin `when` ni `before` propios — la vista ya quedó forzada a
+    // "edit" en el paso 2, que es quien debe garantizarlo.
+    {
+      anchorKey: BUILDER42_TOUR_ANCHORS.toolbarViewport,
+      popover: {
+        title: t("steps.toolbarViewport.title"),
+        description: t("steps.toolbarViewport.description"),
+        side: "bottom",
+      },
+      skipMissingElement: true,
+    },
+
+    // 4. pbx.toolbar.history — HostToolbar.tsx (deshacer/rehacer).
     {
       anchorKey: BUILDER42_TOUR_ANCHORS.toolbarHistory,
       popover: {
@@ -109,7 +124,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     },
   ];
 
-  // 4. pbx.sidebar.tabs — Sidebar.tsx (Componentes/Plantillas; Tokens oculto en
+  // 5. pbx.sidebar.tabs — Sidebar.tsx (Componentes/Plantillas; Tokens oculto en
   // simple, sin ancla propia). Solo existe en el DOM con `sidebarMode = "open"`
   // (§1.4.5, compact reduce el sidebar a un riel sin tabs): `before` lo abre y lo
   // deja como estaba encontrado si no estaba ya abierto — el motor trae
@@ -144,7 +159,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     })(),
   );
 
-  // 5. pbx.sidebar.palette — Sidebar.tsx (paleta arrastrable de secciones y
+  // 6. pbx.sidebar.palette — Sidebar.tsx (paleta arrastrable de secciones y
   // elementos). Puramente descriptivo: el overlay de driver.js pone
   // `pointer-events: none` sobre todo menos el elemento resaltado (§1.4.4), así que
   // el paso no promete "arrastra esto aquí" como acción ejecutable dentro del tour.
@@ -158,7 +173,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     skipMissingElement: true,
   });
 
-  // 6. pbx.canvas.frame — Canvas.tsx (`.pbx-canvas__frame`, el lienzo y su ancho por
+  // 7. pbx.canvas.frame — Canvas.tsx (`.pbx-canvas__frame`, el lienzo y su ancho por
   // dispositivo). Siempre visible en modo edit (ya forzado en el paso 2).
   steps.push({
     anchorKey: BUILDER42_TOUR_ANCHORS.canvasFrame,
@@ -169,7 +184,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     },
   });
 
-  // 7. pbx.canvas.nodeActions — NodeActionsRail.tsx (duplicar/borrar el nodo
+  // 8. pbx.canvas.nodeActions — NodeActionsRail.tsx (duplicar/borrar el nodo
   // seleccionado). Requiere un nodo seleccionado que NO sea el root (el rail se
   // posiciona junto al nodo, §1.4.5): si el lienzo está vacío no hay nada que
   // seleccionar, así que el paso se omite por completo vía `when` (no solo se salta
@@ -189,7 +204,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     skipMissingElement: true,
   });
 
-  // 8. pbx.inspector.tabs — InspectorForm.tsx (tabs Contenido/Estilo/Interactividad).
+  // 9. pbx.inspector.tabs — InspectorForm.tsx (tabs Contenido/Estilo/Interactividad).
   // Requiere nodo seleccionado (el Inspector solo monta `InspectorForm` con un nodo
   // activo) y el panel expandido (`inspectorCollapsed = false`, §1.4.5).
   steps.push({
@@ -210,7 +225,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     skipMissingElement: true,
   });
 
-  // 9. pbx.inspector.breakpoints — InspectorForm.tsx tab "style" (segmented de
+  // 10. pbx.inspector.breakpoints — InspectorForm.tsx tab "style" (segmented de
   // breakpoints, montado por `VisibilityStrip`). Misma precondición que el paso
   // anterior (nodo seleccionado + panel expandido) — `VisibilityStrip` solo se
   // monta dentro de la tab "style" del Inspector con un nodo activo.
@@ -232,7 +247,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     skipMissingElement: true,
   });
 
-  // 10. pbx.pages.breadcrumb — PageBreadcrumb.tsx. Siempre visible: el breadcrumb de
+  // 11. pbx.pages.breadcrumb — PageBreadcrumb.tsx. Siempre visible: el breadcrumb de
   // páginas existe con o sin más de una página en el sitio. El copy transmite el
   // concepto clave de que una landing es un sitio multipágina (§3.2).
   steps.push({
@@ -244,7 +259,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     },
   });
 
-  // 11. pbx.publish — PublishPanel.tsx (publicar y subdominio). Solo si el adapter de
+  // 12. pbx.publish — PublishPanel.tsx (publicar y subdominio). Solo si el adapter de
   // publicación del host está disponible (§3.2 precondición, §1.4.6): con
   // `publishAvailable = false`, `PublishPanel` sigue montado pero solo muestra el
   // mensaje de "deshabilitado" (`publish.disabledTitle`) — un paso de tour ahí sería
@@ -262,7 +277,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     });
   }
 
-  // 12. pbx.profileMenu — ProfileMenu.tsx (tema, idioma, nivel simple/avanzado,
+  // 13. pbx.profileMenu — ProfileMenu.tsx (tema, idioma, nivel simple/avanzado,
   // controles de reorden). Siempre visible: el trigger del menú de preferencias no
   // depende de ningún flag del embed.
   steps.push({

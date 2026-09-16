@@ -12,7 +12,11 @@
     },
     "toolbarViews": {
       "title": "Modifica o anteprima",
-      "description": "Passa dall'editor a un'anteprima dal vivo e controlla come appare la pagina in ogni dimensione di schermo."
+      "description": "Passa dall'editor a un'anteprima dal vivo della pagina."
+    },
+    "toolbarViewport": {
+      "title": "Prova ogni dimensione di schermo",
+      "description": "Controlla e affina come appare la pagina su mobile, tablet e desktop."
     },
     "toolbarHistory": {
       "title": "Annulla senza pensieri",

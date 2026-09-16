@@ -98,6 +98,7 @@ describe("builder42 tour i18n — paridad de claves", () => {
     const stepIdByAnchor: Record<string, string> = {
       [BUILDER42_TOUR_ANCHORS.headerIdentity]: "headerIdentity",
       [BUILDER42_TOUR_ANCHORS.toolbarViews]: "toolbarViews",
+      [BUILDER42_TOUR_ANCHORS.toolbarViewport]: "toolbarViewport",
       [BUILDER42_TOUR_ANCHORS.toolbarHistory]: "toolbarHistory",
       [BUILDER42_TOUR_ANCHORS.sidebarTabs]: "sidebarTabs",
       [BUILDER42_TOUR_ANCHORS.sidebarPalette]: "sidebarPalette",

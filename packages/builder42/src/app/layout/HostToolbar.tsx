@@ -25,7 +25,12 @@ function HostViews() {
   const setView = useDocumentStore((s) => s.setView);
 
   return (
-    <div className="pbx-host-toolbar__views" role="group" aria-label={t("viewMode.label")}>
+    <div
+      className="pbx-host-toolbar__views"
+      role="group"
+      aria-label={t("viewMode.label")}
+      {...dataTourAttr(BUILDER42_TOUR_ANCHORS.toolbarViews)}
+    >
       <button
         type="button"
         className={
@@ -104,11 +109,7 @@ export function HostCanvasToolbar() {
 
   return (
     <div className="pbx-canvas-toolbar" role="toolbar" aria-label={t("canvasControls.label")}>
-      <div
-        id={HOST_VIEWS_ID}
-        className="pbx-canvas-toolbar__center"
-        {...dataTourAttr(BUILDER42_TOUR_ANCHORS.toolbarViews)}
-      >
+      <div id={HOST_VIEWS_ID} className="pbx-canvas-toolbar__center">
         <HostViews />
         <ViewportDropdown />
       </div>

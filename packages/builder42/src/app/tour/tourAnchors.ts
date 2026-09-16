@@ -27,8 +27,10 @@
 export const BUILDER42_TOUR_ANCHORS = {
   /** Host: `EditorHeader.tsx` — nombre y autoguardado de la landing. */
   headerIdentity: 'pbx.header.identity',
-  /** `app/layout/HostToolbar.tsx` (`#md-landing-editor-views`) — Editar/Previsualizar + breakpoints. */
+  /** `app/layout/HostToolbar.tsx` (`#md-landing-editor-views`) — grupo Editar/Previsualizar. */
   toolbarViews: 'pbx.toolbar.views',
+  /** `app/layout/ViewportDropdown.tsx` — selector de tamaño de pantalla (breakpoints). */
+  toolbarViewport: 'pbx.toolbar.viewport',
   /** `app/layout/HostToolbar.tsx` (`#md-landing-editor-history`) — deshacer/rehacer. */
   toolbarHistory: 'pbx.toolbar.history',
   /** `app/layout/Sidebar.tsx` — tabs Componentes/Plantillas (solo en modo `sidebarMode = "open"`). */

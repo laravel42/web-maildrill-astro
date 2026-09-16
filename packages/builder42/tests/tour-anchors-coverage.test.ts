@@ -79,6 +79,9 @@ describe("Builder42 tour anchors — coverage (F2b, static source scan)", () => 
     [BUILDER42_TOUR_ANCHORS.toolbarViews]: [
       { path: "src/app/layout/HostToolbar.tsx", read: () => read("src/app/layout/HostToolbar.tsx") },
     ],
+    [BUILDER42_TOUR_ANCHORS.toolbarViewport]: [
+      { path: "src/app/layout/ViewportDropdown.tsx", read: () => read("src/app/layout/ViewportDropdown.tsx") },
+    ],
     [BUILDER42_TOUR_ANCHORS.toolbarHistory]: [
       { path: "src/app/layout/HostToolbar.tsx", read: () => read("src/app/layout/HostToolbar.tsx") },
     ],
