@@ -6,7 +6,58 @@
  *   nunca en el top-level del módulo — el bundle del consumidor no paga el costo si el tour
  *   nunca se abre.
  * - No-op silencioso cuando `root` es un `ShadowRoot` (§1.4.1 del plan / anchors.ts).
- * - Filtrado de pasos por `when()`, con `before()`/`after()` resueltos alrededor de cada highlight.
+ * - Filtrado de pasos por `when()` — sigue pasando una sola vez en `start()`, antes de construir
+ *   los `DriveStep` (sin cambios respecto a antes de D35).
+ * - **D35 — activación por paso, no por arranque (supersede D23/D24 por completo).** El defecto
+ *   reportado por el usuario: abrir el tour del editor de email disparaba de inmediato el
+ *   command palette, el drawer de librería de componentes y el inspector — UI que solo un paso
+ *   TARDÍO debía revelar — porque `start()` recorría TODOS los pasos elegibles y `await`eaba el
+ *   `before()` de cada uno antes de pintar el primer popover. Bajo D35:
+ *     1. `before()` de un paso corre en el momento en que el tour SE MUEVE a ese paso — para el
+ *        primer paso, inmediatamente antes de `driverInstance.drive()`; para cualquier otro,
+ *        dentro de `transitionTo()` (ver más abajo), justo antes de pedirle a driver.js que
+ *        avance/retroceda. El significado documentado de `before()` en `steps.ts` ("antes de
+ *        resaltar la ancla") no cambia: lo que cambia es CUÁNDO se resuelve esa ancla.
+ *     2. Las anclas se resuelven de forma perezosa: cada `DriveStep.element` es una función
+ *        (`() => resolveAnchor(root, step.anchorKey) ?? undefined`), no un valor ya resuelto —
+ *        driver.js la invoca en el momento de intentar resaltar ese paso (verificado leyendo
+ *        `driver.js@1.8.0`'s `dist/driver.js.mjs`, helper `f(e)`), nunca antes. `skipMissingElement`
+ *        (`step.skipMissingElement ?? true`) y `waitForElement` (`step.waitForElementMs ?? 2000`)
+ *        se declaran igual que antes, pero ahora es driver.js quien hace el polling/timeout
+ *        (su propio `MutationObserver` + `setTimeout` en el internal `m()`/`p()`) y quien decide
+ *        omitir el paso (`F()`) — este paquete ya no tiene su propio polling. Consecuencia:
+ *        construir los `driveSteps` a partir de `eligibleSteps` es ahora SINCRÓNICO justo
+ *        después del `await import('driver.js')` — no hay ninguna resolución de anclas en
+ *        `start()`.
+ *     3. El motor es dueño de las transiciones a través de UN solo helper interno,
+ *        `transitionTo(intendedIndex, move)`, usado por los tres puntos de entrada: el
+ *        `onNextClick`/`onPrevClick` GLOBALES (pasados a `driver()`, que por eso le entrega a
+ *        este paquete la transición ENTERA en vez de avanzar él mismo — verificado leyendo el
+ *        internal `L()`: cuando hay un `onNextClick` configurado, se usa en vez del avance
+ *        interno, salvo en el ÚLTIMO paso, donde `onDoneClick` sigue teniendo prioridad, sin
+ *        cambios) y el propio handler de flechas de este paquete (capture-phase, más abajo).
+ *        `transitionTo()`, en este orden exacto: (a) corre el `after()` del paso SALIENTE y lo
+ *        marca como ya manejado; (b) `await`ea el `before()` del paso ENTRANTE; (c) llama a
+ *        `driverInstance.moveNext()`/`movePrevious()`. Ese orden — `after()` antes que
+ *        `before()` — es lo que deja que una guardia que restaura estado compartido (p.ej. el
+ *        guard del drawer de librería del editor de email, que cancela una restauración
+ *        pendiente en cuanto se entra al siguiente paso de librería) siga funcionando.
+ *     4. `after()` corre exactamente una vez por salida. Sigue conectado al `onDeselected` del
+ *        `DriveStep` — eso es lo que cubre los cierres (×, click en el overlay, Escape,
+ *        `stop()`, Done), porque `onDeselected` dispara tanto en una transición normal (interno
+ *        `J()`) como en destroy (interno `h()`) — pero se suprime la duplicación cuando la
+ *        transición ya la corrió desde `transitionTo()`: un único marcador "paso ya manejado"
+ *        (el `DriveStep` saliente), puesto en (a) y consumido/limpiado por `onDeselected` la
+ *        primera vez que lo ve.
+ *     5. Reconciliación cuando driver.js omite pasos: tras `moveNext()`/`movePrevious()`, si
+ *        `driverInstance.getActiveIndex()` no es el índice que se pretendía alcanzar (driver.js
+ *        omitió uno o más pasos cuya ancla no apareció), este paquete corre el `before()` del
+ *        paso en el que el tour REALMENTE aterrizó y llama a `driverInstance.refresh()` — así un
+ *        paso alcanzado por omisión de otros también obtiene su precondición aplicada y su stage
+ *        reposicionado. Los pasos omitidos NUNCA llegaron a activarse, así que no corren `after()`.
+ *   D35 vuelve obsoleta a D23/D24 en su totalidad: ya no existe resolución de anclas al arrancar,
+ *   así que la superposición concurrente de esperas que D23/D24 describían ya no aplica — no hay
+ *   nada que solapar porque no hay espera de ancla en `start()`.
  * - Contención de Escape: mientras el tour está activo, un `keydown` de Escape se intercepta
  *   en fase de captura, se detiene su propagación/default (para no cerrar el editor anfitrión,
  *   §1.4.3 del plan) y ESTE MISMO handler cierra el tour (D8) llamando a `driverInstance.destroy()`
@@ -17,18 +68,23 @@
  *   — ver `dismissActiveInstance()`.
  * - Keyboard step navigation (D18): the SAME capture-phase `window` keydown handler that owns
  *   Escape also owns `ArrowRight`/`ArrowLeft` — one listener per key, this package the only
- *   owner. `ArrowRight` calls `driverInstance.moveNext()`, `ArrowLeft` calls
- *   `driverInstance.movePrevious()`, gated exactly like Escape (`isActive()`, then
+ *   owner. Since D35, both arrow branches route through the shared `transitionTo()` helper
+ *   instead of calling `driverInstance.moveNext()`/`movePrevious()` directly — `transitionTo()`
+ *   itself still ends by calling one of those two driver.js methods, so the observable
+ *   navigation is unchanged. `transitionTo()` is async (it awaits the incoming step's
+ *   `before()`); the synchronous key handler calls it as `void transitionTo(...)` on purpose —
+ *   making the handler itself `async` would delay `stopPropagation()`/`preventDefault()` past
+ *   the point where they need to run. Gated exactly like Escape (`isActive()`, then
  *   `hasCompetingModalOpen()` yields to a visible competing modal without consuming the key,
  *   D11/D12). D21: arrows move between EXISTING steps only — `ArrowRight` on the last step and
  *   `ArrowLeft` on the first step are no-ops (checked via `isLastStep()`/`getActiveIndex()`
- *   before calling `moveNext()`/`movePrevious()`), because `moveNext()` on the last step would
- *   route into driver.js's own advance handler — replaced by `onDoneClick`, which persists
- *   completion and emits `tour_completed` — and a keypress must never silently finish and
- *   persist the tour; completing stays the Done button's job. D22: the engine does not steal
- *   arrows from text entry — any modifier key held, or a `target` that is an editable surface
- *   (`<input>`, `<textarea>`, `<select>`, or `isContentEditable`), and the handler returns
- *   without consuming, host-agnostically (D1).
+ *   before calling `transitionTo()`), because advancing past the last step would route into
+ *   driver.js's own advance handler — replaced by `onDoneClick`, which persists completion and
+ *   emits `tour_completed` — and a keypress must never silently finish and persist the tour;
+ *   completing stays the Done button's job. D22: the engine does not steal arrows from text
+ *   entry — any modifier key held, or a `target` that is an editable surface (`<input>`,
+ *   `<textarea>`, `<select>`, or `isContentEditable`), and the handler returns without consuming,
+ *   host-agnostically (D1).
  * - Escape le pertenece a la superficie más alta, no incondicionalmente al tour (D11): antes de
  *   consumir el Escape, el guard comprueba si hay un MODAL VISIBLE abierto por encima de la
  *   página (ver `hasCompetingModalOpen()` / `isElementVisible()`, D12) — un elemento que matchee
@@ -50,22 +106,10 @@
  * - Respeta `prefers-reduced-motion` desactivando la animación de driver.js.
  * - Persistencia y analítica conectadas vía las factories de persistence.ts / analytics.ts,
  *   ambas inyectadas por el consumidor (nunca defaults con conocimiento de dominio).
- * - Concurrent anchor resolution (D23/D24, B19): `before()` hooks stay sequential and in
- *   declaration order — they mutate host UI (switch canvas view, open a drawer, flip a
- *   localStorage flag, select a block) and running them concurrently would interleave those
- *   mutations. Only the WAITING for each anchor is concurrent: each step's `waitForAnchor()`
- *   is started right after its own `before()` runs, kept as a promise (not awaited there), and
- *   all of them are awaited together once the loop over `eligibleSteps` finishes. This means a
- *   tour with N missing anchors now costs one shared timeout window instead of N sequential
- *   ones — see `start()` and `buildDriveStep()`/`beginDriveStep()` below. Consequence accepted
- *   by D24: each step's timeout is measured from the moment ITS OWN `before()` ran, not from
- *   when the whole tour started, so a step whose anchor mounts later than its own timeout is
- *   skipped even though, under the old fully-sequential code, an earlier step's timeout might
- *   have accidentally given it more real time to appear.
  */
 
 import type { Driver, DriveStep } from 'driver.js';
-import { isSupportedRoot, resolveAnchor, waitForAnchor, type TourRoot } from './anchors';
+import { isSupportedRoot, resolveAnchor, type TourRoot } from './anchors';
 import { toDriverPopover, type TourStep } from './steps';
 import { createLocalStoragePersistence, type TourPersistence } from './persistence';
 import { createAnalyticsEmitter, type TourAnalyticsCallback } from './analytics';
@@ -285,6 +329,115 @@ export function createTour(options: CreateTourOptions): Tour {
   let ownGeneration = 0;
   /** Total de pasos elegibles de la corrida activa — usado por `dismissActiveInstance()` para dar forma al `tour_dismissed` que emite en nombre de driver.js. */
   let currentTotalSteps = 0;
+  /** `driveSteps` de la corrida activa, en orden — usado por `transitionTo()` para resolver el `TourStep` original de cada índice y por la reconciliación de D35.5. */
+  let currentDriveSteps: DriveStep[] = [];
+  /**
+   * Marcador "el `after()` de este `TourStep` saliente ya corrió, vía `transitionTo()`" (D35.4).
+   * `onDeselected` (conectado en `buildDriveStep()`) dispara SIEMPRE que driver.js deselecciona
+   * un paso, tanto en una transición normal como en destroy (verificado leyendo
+   * `driver.js@1.8.0`'s `dist/driver.js.mjs`, funciones `J()` y `h()`) — así que sin este
+   * marcador, un paso que salió vía `transitionTo()` (flechas, `onNextClick`/`onPrevClick`
+   * globales) correría su `after()` DOS veces: una desde `transitionTo()` y otra desde
+   * `onDeselected` al llegar la transición real. Guarda el `TourStep` ORIGINAL (no el `DriveStep`
+   * — verificado leyendo `driver.js@1.8.0`'s internal `B()`: el objeto que driver.js pasa de
+   * vuelta a `onDeselected` es un `{...step, popover: {...}}` recién creado por cada llamada a
+   * `m()`, nunca el mismo objeto `DriveStep` que este paquete puso en `steps: driveSteps` — así
+   * que comparar por identidad de `DriveStep` nunca matchea. `data` sí sobrevive ese spread por
+   * referencia superficial, así que `data.tourStep` — el `TourStep` original — es lo único
+   * estable para comparar). Se limpia en cuanto `onDeselected` lo consume, así que nunca hace
+   * falta llevar cuenta por índice ni por generación.
+   */
+  let alreadyHandledAfterStep: TourStep | null = null;
+
+  /**
+   * Corre `after()` del `TourStep` dado exactamente una vez, sin importar si el llamador es
+   * `transitionTo()` (antes de pedirle a driver.js que avance) o `onDeselected` (cuando driver.js
+   * decide deseleccionar un paso por su cuenta — cierre, destroy, o el asentamiento real de un
+   * `moveNext()`/`movePrevious()` cuyo paso intermedio se omitió). Ver `alreadyHandledAfterStep`.
+   */
+  function runAfterOnce(tourStep: TourStep | undefined, after: (() => void | Promise<void>) | undefined): void {
+    if (!after) return;
+    if (tourStep && alreadyHandledAfterStep === tourStep) {
+      alreadyHandledAfterStep = null;
+      return;
+    }
+    void after();
+  }
+
+  /**
+   * D35.3 — el único punto por el que este paquete pide una transición de paso, usado por los
+   * tres puntos de entrada: el `onNextClick`/`onPrevClick` GLOBALES pasados a `driver()` (ver
+   * `start()`) y el propio handler de flechas de este paquete (`handleEscapeCapture`, más abajo).
+   *
+   * Orden exacto (D35.3, no reordenable): (a) corre el `after()` del paso SALIENTE (el
+   * `activeIndex` actual, antes de moverse) y lo marca como ya manejado, para que el
+   * `onDeselected` de driver.js no lo repita cuando la transición real ocurra en (c); (b)
+   * `await`ea el `before()` del paso ENTRANTE (`intendedIndex`); (c) llama a
+   * `driverInstance.moveNext()`/`movePrevious()` según `move`. Ese orden —`after()` antes que
+   * `before()`— es lo que deja que una guardia que restaura estado compartido entre pasos
+   * (p.ej. el guard del drawer de librería del editor de email, que cancela una restauración
+   * pendiente en cuanto se entra al siguiente paso de librería) siga funcionando: si `before()`
+   * del paso entrante corriera antes del `after()` del saliente, el `after()` podría deshacer
+   * algo que el `before()` entrante ya había dejado montado.
+   *
+   * D35.5 — reconciliación: tras el `move`, si el índice en el que driver.js realmente aterrizó
+   * no es `intendedIndex` (omitió uno o más pasos intermedios cuya ancla nunca apareció, vía su
+   * propio `skipMissingElement`/`waitForElement`), este helper corre el `before()` del paso en
+   * el que aterrizó y llama a `driverInstance.refresh()` para reposicionar el stage — los pasos
+   * omitidos nunca se activaron, así que no corren `after()`.
+   */
+  async function transitionTo(intendedIndex: number, move: 'next' | 'previous'): Promise<void> {
+    if (!driverInstance) return;
+
+    const outgoingIndex = driverInstance.getActiveIndex();
+    const outgoingDriveStep = outgoingIndex !== undefined ? currentDriveSteps[outgoingIndex] : undefined;
+    const outgoingStep = outgoingDriveStep?.data?.tourStep as TourStep | undefined;
+    if (outgoingStep?.after) {
+      alreadyHandledAfterStep = outgoingStep;
+      await outgoingStep.after();
+    }
+
+    const incomingDriveStep = currentDriveSteps[intendedIndex];
+    const incomingStep = incomingDriveStep?.data?.tourStep as TourStep | undefined;
+    if (incomingStep?.before) await incomingStep.before();
+
+    if (move === 'next') {
+      driverInstance.moveNext();
+    } else {
+      driverInstance.movePrevious();
+    }
+
+    // D35.5 reconciliation. driver.js's own per-step `waitForElement` (when > 0 and the anchor
+    // hasn't resolved yet) does NOT decide synchronously inside `moveNext()`/`movePrevious()`:
+    // when the intended step's anchor is missing, driver.js's internal `m(index, retry)`
+    // installs a `MutationObserver` + `setTimeout` and returns WITHOUT committing a new
+    // `activeIndex` — the committed index only changes once that observer/timeout fires and
+    // `m()` re-drives with the retry flag (verified reading `driver.js@1.8.0`'s `m()`/`p()`).
+    // So immediately after the move call, `getActiveIndex()` can still read the OUTGOING index
+    // (not `intendedIndex`, and not any "landed" index either) even though the tour is about to
+    // skip forward/back past the missing step. Poll briefly, bounded by the intended step's own
+    // `waitForElementMs` plus a margin, for the committed index to actually change from the
+    // outgoing one — this mirrors, at the engine level, exactly the wait driver.js itself is
+    // already doing internally (its own `waitForElement`), so it adds no NEW waiting behaviour
+    // beyond what driver.js already started; it only observes when that settles. For the common
+    // case (the intended step's anchor already exists), `moveNext()`/`movePrevious()` commits
+    // the new index synchronously, so this loop's condition is already false on its first check
+    // and no polling happens at all.
+    const settleTimeoutMs = (incomingStep?.waitForElementMs ?? 2000) + 100;
+    const settleStartedAt = Date.now();
+    let landedIndex = driverInstance.getActiveIndex();
+    while (landedIndex === outgoingIndex && Date.now() - settleStartedAt < settleTimeoutMs) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      landedIndex = driverInstance.getActiveIndex();
+    }
+
+    if (landedIndex !== undefined && landedIndex !== intendedIndex) {
+      const landedDriveStep = currentDriveSteps[landedIndex];
+      const landedStep = landedDriveStep?.data?.tourStep as TourStep | undefined;
+      if (landedStep?.before) await landedStep.before();
+      driverInstance.refresh();
+    }
+  }
 
   const handleEscapeCapture = (e: KeyboardEvent) => {
     if (!driverInstance?.isActive()) return;
@@ -329,23 +482,31 @@ export function createTour(options: CreateTourOptions): Tour {
       if (hasCompetingModalOpen()) return;
 
       if (e.key === 'ArrowRight') {
-        // D21: ArrowRight moves between EXISTING steps only. On the last step, `moveNext()`
-        // would route into driver.js's own advance handler — replaced by `onDoneClick`, which
+        // D21: ArrowRight moves between EXISTING steps only. On the last step, advancing would
+        // route into driver.js's own advance handler — replaced by `onDoneClick`, which
         // persists completion and emits `tour_completed` (see `start()`) — so a keypress must
         // not silently finish and persist the tour. Checked BEFORE stopping propagation/default:
         // a no-op arrow on the last step must not behave as if the tour had consumed the key.
         if (driverInstance.isLastStep()) return;
         e.stopPropagation();
         e.preventDefault();
-        driverInstance.moveNext();
+        const activeIndex = driverInstance.getActiveIndex() ?? 0;
+        // D35: route through the shared `transitionTo()` helper instead of calling
+        // `driverInstance.moveNext()` directly, so the incoming step's `before()` runs right
+        // before the move instead of having run for every step back at `start()`.
+        // `transitionTo()` is async; calling it as `void ...()` here (rather than making this
+        // handler `async`) keeps `stopPropagation()`/`preventDefault()` above running
+        // synchronously, exactly when they always have.
+        void transitionTo(activeIndex + 1, 'next');
       } else {
         // D21: symmetric no-op at the other boundary — ArrowLeft on the first step must not
-        // call `movePrevious()` (there is nowhere to go, and driver.js has no "before the
-        // first step" state to route into, but the no-op must still not consume the key).
+        // move backwards (there is nowhere to go, and driver.js has no "before the first step"
+        // state to route into, but the no-op must still not consume the key).
         if (driverInstance.getActiveIndex() === 0) return;
         e.stopPropagation();
         e.preventDefault();
-        driverInstance.movePrevious();
+        const activeIndex = driverInstance.getActiveIndex() ?? 0;
+        void transitionTo(activeIndex - 1, 'previous');
       }
     }
   };
@@ -414,6 +575,44 @@ export function createTour(options: CreateTourOptions): Tour {
     destroyActiveInstance();
   }
 
+  /**
+   * D35.2 — construye el `DriveStep` de `step` con resolución de ancla PEREZOSA: `element` es
+   * una función, `() => resolveAnchor(root, step.anchorKey) ?? undefined`, invocada por
+   * driver.js en el momento de intentar resaltar este paso (verificado leyendo
+   * `driver.js@1.8.0`'s `dist/driver.js.mjs`, helper `f(e)` — `typeof e==='function' ? e() :
+   * ...`), no aquí. El cast `as unknown as string` compensa que el tipo público de
+   * `DriveStep.element` es `string | Element | (() => Element)` — sin `null`/`undefined` en la
+   * firma de retorno de la función — aunque driver.js maneja el caso "no resolvió" internamente
+   * exactamente igual que con un selector de cadena que no matchea nada (su propio helper
+   * `F()`/`m()` comprueba el resultado antes de usarlo).
+   *
+   * `skipMissingElement`/`waitForElement` se declaran igual que antes; ahora es driver.js quien
+   * hace el polling (su propio `MutationObserver` + `setTimeout`) y quien decide omitir el
+   * paso — este paquete ya no tiene su propio `waitForAnchor()` en este camino.
+   *
+   * `data.tourStep` guarda una referencia al `TourStep` original: es lo que `transitionTo()`
+   * usa para encontrar el `before()`/`after()` de cada índice sin mantener un mapa aparte.
+   *
+   * `onDeselected` sigue siendo la vía por la que corren los cierres (×, overlay, Escape,
+   * `stop()`, Done) — pero ahora pasa por `runAfterOnce()` para no repetir un `after()` que
+   * `transitionTo()` ya corrió (D35.4).
+   */
+  function buildDriveStep(root: TourRoot, step: TourStep): DriveStep {
+    const driveStep: DriveStep = {
+      element: (() => resolveAnchor(root, step.anchorKey) ?? undefined) as unknown as string,
+      popover: toDriverPopover(step.popover),
+      skipMissingElement: step.skipMissingElement ?? true,
+      waitForElement: step.waitForElementMs ?? 2000,
+      data: { tourStep: step },
+      onDeselected: step.after
+        ? () => {
+            runAfterOnce(step, step.after);
+          }
+        : undefined,
+    };
+    return driveStep;
+  }
+
   async function start(): Promise<void> {
     if (!isSupported) return;
 
@@ -436,38 +635,15 @@ export function createTour(options: CreateTourOptions): Tour {
     // import — abortar sin construir nada ni tocar el DOM.
     if (!isCurrentGeneration(options.tourId, generation)) return;
 
-    // D23/D24 (B19): `before()` hooks run here, sequentially, in declaration order — this loop
-    // still awaits each `step.before?.()` one at a time, exactly like before, because those
-    // hooks mutate host UI (switch the canvas view, open a drawer, flip a localStorage flag,
-    // select a block) and running them concurrently would interleave those mutations and
-    // change what the DOM looks like mid-resolution. What changes is that this loop no longer
-    // waits for the anchor itself: `beginAnchorWait()` applies the step's precondition
-    // (`before()`) and then STARTS `waitForAnchor()`/`resolveAnchor()` for that step, handing
-    // back the pending promise without awaiting it here. That keeps "this step's wait begins
-    // once its own precondition has been applied" true, while earlier steps' waits keep
-    // polling in the background during later steps' `before()` calls — so a late-mounting
-    // anchor is still caught within its own timeout window.
-    const pendingSteps: PendingDriveStep[] = [];
-    for (const step of eligibleSteps) {
-      pendingSteps.push(await beginAnchorWait(root, step));
-    }
-
-    // All the anchor waits started above run concurrently; awaiting them together with a
-    // single `Promise.all` here means the total cost is the SLOWEST single wait, not the sum
-    // of every missing anchor's timeout (the defect this task fixes — see the top-of-file doc
-    // block, D23/D24). `driveStepResults` preserves `pendingSteps`' order, so the resulting
-    // `driveSteps` array below stays in declared step order.
-    const driveStepResults = await Promise.all(pendingSteps.map((pending) => finishDriveStep(pending)));
-    const driveSteps: DriveStep[] = [];
-    for (const driveStep of driveStepResults) {
-      if (driveStep) driveSteps.push(driveStep);
-    }
-
-    // Idem tras resolver `before()`/anclas: pudo haber llegado un `start()` más nuevo durante
-    // esa espera también.
-    if (!isCurrentGeneration(options.tourId, generation)) return;
+    // D35: construir los `driveSteps` es ahora SINCRÓNICO — no hay resolución de anclas aquí.
+    // Cada `DriveStep.element` es una función que driver.js invoca perezosamente, en el momento
+    // de intentar resaltar ESE paso (ver `buildDriveStep()` más abajo y el bloque D35 al inicio
+    // de este archivo). `before()` del primer paso todavía no ha corrido — corre justo antes de
+    // `driverInstance.drive()`, más abajo, no aquí.
+    const driveSteps: DriveStep[] = eligibleSteps.map((step) => buildDriveStep(root, step));
     if (driveSteps.length === 0) return;
 
+    currentDriveSteps = driveSteps;
     currentTotalSteps = driveSteps.length;
 
     driverInstance = driver({
@@ -502,6 +678,23 @@ export function createTour(options: CreateTourOptions): Tour {
       prevBtnText: options.labels?.prevBtnText,
       doneBtnText: options.labels?.doneBtnText,
       steps: driveSteps,
+      // D35.3: global `onNextClick`/`onPrevClick` — when configured, driver.js hands the ENTIRE
+      // transition to these hooks and does not advance/retreat on its own (verified reading
+      // `driver.js@1.8.0`'s internal `L()`/`R()`: a configured `onNextClick`/`onPrevClick` is
+      // used INSTEAD of the internal advance/retreat, except on the LAST step, where
+      // `onDoneClick` still takes priority over `onNextClick` — so this global hook is simply
+      // never invoked there, and the existing `onDoneClick` below keeps working untouched).
+      // Both route through the same `transitionTo()` helper the arrow-key handler uses, so a
+      // click on the popover's Next/Previous button gets the identical `after()`-then-`before()`
+      // ordering and D35.5 reconciliation as a keyboard-driven transition.
+      onNextClick: () => {
+        const activeIndex = driverInstance?.getActiveIndex() ?? 0;
+        void transitionTo(activeIndex + 1, 'next');
+      },
+      onPrevClick: () => {
+        const activeIndex = driverInstance?.getActiveIndex() ?? 0;
+        void transitionTo(activeIndex - 1, 'previous');
+      },
       onHighlighted: (_el, driveStep) => {
         const index = driveSteps.indexOf(driveStep);
         emit({
@@ -586,6 +779,16 @@ export function createTour(options: CreateTourOptions): Tour {
     attachEscapeGuard();
     persistence.markSeen(options.tourId, options.version);
     emit({ event: 'tour_started', tourId: options.tourId, totalSteps: driveSteps.length });
+    // D35.1: the FIRST step's `before()` runs here, immediately before `drive()` — not back
+    // when this loop over `eligibleSteps` built `driveSteps`. This is the exact fix for the
+    // reported bug: UI a later step reveals (command palette, library drawer, inspector) no
+    // longer opens during the first steps, because no step's `before()` but the first one's
+    // has run by the time the tour is driven.
+    const firstStep = eligibleSteps[0] as TourStep | undefined;
+    if (firstStep?.before) await firstStep.before();
+    // A `start()` más nuevo pudo haber reclamado el registro mientras esperábamos ese
+    // `before()` — abortar sin llamar a `drive()` si ya no somos la generación vigente.
+    if (!isCurrentGeneration(options.tourId, generation)) return;
     driverInstance.drive();
   }
 
@@ -599,74 +802,6 @@ export function createTour(options: CreateTourOptions): Tour {
   }
 
   return { isSupported, start, stop, isActive };
-}
-
-/**
- * Resultado intermedio de `beginAnchorWait()`: el `step` original (para armar el `DriveStep`
- * después) junto con la promesa de resolución de su ancla, ya en marcha. `skip` se calcula aquí
- * porque decide, sin esperar nada, si esa promesa es un `waitForAnchor()` (polling) o un
- * `resolveAnchor()` síncrono envuelto en `Promise.resolve()` (D24: `skipMissingElement: false`
- * sigue sin esperar nada).
- */
-interface PendingDriveStep {
-  step: TourStep;
-  skip: boolean;
-  elementPromise: Promise<Element | null>;
-}
-
-/**
- * Aplica la precondición de `step` (`before()`, awaited — D23: esto sigue siendo secuencial en
- * el llamador, porque esta función en sí misma se awaitea una vez por paso dentro del loop de
- * `start()`) y luego ARRANCA la resolución de su ancla sin esperarla: devuelve la promesa en
- * marcha para que `start()` la vaya acumulando y las espere todas juntas después con
- * `finishDriveStep()`. Este es el punto exacto en el que D23/D24 separan "aplicar la
- * precondición" (secuencial, en orden de declaración) de "esperar la ancla" (concurrente):
- * arrancar el `waitForAnchor()` aquí, inmediatamente después del `before()` de ESTE paso, es lo
- * que preserva "la espera de este paso empieza en cuanto se aplicó su propia precondición" —
- * mientras el polling de pasos anteriores sigue corriendo en segundo plano durante los
- * `before()` de los pasos siguientes.
- */
-async function beginAnchorWait(root: TourRoot, step: TourStep): Promise<PendingDriveStep> {
-  if (step.before) await step.before();
-
-  const skip = step.skipMissingElement ?? true;
-  const elementPromise = skip
-    ? waitForAnchor(root, step.anchorKey, { timeoutMs: step.waitForElementMs ?? 2000 })
-    : Promise.resolve(resolveAnchor(root, step.anchorKey));
-
-  return { step, skip, elementPromise };
-}
-
-/**
- * Segunda mitad de lo que antes era `buildDriveStep()`: espera la promesa de ancla ya en
- * marcha (que para entonces puede llevar corriendo desde hace tiempo — o ya estar resuelta,
- * ver `beginAnchorWait()`) y ensambla el `DriveStep` final, o `null` si el paso debe omitirse.
- * Comportamiento sin cambios respecto al `buildDriveStep()` original: `skipMissingElement:
- * true` (default) descarta el paso si el ancla no aparece; `skipMissingElement: false` nunca
- * descarta, cae a `element: step.anchorKey` y deja que driver.js falle explícitamente si no
- * existe.
- */
-async function finishDriveStep(pending: PendingDriveStep): Promise<DriveStep | null> {
-  const { step, skip } = pending;
-  const element = await pending.elementPromise;
-
-  if (!element) {
-    if (skip) return null;
-    // No se pidió omitir: se deja que driver.js falle explícitamente en vez de ocultar el
-    // problema (el consumidor optó a propósito por no tener red de seguridad en este paso).
-  }
-
-  return {
-    element: element ?? step.anchorKey,
-    popover: toDriverPopover(step.popover),
-    skipMissingElement: skip,
-    waitForElement: step.waitForElementMs ?? 2000,
-    onDeselected: step.after
-      ? () => {
-          void step.after?.();
-        }
-      : undefined,
-  };
 }
 
 function requireStoragePrefix(prefix: string | undefined): string {

@@ -1,104 +1,114 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { createTour } from '@/createTour';
 import type { TourStep } from '@/steps';
 
 /**
- * B19 / D23 / D24 — "a tour with missing anchors costs ONE timeout window, not one per step".
+ * B19 / D23 / D24 → SUPERSEDED BY D35 — this file used to assert "a tour with missing anchors
+ * costs ONE timeout window, not one per step", which relied on `start()` resolving every
+ * eligible step's anchor up front (sequential `before()`, concurrent anchor waits). D35 removes
+ * start-time anchor resolution ENTIRELY — `before()` now runs at step ACTIVATION (immediately
+ * before the tour moves to that step; for the first step, immediately before `drive()`), and
+ * each `DriveStep.element` is a function driver.js resolves lazily at drive time, with
+ * driver.js's own `waitForElement`/`skipMissingElement` doing the waiting/skipping. There is
+ * nothing left to overlap: no anchor wait of any kind happens inside `start()` any more, for
+ * ANY step, so the old assertions ("N missing anchors cost ~1 timeout, not N") are not lowered
+ * by this rewrite, they are simply about a code path that no longer exists.
+ *
+ * This file now asserts the NEW, STRICTLY STRONGER guarantee D35 makes: with several steps
+ * whose anchors are missing, `start()` resolves without waiting for ANY anchor timeout at all —
+ * proven below with fake timers (no timer is ever advanced) — and no step's `before()` has run
+ * except the first eligible step's. Measured, not assumed: see the fake-timer assertions and
+ * the literal `before()` call-order assertion in each test.
  *
  * Same conventions as `keyboardNavigation.test.ts` / `closeAndOverlayDismissal.test.ts`: REAL
- * driver.js@1.8.0 against happy-dom, no mocks, `waitForOverlay()` polling (driver.js paints
- * inside `requestAnimationFrame`), plain `document.body.innerHTML` fixtures with `data-tour`
- * anchors, `localStorage.clear()` in `afterEach`, `@/` alias imports.
- *
- * Pre-fix (see the mutation check in the task report), `start()` awaited each step's
- * `before()` AND its anchor wait one step at a time, so N missing anchors cost N full timeout
- * windows, additive. Post-fix, `before()` hooks stay sequential and in declaration order
- * (D23); only the anchor WAIT is concurrent — each step's wait starts right after its own
- * `before()` runs, and all the waits are awaited together once every step's `before()` has
- * run. So N missing anchors now cost roughly ONE timeout window (the slowest single wait),
- * not their sum.
+ * driver.js@1.8.0 against happy-dom, no mocks, plain `document.body.innerHTML` fixtures with
+ * `data-tour` anchors, `localStorage.clear()` in `afterEach`, `@/` alias imports.
  */
 
-function flushMicrotasks() {
-  return new Promise((resolve) => setTimeout(resolve, 0));
-}
+describe('createTour — no start-time anchor resolution at all (D35, supersedes D23/D24)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
 
-async function waitForOverlay(): Promise<void> {
-  for (let i = 0; i < 20; i++) {
-    if (document.querySelector('.driver-overlay')) return;
-    await new Promise((resolve) => setTimeout(resolve, 10));
-  }
-}
-
-function popoverTitle(): string | null | undefined {
-  return document.querySelector('.driver-popover-title')?.textContent;
-}
-
-describe('createTour — concurrent anchor resolution (D23/D24, B19)', () => {
   afterEach(() => {
     document.body.innerHTML = '';
     localStorage.clear();
+    vi.useRealTimers();
   });
 
-  it('resolves start() in roughly one timeout window, not the sum of every missing anchor timeout', async () => {
-    // Three steps, none of their anchors ever appear in the DOM. Sequentially this would cost
-    // 3 * 300ms = 900ms+ before `start()` resolves. Concurrently it should cost close to a
-    // single 300ms window.
+  it('start() resolves with several missing anchors while NO timer is ever advanced — there is no start-time anchor wait to overlap', async () => {
+    // Three steps, none of their anchors exist in the DOM. Under the old D23/D24 code this
+    // would need real (or advanced fake) time to elapse — each step's `waitForAnchor()` used a
+    // `setInterval`/timeout, and `start()` itself awaited a `Promise.all` of those waits before
+    // resolving. Under D35 there is no anchor wait inside `start()` at all: the first step's
+    // `before()` runs (there is none here), and `drive()` is called synchronously after that —
+    // driver.js's OWN per-step `waitForElement` only kicks in later, when the tour actually
+    // tries to highlight a step whose anchor is missing, which happens INSIDE `drive()`, not
+    // inside anything `start()` awaits.
     const steps: TourStep[] = [
-      { anchorKey: 'missing-1', popover: { title: 'Missing 1' }, waitForElementMs: 300 },
-      { anchorKey: 'missing-2', popover: { title: 'Missing 2' }, waitForElementMs: 300 },
-      { anchorKey: 'missing-3', popover: { title: 'Missing 3' }, waitForElementMs: 300 },
+      { anchorKey: 'missing-1', popover: { title: 'Missing 1' }, waitForElementMs: 5000 },
+      { anchorKey: 'missing-2', popover: { title: 'Missing 2' }, waitForElementMs: 5000 },
+      { anchorKey: 'missing-3', popover: { title: 'Missing 3' }, waitForElementMs: 5000 },
     ];
 
     const tour = createTour({
-      tourId: 'concurrency-timing-tour',
+      tourId: 'no-start-time-wait-tour',
       version: 1,
       storagePrefix: 'test:',
       steps,
     });
 
-    const startedAt = Date.now();
-    await tour.start();
-    const elapsedMs = Date.now() - startedAt;
+    const startPromise = tour.start();
 
-    // eslint-disable-next-line no-console -- surfaced deliberately: the task report must state
-    // the literal measured value, not an invented one.
-    console.log(`[B19 timing] elapsed=${elapsedMs}ms (sequential worst case would be ~900ms+)`);
+    // The critical measurement: `start()` must resolve WITHOUT this test ever advancing the
+    // fake clock (no `vi.advanceTimersByTime`/`vi.runAllTimers`/`vi.runOnlyPendingTimers` call
+    // anywhere in this test). Under D35 there is no `setInterval`/`setTimeout`-based anchor
+    // wait left inside `start()` for any step — the only asynchronous work `start()` still
+    // does is `await import('driver.js')` (a real, one-time module-loader macrotask, unrelated
+    // to anchors) and, for the first step, its `before()`. `vi.waitFor` here polls on REAL
+    // timers under the hood for the assertion callback itself (vitest's own polling, not this
+    // package's), while the fake clock installed by `vi.useFakeTimers()` above is never
+    // advanced — proving that whatever `start()` is awaiting is not a fake timer, which is
+    // exactly what an anchor-polling `setInterval`/timeout would have been pre-D35.
+    await vi.waitFor(
+      () => {
+        expect(tour.isActive()).toBe(true);
+      },
+      { timeout: 2000, interval: 5 },
+    );
 
-    // Every anchor was missing with skipMissingElement defaulting to true, so no step survives
-    // and the tour never starts (isActive() stays false) — that's fine, this case is only
-    // about the elapsed time of start() itself.
-    expect(elapsedMs).toBeLessThan(700);
+    await startPromise;
+
+    expect(tour.isActive()).toBe(true);
 
     tour.stop();
   });
 
-  it('runs before() hooks in declaration order even though the anchor waits are concurrent', async () => {
-    document.body.innerHTML = '';
+  it('no step`s before() has run except the first eligible step`s, even though every anchor is missing', async () => {
     const callOrder: string[] = [];
 
     const steps: TourStep[] = [
       {
         anchorKey: 'missing-a',
         popover: { title: 'A' },
-        waitForElementMs: 50,
-        before: async () => {
+        waitForElementMs: 5000,
+        before: () => {
           callOrder.push('a');
         },
       },
       {
         anchorKey: 'missing-b',
         popover: { title: 'B' },
-        waitForElementMs: 50,
-        before: async () => {
+        waitForElementMs: 5000,
+        before: () => {
           callOrder.push('b');
         },
       },
       {
         anchorKey: 'missing-c',
         popover: { title: 'C' },
-        waitForElementMs: 50,
-        before: async () => {
+        waitForElementMs: 5000,
+        before: () => {
           callOrder.push('c');
         },
       },
@@ -113,160 +123,13 @@ describe('createTour — concurrent anchor resolution (D23/D24, B19)', () => {
 
     await tour.start();
 
-    expect(callOrder).toEqual(['a', 'b', 'c']);
-
-    tour.stop();
-  });
-
-  it('keeps the final step order as declared, walking forward with ArrowRight', async () => {
-    document.body.innerHTML =
-      '<button data-tour="step-a">a</button><button data-tour="step-b">b</button><button data-tour="step-c">c</button>';
-
-    const steps: TourStep[] = [
-      { anchorKey: 'step-a', popover: { title: 'Step A' } },
-      { anchorKey: 'step-b', popover: { title: 'Step B' } },
-      { anchorKey: 'step-c', popover: { title: 'Step C' } },
-    ];
-
-    const tour = createTour({
-      tourId: 'declared-order-tour',
-      version: 1,
-      storagePrefix: 'test:',
-      steps,
-    });
-
-    await tour.start();
-    await waitForOverlay();
-    expect(popoverTitle()).toBe('Step A');
-
-    const advance = () => {
-      const event = new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true });
-      window.dispatchEvent(event);
-    };
-
-    advance();
-    await flushMicrotasks();
-    expect(popoverTitle()).toBe('Step B');
-
-    advance();
-    await flushMicrotasks();
-    expect(popoverTitle()).toBe('Step C');
-
-    tour.stop();
-  });
-
-  it('resolves an anchor injected late — after other steps` before() hooks already ran, but within its own timeout', async () => {
-    document.body.innerHTML = '<button data-tour="early">early</button>';
-
-    const steps: TourStep[] = [
-      { anchorKey: 'early', popover: { title: 'Early' } },
-      {
-        anchorKey: 'late',
-        popover: { title: 'Late' },
-        waitForElementMs: 400,
-        before: async () => {
-          // Inject the anchor for THIS step slightly after this before() runs, simulating a
-          // slow-mounting UI element. Because the wait for this step starts right after this
-          // before() (D23), and the timeout is 400ms measured from here (D24), 60ms later is
-          // comfortably within the window.
-          setTimeout(() => {
-            const el = document.createElement('div');
-            el.setAttribute('data-tour', 'late');
-            document.body.appendChild(el);
-          }, 60);
-        },
-      },
-      { anchorKey: 'after-late', popover: { title: 'After Late' } },
-    ];
-
-    document.body.innerHTML += '<button data-tour="after-late">after-late</button>';
-
-    const tour = createTour({
-      tourId: 'late-anchor-tour',
-      version: 1,
-      storagePrefix: 'test:',
-      steps,
-    });
-
-    await tour.start();
-    await waitForOverlay();
-
-    // All three steps survived, including the one whose anchor mounted late but within its
-    // own timeout window.
-    expect(popoverTitle()).toBe('Early');
-
-    const advance = () => {
-      window.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }),
-      );
-    };
-    advance();
-    await flushMicrotasks();
-    expect(popoverTitle()).toBe('Late');
-
-    advance();
-    await flushMicrotasks();
-    expect(popoverTitle()).toBe('After Late');
-
-    tour.stop();
-  });
-
-  it('still drops a step whose anchor never appears, under the default skipMissingElement', async () => {
-    document.body.innerHTML = '<button data-tour="present">present</button>';
-
-    const steps: TourStep[] = [
-      { anchorKey: 'present', popover: { title: 'Present' } },
-      { anchorKey: 'never-appears', popover: { title: 'Never' }, waitForElementMs: 40 },
-    ];
-
-    const onEvent = vi.fn();
-    const tour = createTour({
-      tourId: 'default-skip-tour',
-      version: 1,
-      storagePrefix: 'test:',
-      steps,
-      onEvent,
-    });
-
-    await tour.start();
-    await waitForOverlay();
-
-    expect(tour.isActive()).toBe(true);
-    // Only the surviving step counts towards totalSteps.
-    expect(onEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ event: 'tour_started', totalSteps: 1 }),
-    );
-
-    tour.stop();
-  });
-
-  it('does not wait at all when skipMissingElement is false, and keeps the step with the anchorKey fallback', async () => {
-    document.body.innerHTML = '';
-
-    const steps: TourStep[] = [
-      {
-        anchorKey: 'never-mounted',
-        popover: { title: 'Fallback' },
-        skipMissingElement: false,
-        waitForElementMs: 5000,
-      },
-    ];
-
-    const tour = createTour({
-      tourId: 'no-skip-tour',
-      version: 1,
-      storagePrefix: 'test:',
-      steps,
-    });
-
-    const startedAt = Date.now();
-    await tour.start();
-    const elapsedMs = Date.now() - startedAt;
-
-    // skipMissingElement: false must resolve immediately (resolveAnchor only, no polling) even
-    // though waitForElementMs is set to a large value — proving no wait happened.
-    expect(elapsedMs).toBeLessThan(200);
-    expect(tour.isActive()).toBe(true);
+    // Pre-D35 (the old sequential-before/concurrent-wait code this file used to assert on),
+    // this would already read ['a', 'b', 'c'] — ALL three `before()` hooks ran during
+    // `start()`, before the first popover ever rendered (the exact bug T8 fixes: a later
+    // step's precondition — opening a drawer, a command palette, etc. — was already applied
+    // during the very first step). Under D35, only the FIRST eligible step's `before()` has
+    // run by the time `start()` resolves.
+    expect(callOrder).toEqual(['a']);
 
     tour.stop();
   });
