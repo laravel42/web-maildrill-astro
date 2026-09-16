@@ -11,16 +11,19 @@ Plan being executed: [`docs/product-tour-driverjs-plan.md`](../docs/product-tour
 
 # START HERE — next session
 
-**NEXT ACTION, verbatim: run T11 then T12 (decision D50) to close B46 — the overlay cut-out is drawn
-against a stale anchor position on 4 of the landing tour's 15 steps, reported by the user for the
-style step. Read B46 for the measurements before touching anything. The earlier
-T7a→T7b→T8a→T8b→T10 chain is DONE and gated green (D44–D49): B35/B36/B38 and the "step 10 won't
-advance, then jumps to 12 or 13" report are closed with e2e proof. Nothing is pushed (31 commits
-ahead). Other open items, in priority order: B39 (the one still-red e2e test, pre-existing, needs a
-fresh dev server — do not restart it autonomously, ask the user), B45, B40 (the plan doc still
-repeats the false B34 claim), B33, B42, B43, B23, B3.**
+**NEXT ACTION, verbatim: nothing is pending on either user report. B46 (the misaligned overlay
+cut-out, reported for the style step) is CLOSED by T11b and guarded by T12: all 15 landing steps
+measure `dx = 0`, `dy = -5` in a real browser, and `tour.spec.ts` is 25 passed / 1 failed of 26. The
+earlier T7a→T7b→T8a→T8b→T10 chain (D44–D49) closed B35/B36/B38 and the "step 10 won't advance, then
+jumps to 12 or 13" report. Nothing is pushed (37 commits ahead of `origin/feat/ui-polish-p1`).
+Open items, in priority order: B39 (the one still-red e2e test, pre-existing, needs a fresh dev
+server before trusting it — do NOT restart it autonomously, ask the user), B45 (D46 drops a click
+with no visible feedback), B40 (the plan doc still repeats the false B34 claim), B21/B20 (the e2e
+suite should be served from a production build — this session produced a false red from server
+degradation, see the T12 gate), B33, B42, B43, B48, B23, B3.**
 
-**Read B40 first if you touch the engine: B34 was factually wrong and D43's stated premise with it.**
+**Read B47 before touching the engine's timing code, and B40 before trusting any claim about
+driver.js's `waitForElement`.**
 
 **Contract decision for the B46 chain (orchestrator's, not delegable):**
 
@@ -46,7 +49,29 @@ repeats the false B34 claim), B33, B42, B43, B23, B3.**
 | ---- | ------------------------------------------------------------------------ | --------------------------------------------------------- | --------- |
 | T11  | the engine waits for a settled rect and refreshes the stage after moving — **`d592db6`, unit-green but INERT in the browser, see B47** | `packages/product-tour/src/createTour.ts` + `tests/anchorRectSettle.test.ts` | D50 |
 | T11b | make the settle wait real (always sleep between samples) and refresh unconditionally after the move | `packages/product-tour/src/createTour.ts` + its `tests/`   | D50b      |
-| T12  | e2e guard: the stage lines up with the anchor at every landing step       | `tests/e2e/tour.spec.ts`                                   | —         |
+| T12  | e2e guard: the stage lines up with the anchor at every landing step — **DONE `08158ca`, green** | `tests/e2e/tour.spec.ts`                       | —         |
+
+**T12 gate (orchestrator, `46ab67c..08158ca`):** one file, **`134 0`** — a pure addition, not one
+existing line touched. The new test seeds canvas content (so it covers the three steps that only
+exist with content — the very reason B46 hid from an entire earlier chain), walks with `ArrowRight`,
+parses the cut-out out of driver.js's overlay `<path d="…">` at every step and asserts all four
+relationships against the element's live rect within 2 px, and finally asserts the walk really did
+visit `pbx.inspector.breakpoints`, `pbx.settings.pages` and `pbx.settings.languages` so it can never
+go vacuously green. Proven to bite, by the subagent and reported literally: shifting its own expected
+`stage.y` by 40 px produces `Expected: <= 2, Received: 40` with a message naming the step and printing
+both rects. Full spec re-measured by the orchestrator: **25 passed / 1 failed of 26** — the only red
+is B39 by name.
+
+**One correction to the subagent's report, measured by the orchestrator:** it reported a SECOND red
+(the T6 site-section test) and believed it pre-existing, having reproduced it against pristine
+`46ab67c`. Re-run here immediately afterwards, that test and T12 both pass (`2 passed`), and the full
+spec shows only B39 failing. Its failure mode — `Target page … has been closed` after a 60 s timeout —
+is **B20's documented dev-server degradation under repeated heavy runs**, not a defect: this session
+put the same long-lived dev server through many full-suite runs, and the full spec's own wall time
+drifted from 1.7 min to 3.6 min over that period. Worth remembering as the shape of a false red in
+this environment, and one more argument for B21 (serve the e2e from a production build).
+
+
 
 - **D50b — corrects D50 after B47, and simplifies it where the measurement says to.** Three points:
   1. **A settle sample pair must be separated in TIME.** `waitForRectToSettle()` must always
@@ -1314,6 +1339,18 @@ is NOT verified in a browser: that the with-content walk now passes step 10 → 
 e2e that seeds a node before starting the tour would close it; it needs its own task.
 
 ## Findings
+
+**B48 — D50b's real settle wait made `@md/product-tour`'s unit suite ~6× slower, and coupled five
+test files to the engine's internal timing.** Measured by the orchestrator across the T11b gate: the
+package's reported test time went from ~4 s to ~24 s, because every step transition now genuinely
+awaits at least one ~50 ms sample interval instead of resolving in the same task. That is the price of
+the fix working at all (see B47) and was accepted knowingly, not overlooked. The second half is the
+part worth watching: T11b had to bump three test files' local `flushMicrotasks()` helper from
+`setTimeout(…, 0)` to 80–120 ms and wrap two awaits in `vi.waitFor`, so those files now depend on
+`D50_SETTLE_SAMPLE_INTERVAL_MS` staying where it is — raise it and they break, for reasons that have
+nothing to do with what they assert. The subagent flagged this itself. Cheap improvement if anyone
+picks it up: have those helpers poll an observable condition (overlay present, active index changed)
+instead of sleeping a fixed amount. Owner: unassigned.
 
 **B47 — T11 shipped a settle wait that is INERT in a real browser, and its unit tests passed because
 their stub models `getBoundingClientRect` wrongly.** Found by the orchestrator when the post-T11
