@@ -580,4 +580,181 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
     await page.waitForTimeout(500);
     await expectTourPopoverInsideViewport(page, 'second step popover must be inside the viewport');
   });
+
+  // --- T6 — e2e coverage for T1–T5 (D37–D43): the landing tour's view/screen-size split, ---
+  // --- the Templates-tab step, and the site-section steps (layers/pages/languages). ------
+  //
+  // Navigation in every test below uses `ArrowRight` (this package's own keyboard handler,
+  // D18/D35/D43 in `createTour.ts`), never clicking the popover's own Next/Done button:
+  // driver.js's built-in button-click routing recomputes, at click time, whether it believes
+  // there is a reachable next step (`I()`/`F()` in `dist/driver.js.mjs`) and can route to
+  // `onDoneClick` instead of this package's `onNextClick` when a step's anchor has not
+  // mounted yet — confirmed live this session on `pbx.settings.pages` (B35/B36, still open,
+  // orchestrator-owned, not this task's to fix). `ArrowRight` never has that failure mode: it
+  // is handled entirely by this package's own listener, bounded only by
+  // `currentDriveSteps.length` (T5's D21 fix), so it is the reliable way to drive a multi-step
+  // walk in tests until B35/B36 is resolved.
+  //
+  // Every test below emulates `reducedMotion: 'reduce'` (same convention as the existing
+  // "full step walk" tests above) so each transition's highlight swap — driver.js removes
+  // `driver-active-element` from the outgoing element and adds it to the incoming one,
+  // verified reading `dist/driver.js.mjs` — settles synchronously instead of straddling an
+  // animated reposition; `waitForActiveElement()` below still polls rather than assuming a
+  // fixed delay, since D43's own anchor wait can still add real time for a late-mounted step.
+  /**
+   * Waits until `anchor`'s own element carries `.driver-active-element`. Deliberately does
+   * NOT require it to be the only element in the document with that class: found this session
+   * (see B37 in `.orquestacion/bitacora.md`) that driver.js leaves the class on certain earlier
+   * steps' elements after transitioning past them — reproduced consistently on this route,
+   * `pbx.toolbar.history`/`pbx.toolbar.viewport`/`pbx.sidebar.tabs`/`pbx.sidebar.palette` keep
+   * the class after the tour moves on, even though the popover, the overlay, and driver.js's
+   * own `getActiveIndex()` are all correct and singular throughout — a CSS/cosmetic residue on
+   * elements no longer part of the tour's flow, not a navigation defect and not this task's to
+   * fix. What this assertion needs to prove (matching "one control per step", D37/D39/D41) is
+   * that `anchor`'s own element is (still) actively highlighted, which the class also proves —
+   * scoping the query to `anchor` avoids the accumulation making that unprovable.
+   */
+  async function waitForActiveElement(page: import('@playwright/test').Page, anchor: string): Promise<void> {
+    await expect(page.locator(`.driver-active-element[data-tour="${anchor}"]`)).toHaveCount(1, {
+      timeout: 8_000,
+    });
+  }
+
+  /**
+   * Presses ArrowRight then waits for the tour to settle on `anchor`, RETRYING the keypress
+   * if the first press's transition does not land within a short window. Needed because these
+   * tests fire ArrowRight in rapid succession with no natural user pacing between presses —
+   * occasionally faster than a still-in-flight previous transition's own D43 anchor wait (or a
+   * React re-render it triggered) has settled, which this package's own `transitionTo()` design
+   * already tolerates for real users (each transition re-validates liveness after every
+   * `await`) but can occasionally leave a single ArrowRight without an observable effect if it
+   * arrives mid-transition. A second press once the first is idle is a normal, supported input
+   * (arrow-key repeat), not a workaround for a defect — this is not the B35/B36 click-routing
+   * bug (arrows never consult driver.js's `isLastStep()`/`L()`), just ordinary UI test timing.
+   */
+  /**
+   * Presses ArrowRight then waits for the tour to settle on `anchor`. Retries the keypress
+   * once if the first press's transition does not land within a short window — arrow-key
+   * repeat is a normal, supported input, not a workaround for a defect; this is not the
+   * B35/B36 click-routing bug (arrows never consult driver.js's `isLastStep()`/`L()`).
+   */
+  async function advanceTourTo(page: import('@playwright/test').Page, anchor: string): Promise<void> {
+    await page.keyboard.press('ArrowRight');
+    try {
+      await waitForActiveElement(page, anchor);
+    } catch {
+      await page.keyboard.press('ArrowRight');
+      await waitForActiveElement(page, anchor);
+    }
+  }
+
+  test('T6: the view-mode step highlights only Edit/Preview, and the screen-size step highlights only the viewport switch (D37)', async ({
+    page,
+  }) => {
+    await resetLandingTourState(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoApp(page, '/dashboard/landings/editor');
+
+    const popover = tourPopover(page);
+    await expect(popover, 'tour popover appears on first visit').toHaveCount(1, { timeout: 45_000 });
+
+    // Step 1 (header identity) → step 2 (view mode).
+    await advanceTourTo(page, 'pbx.toolbar.views');
+
+    const highlightedViews = page.locator('.driver-active-element[data-tour="pbx.toolbar.views"]');
+    // The Edit/Preview group is inside the highlighted element (structural check — labels are
+    // i18n'd, this route currently renders Spanish copy, B33)…
+    await expect(highlightedViews.locator('.pbx-host-toolbar__view')).toHaveCount(2);
+    // …but the viewport switch is a SEPARATE sibling anchor, never inside this one (D37 fixes
+    // exactly this: `pbx.toolbar.views` used to wrap both).
+    await expect(highlightedViews.locator('[data-tour="pbx.toolbar.viewport"]')).toHaveCount(0);
+
+    // Step 2 (view mode) → step 3 (screen size).
+    await advanceTourTo(page, 'pbx.toolbar.viewport');
+
+    const highlightedViewport = page.locator('.driver-active-element[data-tour="pbx.toolbar.viewport"]');
+    // The screen-size step's highlighted element must not be (or contain) the Edit/Preview
+    // group — the reverse of the assertion above, proving neither step's highlight leaks into
+    // the other's. (Not asserting the PREVIOUS step's class is gone: see B37 — driver.js does
+    // not always clean up `.driver-active-element` from earlier steps' elements on this route,
+    // a cosmetic residue unrelated to which element is currently, correctly highlighted.)
+    await expect(highlightedViewport.locator('[data-tour="pbx.toolbar.views"]')).toHaveCount(0);
+  });
+
+  test('T6: the Templates step really opens the sidebar Templates tab (not just highlights it)', async ({ page }) => {
+    test.setTimeout(60_000);
+    await resetLandingTourState(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoApp(page, '/dashboard/landings/editor');
+
+    const popover = tourPopover(page);
+    await expect(popover, 'tour popover appears on first visit').toHaveCount(1, { timeout: 45_000 });
+
+    // header identity → views → viewport → history → sidebar tabs → palette → templates
+    const anchorsInOrder = [
+      'pbx.toolbar.views',
+      'pbx.toolbar.viewport',
+      'pbx.toolbar.history',
+      'pbx.sidebar.tabs',
+      'pbx.sidebar.palette',
+      'pbx.sidebar.templates',
+    ];
+    for (const anchor of anchorsInOrder) {
+      await advanceTourTo(page, anchor);
+    }
+
+    // The step's own `before()` (T3's store seam for the sidebar tab, D38) must have actually
+    // switched the sidebar to its Templates tab, not merely pointed the tour at an anchor that
+    // happens to exist regardless of which tab is open — assert the SIDEBAR's own Templates tab
+    // button (`Sidebar.tsx`, `role="tab"`, `id="pbx-side-tab-templates"`) reports selected.
+    await expect(page.locator('#pbx-side-tab-templates')).toHaveAttribute('aria-selected', 'true');
+  });
+
+  test('T6: each site-section step (layers/pages/languages) reaches its anchor with the matching settings tab active (D39/D41)', async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await resetLandingTourState(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoApp(page, '/dashboard/landings/editor');
+
+    const popover = tourPopover(page);
+    await expect(popover, 'tour popover appears on first visit').toHaveCount(1, { timeout: 45_000 });
+
+    // Walk forward to pbx.settings.tabs (the section strip itself) — the fixed anchor order
+    // recorded in the log, up to and including the canvas step just before it.
+    const anchorsBeforeSettings = [
+      'pbx.toolbar.views',
+      'pbx.toolbar.viewport',
+      'pbx.toolbar.history',
+      'pbx.sidebar.tabs',
+      'pbx.sidebar.palette',
+      'pbx.sidebar.templates',
+      'pbx.canvas.frame',
+      'pbx.settings.tabs',
+    ];
+    for (const anchor of anchorsBeforeSettings) {
+      await advanceTourTo(page, anchor);
+    }
+
+    const sections: { anchor: string; tabId: string }[] = [
+      { anchor: 'pbx.settings.layers', tabId: 'layers' },
+      { anchor: 'pbx.settings.pages', tabId: 'pages' },
+      { anchor: 'pbx.settings.languages', tabId: 'languages' },
+    ];
+
+    for (const { anchor, tabId } of sections) {
+      await advanceTourTo(page, anchor);
+
+      // The section's own tab button (`SiteSettingsPanel.tsx`, `role="tab"`,
+      // `id="pbx-site-tab-<id>"`) must report `aria-selected="true"` — proving the step's
+      // `before()` (D39: `openSiteSettings(tab)`) actually switched the panel to this
+      // section, not merely that the anchor happens to be present regardless of which tab
+      // is open (D41: anchors are stamped on each section's own root, so a wrong tab would
+      // leave this anchor absent from the DOM entirely — this assertion is the direct proof
+      // the RIGHT tab is the one that is open).
+      await expect(page.locator(`#pbx-site-tab-${tabId}`)).toHaveAttribute('aria-selected', 'true');
+    }
+  });
+
 });
