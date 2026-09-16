@@ -112,8 +112,37 @@ T8a/T8b share `tourSteps.ts`, so they are ordered, never parallel):**
 | ---- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------- |
 | T7a  | engine owns Next/Done routing and step skipping — **DONE `04b429a`, green** | `packages/product-tour/src/createTour.ts` + `tests/engineOwnedRouting.test.ts` | D44/D45/D45b/D47 |
 | T7b  | at most one transition in flight; extra clicks/arrows dropped — **DONE `f7c4d5c`, green** | `packages/product-tour/src/createTour.ts` + `tests/transitionInFlight.test.ts` | D46         |
-| T8a  | inspector element tab in the document store + `breakpoints` step opens it   | `builder42` store slice + `InspectorForm.tsx` + `app/tour/tourSteps.ts` + tests | D48         |
-| T8b  | breadcrumb/profileMenu steps gated out of the embed                         | `builder42` `app/tour/tourSteps.ts` + `useBuilder42Tour.ts` + tests            | D49         |
+| T8a  | inspector element tab in the document store + `breakpoints` step opens it — **DONE `ce66b97`, green** | `builder42` `slices/ui.ts` + `InspectorForm.tsx` + `app/tour/tourSteps.ts` + 2 tests | D48         |
+| T8b  | breadcrumb/profileMenu steps gated out of the embed — **DONE `e3a0f25`, green** | `builder42` `tourSteps.ts` + `App.tsx` + `Builder42Editor.tsx` + 2 tests            | D49         |
+| T10  | e2e: the two "full step walk" click tests must wait for the step to change before clicking again (**B44**) | `tests/e2e/tour.spec.ts`                                        | —           |
+
+**T8b gate (orchestrator, `ce66b97..e3a0f25`):** scope respected (5 files), zero deletions, history
+intact, `pnpm --filter builder42 test` **16 files / 163 tests green** (was 15/159). New spec is a
+pure addition (`93 0`); the only change to a pre-existing test file is `2 0` — literally two
+`standaloneChrome: true` lines added to the two config fixtures, so the "emits all 18 anchors"
+invariant keeps exercising the full standalone list. No assertion touched. Mutation-tested by the
+orchestrator: restored `tourSteps.ts` from `ce66b97` → **3 of 4 new tests red** by name. Tree clean.
+
+**Repo-level gate after the whole chain (`3e4e71e..e3a0f25`):** `pnpm check` **339 files, 0 errors,
+0 warnings, 3 hints** (identical to baseline). Root `pnpm test` **44 files / 313 tests green**.
+`pnpm build` **Complete** (server built, sitemap emitted) — which matters more than usual here,
+because `packages/builder42` has no typechecker of its own (B31) and the build is the only
+compile-level guard over it. `pnpm lint` is red with 3 errors, all pre-existing and outside this
+chain's diff — see **B43**.
+
+**End-to-end verification of the user's report (orchestrator, against the user's already-running dev
+servers on :4321 and :3001 — reused, never restarted, per B20/B32):**
+`npx playwright test "e2e/tour\.spec\.ts" --project=chromium --no-deps --workers=1 --retries=0`
+(the regex form matters: a bare `tests/e2e/tour.spec.ts` also matches `workspace-tour.spec.ts`) →
+**24 passed / 1 failed of 25**. The single failure is **B39**, the same pre-existing red by name the
+previous session recorded. **B38 is GREEN**: "landing editor tour … exactly one instance is ever
+active, and a full step walk finishes via the real Next button" — the test that failed
+deterministically 3/3 at step index 10 (`pbx.settings.pages`) — now passes, and re-measured with
+`--repeat-each=3 --grep "exactly one instance is ever active"` it is **3/3 green on the landing
+route**. That is the direct end-to-end proof that the reported defect is closed. The same grep also
+ran the EMAIL editor's sibling test, which failed 2 of 3 — investigated rather than waved off, and
+it is not a product regression: see **B44** for the measurement (the email tour walks all 15 of its
+steps correctly with an honest "Done" label only at 15/15) and **B45**.
 
 **T7b gate (orchestrator, `c241457..f7c4d5c`):** scope respected (2 files), zero deletions, history
 intact, `pnpm --filter @md/product-tour test` **13 files / 96 tests green** (was 12/89), `typecheck`
@@ -1195,6 +1224,50 @@ names alone and should have been in the contract, not discovered by the implemen
 **D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
 
 ## Findings
+
+**B45 — D46 drops a Next click with no visible feedback, which is invisible to a human but breaks
+any scripted walk that clicks as fast as it can.** Measured while gating T8b (see the e2e block
+above). For a user this is the intended trade: click Next twice quickly and you advance one step,
+which is exactly what stops the multi-step jump. But the drop is SILENT — the button neither
+disables nor shows a busy state — so on a step whose transition genuinely takes a while (the engine
+waiting out a missing anchor's `waitForElementMs`, up to 2 s), a user clicking again gets nothing and
+experiences a milder version of the very complaint that opened this chain. Candidate fix, not
+attempted (it needs its own task and a decision): while `transitionInFlight` is true, add a class to
+the popover / set `aria-disabled` on the Next button so the state is visible, or shorten the default
+`waitForElementMs`. Owner: unassigned.
+
+**B44 — the email editor's tour is verified CORRECT end to end, and its e2e "full step walk" test
+was passing for the wrong reason before this chain.** Measured with a throwaway probe (deleted after
+use) that walked `/dashboard/templates/email` with `ArrowRight` — arrows, not clicks, so D46's
+drop-don't-queue could not confound it — logging the popover's progress text, title, Next label and
+active anchor at each step. Literal result: 15 eligible steps, walked in order from
+`1 of 15` "Name your template" (`eb.header.identity`) to `15 of 15` "Test and save"
+(`eb.header.actions`), with the Next button reading **"Next" for steps 1–14 and "Done" only at 15**.
+So on this route D44 fixed B36's mislabel outright, and D45 reached the true end without skipping to
+it. Two incidental observations from the same log: `12 of 15` appeared twice (one ArrowRight was
+consumed but did not advance — D46 dropping the key because the transition was still in flight after
+the probe's 600 ms pause, recovered on the next press), and `13 of 15` never appeared at all (the
+engine skipped that step because its anchor did not materialise within its budget — D45 working as
+designed). **Consequence for the suite:** the pre-existing e2e test "exactly one instance is ever
+active, and a full step walk finishes via the real Next button" (email editor) has a fixed budget of
+20 loop iterations and clicks again immediately after each click. With 15 real steps plus dropped
+clicks it now exhausts that budget and fails at `expect(popover, 'tour finished, no popover left')
+.toHaveCount(0)`. Before this chain it passed ~2/3 of the time **because B36 showed "Done" early and
+the loop broke out of the walk early** — it never actually walked the whole tour. The honest fix is
+in the test (wait for the progress text to change before clicking again), which also makes it a
+stronger assertion; closed by T10.
+
+**B43 — `pnpm lint` is red at the repo level for 3 pre-existing errors, none of them in this
+chain's diff.** Measured by the orchestrator during the repo gate: `src/components/react/
+CampaignsBoard.tsx:199` (`Definition for rule 'react-hooks/exhaustive-deps' was not found` — an
+eslint plugin/config drift, not a code defect) and `src/components/react/automations/
+AutomationBuilder.tsx:91,92` (`'past'`/`'future'` assigned but never used). Neither file appears in
+`git diff 3e4e71e..HEAD --stat` for this whole chain (which touches only `.orquestacion/`,
+`packages/builder42/**` and `packages/product-tour/**`), so eslint being per-file and deterministic,
+this chain cannot have caused them. Recorded because earlier log entries described the lint gate as
+"unchanged"/green without ever writing down its error count — the lesson B20's neighbours already
+teach: save the NAMES of what is red, not the verdict. Owner: unassigned (the `exhaustive-deps` one
+is environment/config, the two unused vars belong to whoever owns AutomationBuilder).
 
 **B42 — under D45 the engine runs `before()` for candidates it then SKIPS, and nothing ever undoes
 that `before()`.** Noticed by the orchestrator reading T7a's `findNextActivatableIndex()`. Running
