@@ -55,6 +55,7 @@ import { TemplatesPanel } from "./TemplatesPanel";
 import { SectionTemplateCard } from "./TemplateCard";
 import { TemplateHoverPreviewPortal } from "@/builder/dnd/TemplateHoverPreviewPortal";
 import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
+import type { SideTab } from "@/builder/store/documentStore";
 
 // ---------------------------------------------------------------------------
 // Iconos por categoría — Lucide (Fase 11.f), 16×16 vía CSS, currentColor
@@ -346,13 +347,12 @@ function ComponentsPanel() {
   );
 }
 
-type SideTab = "components" | "tokens" | "templates";
-
 const ALL_TAB_IDS: SideTab[] = ["components", "tokens", "templates"];
 
 export function Sidebar() {
   const { t } = useTranslation("sidebar");
-  const [tab, setTab] = useState<SideTab>("components");
+  const tab = useDocumentStore((s) => s.sidebarTab);
+  const setTab = useDocumentStore((s) => s.setSidebarTab);
   const [sidebarMode, setSidebarMode] = useLocalConfig("sidebarMode");
   const embedded = useEmbeddedChrome();
   const { isSimple } = useExperienceLevel();

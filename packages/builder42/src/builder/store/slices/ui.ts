@@ -34,6 +34,14 @@ export type SiteTab =
   | "publish"
   | "settings";
 
+/**
+ * Tab activa del sidebar izquierdo (`Sidebar.tsx`): "Componentes", "Tokens" o
+ * "Plantillas". Vive aquí (en vez de un `useState` local del componente) para
+ * que código que corre FUERA de React — p. ej. el `before()` de un paso del
+ * tour guiado — pueda cambiarla.
+ */
+export type SideTab = "components" | "tokens" | "templates";
+
 export interface UiSlice {
   selectedId: NodeId | null;
   activeBreakpoint: Breakpoint;
@@ -98,6 +106,12 @@ export interface UiSlice {
    */
   requestedSiteTab: SiteTab | null;
 
+  /**
+   * Tab activa del sidebar izquierdo (`SideTab`). UI-state (no entra a
+   * zundo ni se serializa) — ver doc del tipo `SideTab` arriba.
+   */
+  sidebarTab: SideTab;
+
   // UI
   select: (id: NodeId | null) => void;
   /** Entra en modo edición inline de texto para `id` (docs/12 §B.11). */
@@ -125,6 +139,8 @@ export interface UiSlice {
   openSiteSettings: (tab: SiteTab) => void;
   /** Limpia la petición pendiente de tab (la consume `SiteSettingsPanel`). */
   clearRequestedSiteTab: () => void;
+  /** Cambia la tab activa del sidebar izquierdo (`SideTab`). */
+  setSidebarTab: (tab: SideTab) => void;
 }
 
 export const createUiSlice: SliceCreator<UiSlice> = (set) => ({
@@ -139,6 +155,7 @@ export const createUiSlice: SliceCreator<UiSlice> = (set) => ({
   view: "edit",
   editingLocale: initialSite.meta.defaultLang,
   requestedSiteTab: null,
+  sidebarTab: "components",
 
   select: (id) =>
     set((s) => {
@@ -196,4 +213,5 @@ export const createUiSlice: SliceCreator<UiSlice> = (set) => ({
       s.requestedSiteTab = tab;
     }),
   clearRequestedSiteTab: () => set({ requestedSiteTab: null }),
+  setSidebarTab: (tab) => set({ sidebarTab: tab }),
 });
