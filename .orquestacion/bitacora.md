@@ -30,11 +30,13 @@ touches both panels.
 
 | Task | What                                                                          | Scope (files)                                                                                             | Commit    | Gate  |
 | ---- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------- | ----- |
-| T1   | `sidebarTab` into the document store (D38)                                     | `builder/store/slices/ui.ts`, `app/layout/Sidebar.tsx`, new test                                          | —         | —     |
-| T2   | split view mode / screen size (D37): re-point `toolbar.views`, add `toolbar.viewport` | `app/tour/tourAnchors.ts`, `tourSteps.ts`, `app/layout/HostToolbar.tsx`, `ViewportDropdown.tsx`, `tour.json` ×3, 2 tests | —         | —     |
-| T3   | Templates-tab step (`sidebar.templates`), palette step pins the components tab  | `tourAnchors.ts`, `tourSteps.ts`, `app/layout/TemplatesPanel.tsx`, `tour.json` ×3, 2 tests                | —         | —     |
-| T4   | site sections: `settings.tabs/layers/pages/languages` (D39/D40/D41) + publish `before()` | `tourAnchors.ts`, `tourSteps.ts`, `inspector/SiteSettingsPanel.tsx`, `PageManager.tsx`, `I18nSettings.tsx`, `tour.json` ×3, 2 tests | —         | —     |
-| T5   | e2e: one control per toolbar step, templates tab really opens, sections open    | `tests/e2e/tour.spec.ts`, `tests/e2e/helpers/tour.ts`                                                     | —         | —     |
+| T1   | `sidebarTab` into the document store (D38)                                     | `builder/store/slices/ui.ts`, `app/layout/Sidebar.tsx`, new test                                          | `a5623e9` | green |
+| T2   | split view mode / screen size (D37): re-point `toolbar.views`, add `toolbar.viewport` | `app/tour/tourAnchors.ts`, `tourSteps.ts`, `app/layout/HostToolbar.tsx`, `ViewportDropdown.tsx`, `tour.json` ×3, 2 tests | `79aa504` | green (browser-verified: `views` wraps only Edit/Preview, `viewport` only the size switch) |
+| T2b  | guard test: every anchor call-site file must import `dataTourAttr` (see **B32**) | `tests/tour-anchors-coverage.test.ts`                                                                     | `f02ca70` | green |
+| T3   | Templates-tab step (`sidebar.templates`), palette step pins the components tab  | `tourAnchors.ts`, `tourSteps.ts`, `app/layout/TemplatesPanel.tsx`, `tour.json` ×3, 2 tests                | `bb5616e` | green (browser-verified: step 7 opens the Templates tab) |
+| T4   | site sections: `settings.tabs/layers/pages/languages` (D39/D40/D41) + publish `before()` | `tourAnchors.ts`, `tourSteps.ts`, `inspector/SiteSettingsPanel.tsx`, `PageManager.tsx`, `I18nSettings.tsx`, `tour.json` ×3, 2 tests | `33ac950` | unit green; **blocked in the browser by B34** — kept, not reverted: the steps are correct, the ENGINE cannot deliver them yet |
+| T5   | engine: wait for the incoming step's anchor after `before()` (**D43**)          | `packages/product-tour/src/createTour.ts` + tests                                                         | —         | —     |
+| T6   | e2e: one control per toolbar step, templates tab really opens, sections open     | `tests/e2e/tour.spec.ts`, `tests/e2e/helpers/tour.ts`                                                     | —         | —     |
 
 **Contract decisions for this chain (orchestrator's, not delegable):**
 
@@ -67,6 +69,14 @@ touches both panels.
   are silently skipped there; they stay untouched for the standalone editor, and the new
   `pbx.settings.pages` covers "pages" for the embed. The resulting redundancy is a product call for
   the user, not an agent's to make.
+
+- **D43 — the engine waits for the INCOMING step's anchor after running its `before()`, and only then
+  tells driver.js to move.** Forced by **B34**: `waitForElement` is dead config in driver.js@1.8.0, so a
+  `before()` that flips a React panel loses the race and its step is skipped instantly (and a run of
+  missing steps ends the tour as "completed"). This does **not** revert D35: nothing goes back to
+  resolving every anchor up front, and `before()` still runs only when the tour reaches its step \u2014 the
+  wait is per-step, bounded by that step's own `waitForElementMs`, and happens between `before()` and
+  `moveNext()`/`drive()`.
 
 **Three bindings every task in this chain must respect (this is what incident I2 was about):** the
 package enforces a 1:1 registry↔steps mapping through its own tests, so an anchor and its step and
@@ -987,6 +997,64 @@ names alone and should have been in the contract, not discovered by the implemen
 **D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
 
 ## Findings
+
+**B34 — `waitForElement` does not exist in driver.js@1.8.0, so any step whose anchor is not ALREADY in
+the DOM when the engine calls `moveNext()` is skipped instantly \u2014 and if all remaining steps are
+missing, the tour reports itself COMPLETED.** Measured by the orchestrator while gating T4, first in the
+browser and then by reading `driver.js@1.8.0`'s `dist/driver.js.mjs` directly:
+`[regex]::Matches(src,"waitForElement").Count` is **3**, and all three are the same occurrence \u2014 the
+`waitForElement: 0` entry of the defaults object in `ne()`; the option is never read anywhere else.
+`skipMissingElement` IS implemented (`F(e,t)` returns "skip this step" when the flag is set and
+`f(t.element)` resolves falsy, and `I(e,from,dir)` walks to the next non-skippable index), so the skip
+is immediate and synchronous, with no waiting of any kind. When `I()` finds no further index, `L()`
+routes to `onDoneClick` \u2014 which in this engine persists completion and emits `tour_completed`. This
+invalidates part of what **D35** documented ("driver.js does its own polling/timeout with a
+MutationObserver + setTimeout in its internal `m()`/`p()` and decides to omit the step"): the omission is
+real, the waiting is fiction. Observed consequence in the landing editor: at the `pbx.settings.layers`
+step, clicking Next ran `before()` (which flips a React panel), and 227 ms later the overlay and popover
+were gone \u2014 driver.js had skipped `settings.pages`, `settings.languages`, `pages.breadcrumb` and
+`profileMenu` in one synchronous sweep because React had not committed the new panel yet. Closed by
+**D43** (engine waits for the incoming step's anchor before moving); the dead `waitForElement` we still
+pass to driver.js is harmless but must not be trusted again.
+
+**B33 — the landing tour speaks Spanish while the embedded editor speaks English.** Measured in the
+browser during the T3/T4 gates: the popovers read "Nombre y autoguardado" / "Plantillas de p\u00e1gina" while
+the editor chrome around them reads "Edit" / "Preview" / "Components" / "Templates". Cause, read in
+`app/tour/tourSteps.ts`: its `t()` resolves against the **global i18next singleton** (`import i18n from
+"@/i18n"`, whose `lng` comes from `readConfig("editorLang")`, default `"es"`), but the embed renders with
+a per-instance i18n created by `createEditorI18n(locale)` from the host's locale \u2014 the instance
+`useBuilder42Tour` already receives and watches for `languageChanged`. So the copy is resolved from a
+different catalogue than every other string on screen. Fix shape (not attempted, needs its own task):
+pass the i18n instance into `buildBuilder42TourSteps(config, i18nInstance)` and resolve copy from it,
+keeping the singleton as the standalone default. Owner: unassigned.
+
+**B32 — a browser gate run right after a subagent edits package source can read a STALE module and
+report a phantom crash.** During the T2 gate the orchestrator measured `ReferenceError: dataTourAttr is
+not defined` from `ViewportDropdown.tsx` and opened a corrective task (T2b) \u2014 but the import was already
+present in the committed file (`git show HEAD:\u2026` confirmed it): the long-running `astro dev` server
+(started 10:15, per **B20**'s note that it degrades over hours) was still serving a transform from an
+intermediate save. Touching the changed files' mtimes and re-running showed the editor mounting cleanly.
+**Procedure for this environment: before any browser verification of a package-source change, bump the
+mtimes of the touched files (or restart the dev server) \u2014 otherwise the observation is not about the
+committed code.** T2b was not wasted (its guard test is real and bites), but the diagnosis that
+justified it was an artefact.
+
+**B31 — nothing type-checks `packages/builder42`.** The root `tsconfig.json` lists `packages` under
+`exclude`, so neither `pnpm check` (astro check) nor `tsc --noEmit` sees that tree, and the package has
+no `typecheck` script of its own (`package.json` has only `test` and `build:runtime`) \u2014 unlike
+`@md/product-tour`, which does. A missing import or a type error inside `packages/builder42` is caught
+only by a runtime crash in the browser (see **B32** for how that played out) or, indirectly, by the
+static-source assertions in `tests/tour-anchors-coverage.test.ts`. Cheap to close: add
+`\"typecheck\": \"tsc --noEmit\"` to that package and wire it into the gate \u2014 but it must be its own task,
+because nobody has measured how many pre-existing errors that would surface. Owner: unassigned.
+
+**B30 — the \"initial value\" case of `tests/ui.sidebarTab.test.ts` does not bite.** Measured by the
+orchestrator gating T1: changing the slice's initial `sidebarTab` from `\"components\"` to `\"templates\"`
+leaves that file 3/3 green, because its own `beforeEach` calls
+`useDocumentStore.setState({ sidebarTab: \"components\" })` \u2014 so the assertion checks the reset, not the
+default. The two cases that matter (the setter, called from outside React \u2014 the seam D38 exists for) DO
+bite. Closing it properly needs `vi.resetModules()` + a dynamic re-import to observe a fresh store, which
+is more machinery than the value justifies. Owner: unassigned.
 
 **B29 — every tour `before()` that opens a panel by writing `localStorage` directly is a no-op in the
 live session.** Found by the orchestrator reading `hooks/useLocalConfig.ts` while planning the landing
