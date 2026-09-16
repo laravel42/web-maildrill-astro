@@ -77,9 +77,18 @@ DOM at that instant (see B41 for each one and why). Full mechanism, all four lin
   what fixes link 4 above (the multi-step jump from repeated clicks). The arrow branches still
   consume the key (`stopPropagation`/`preventDefault`) while a transition is in flight, so the host
   editor never sees it — dropping the navigation must not leak the key to the host.
-- **D47 — `waitForElement` keeps being passed per step, but nothing may rely on it.** It is NOT
-  dead config (B40 corrects B34), yet after D45 the engine has already awaited the anchor itself
-  before calling `moveTo`, so driver.js's own wait is only ever a redundant second net.
+- **D47 — stop passing a non-zero `waitForElement` to driver.js; pass `0` (its default).** It is NOT
+  dead config (B40 corrects B34), which is exactly why it must now be turned off: after D45 the
+  engine has already awaited the anchor and already decided, so driver.js's own
+  MutationObserver+timeout wait can only ADD latency after the engine gave up — a 2 s frozen popover
+  in precisely the case where the engine deliberately chose to show the step anyway. The engine owns
+  the wait; `TourStep.waitForElementMs` keeps its meaning as the budget for
+  `waitForStepAnchor()` and stops being forwarded.
+- **D45b — `start()` uses the same walker.** `drive()` accepts an index (`drive(e=0)` → `m(e)`), so
+  `start()` must resolve the FIRST activatable index with the same rule as D45 (run `before()`,
+  await the anchor, skip when unresolved and skippable) and call `drive(thatIndex)`. Without this,
+  D44 turns a missing first anchor from "silently skipped by driver.js" into "an orphan centred
+  popover is the first thing the user sees".
 - **D48 — `InspectorForm`'s element tab moves from local `useState` into the document store**
   (`inspectorTab` + `setInspectorTab`), exactly as T1/D38 did for `sidebarTab`: a seam the tour's
   `before()` can drive from outside React. Forced by B41: `pbx.inspector.breakpoints` is stamped on
