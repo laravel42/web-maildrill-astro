@@ -485,6 +485,26 @@ export function createTour(options: CreateTourOptions): Tour {
    * falta llevar cuenta por índice ni por generación.
    */
   let alreadyHandledAfterStep: TourStep | null = null;
+  /**
+   * D46 — at most one `transitionTo()` in flight per tour instance. `true` from the moment a
+   * `transitionTo()` call is accepted until it settles (every exit path, via `finally` — see
+   * `transitionTo()`), across all three call sites (`onNextClick`, `onPrevClick`, and the
+   * capture-phase arrow handler). While `true`, any further Next/Prev click or ArrowRight/
+   * ArrowLeft press is DROPPED, not queued: the tour does not remember it and does not replay
+   * it once the in-flight transition settles. This is what stops the defect this task closes —
+   * without it, `driverInstance.getActiveIndex()` stays stale for the whole duration of the
+   * first transition's awaits (`after()`, then each candidate's `before()` +
+   * `waitForStepAnchor()`), so every further click/arrow starts an INDEPENDENT walk from that
+   * same stale index and eventually issues its own `moveTo()` — several stacked transitions
+   * landing as one multi-step jump once they all resolve.
+   *
+   * Reset by every `start()` (declared as a local, reassigned per `createTour()` call — see
+   * below) so a relaunched tour never inherits a stuck flag from a previous run. Released on
+   * EVERY exit path of `transitionTo()` via `finally`, so a thrown `before()`/`after()` can
+   * never leave it stuck (a stuck flag would freeze navigation permanently, which is worse than
+   * the bug being fixed).
+   */
+  let transitionInFlight = false;
 
   /**
    * Corre `after()` del `TourStep` dado exactamente una vez, sin importar si el llamador es
@@ -596,51 +616,69 @@ export function createTour(options: CreateTourOptions): Tour {
    * mueven al índice CONTIGUO (planos, sin omisión que delegarles — ver los hechos verificados
    * en el bloque D44/D45/D45b/D47 al inicio del archivo), así que usarlos aquí aterrizaría
    * siempre en el candidato inmediato en vez del que este recorrido decidió.
+   *
+   * **D46 — at most one `transitionTo()` in flight per tour instance.** The caller (each of the
+   * three call sites: the global `onNextClick`/`onPrevClick`, and the capture-phase arrow
+   * handler) is responsible for checking `transitionInFlight` BEFORE calling this function —
+   * that check happens at the call site, not here, because the arrow-key call site must decide
+   * whether to consume the key (`stopPropagation()`/`preventDefault()`) even when it drops the
+   * navigation, and that decision has to run synchronously before this async function is ever
+   * invoked. Once entered, this function sets `transitionInFlight = true` for its entire
+   * lifetime and clears it in a `finally` that wraps EVERY line below — including every early
+   * `return` (dead outgoing instance/generation, no activatable candidate, nothing before the
+   * first step) and the terminal `completeTour()` path — so a thrown `before()`/`after()` can
+   * never leave the flag stuck (a stuck flag would freeze navigation permanently, which is worse
+   * than the bug D46 fixes).
    */
   async function transitionTo(fromIndex: number, direction: 'next' | 'previous'): Promise<void> {
-    // T8b — Fix 1: capture the generation this transition belongs to (the same value `start()`
-    // used, via the `ownGeneration` closure variable at call time) and re-validate it — together
-    // with a freshly-read `driverInstance` local, never the narrowing from the top of this
-    // function — after EVERY await below. `driverInstance` is a closure variable `onDestroyed`
-    // sets to `null`, and a newer `start()` can also bump the registered generation; either one
-    // means this run is no longer live (the tour closed — Escape, overlay click, ×, `stop()` —
-    // or a fresher `start()` superseded it) while this transition was suspended on an `await`.
-    // TypeScript's narrowing from the guard below does NOT survive an `await` (the variable can
-    // be reassigned by a callback that runs during that suspension), so every dereference below
-    // reads `driverInstance` into a local first and checks that local, never the outer variable
-    // directly.
-    const generation = ownGeneration;
-    const isLive = () => isCurrentGeneration(options.tourId, generation);
+    transitionInFlight = true;
+    try {
+      // T8b — Fix 1: capture the generation this transition belongs to (the same value `start()`
+      // used, via the `ownGeneration` closure variable at call time) and re-validate it — together
+      // with a freshly-read `driverInstance` local, never the narrowing from the top of this
+      // function — after EVERY await below. `driverInstance` is a closure variable `onDestroyed`
+      // sets to `null`, and a newer `start()` can also bump the registered generation; either one
+      // means this run is no longer live (the tour closed — Escape, overlay click, ×, `stop()` —
+      // or a fresher `start()` superseded it) while this transition was suspended on an `await`.
+      // TypeScript's narrowing from the guard below does NOT survive an `await` (the variable can
+      // be reassigned by a callback that runs during that suspension), so every dereference below
+      // reads `driverInstance` into a local first and checks that local, never the outer variable
+      // directly.
+      const generation = ownGeneration;
+      const isLive = () => isCurrentGeneration(options.tourId, generation);
 
-    let instance = driverInstance;
-    if (!instance || !isLive()) return;
+      let instance = driverInstance;
+      if (!instance || !isLive()) return;
 
-    const outgoingIndex = instance.getActiveIndex();
-    const outgoingDriveStep = outgoingIndex !== undefined ? currentDriveSteps[outgoingIndex] : undefined;
-    const outgoingStep = outgoingDriveStep?.data?.tourStep as TourStep | undefined;
-    if (outgoingStep?.after) {
-      alreadyHandledAfterStep = outgoingStep;
-      await outgoingStep.after();
-    }
-
-    instance = driverInstance;
-    if (!instance || !isLive()) return;
-
-    const delta = direction === 'next' ? 1 : -1;
-    const candidateIndex = await findNextActivatableIndex(fromIndex + delta, delta, isLive);
-
-    instance = driverInstance;
-    if (!instance || !isLive()) return;
-
-    if (candidateIndex === undefined) {
-      if (direction === 'next') {
-        completeTour(currentTotalSteps);
+      const outgoingIndex = instance.getActiveIndex();
+      const outgoingDriveStep = outgoingIndex !== undefined ? currentDriveSteps[outgoingIndex] : undefined;
+      const outgoingStep = outgoingDriveStep?.data?.tourStep as TourStep | undefined;
+      if (outgoingStep?.after) {
+        alreadyHandledAfterStep = outgoingStep;
+        await outgoingStep.after();
       }
-      // direction === 'previous': nothing before the first step — stay put, do nothing.
-      return;
-    }
 
-    instance.moveTo(candidateIndex);
+      instance = driverInstance;
+      if (!instance || !isLive()) return;
+
+      const delta = direction === 'next' ? 1 : -1;
+      const candidateIndex = await findNextActivatableIndex(fromIndex + delta, delta, isLive);
+
+      instance = driverInstance;
+      if (!instance || !isLive()) return;
+
+      if (candidateIndex === undefined) {
+        if (direction === 'next') {
+          completeTour(currentTotalSteps);
+        }
+        // direction === 'previous': nothing before the first step — stay put, do nothing.
+        return;
+      }
+
+      instance.moveTo(candidateIndex);
+    } finally {
+      transitionInFlight = false;
+    }
   }
 
   const handleEscapeCapture = (e: KeyboardEvent) => {
@@ -713,6 +751,13 @@ export function createTour(options: CreateTourOptions): Tour {
         if (activeIndexForRight + 1 >= currentDriveSteps.length) return;
         e.stopPropagation();
         e.preventDefault();
+        // D46: a transition is already in flight — drop this press (do not start a second,
+        // independent `transitionTo()` walk from this same stale active index) but the key is
+        // still CONSUMED (`stopPropagation()`/`preventDefault()` already ran above): dropping
+        // the navigation must never let the key leak through to the host editor. See the doc
+        // block on `transitionInFlight` for why an independent second walk is exactly the
+        // multi-step-jump defect this task closes.
+        if (transitionInFlight) return;
         // D45: route through the shared `transitionTo()` helper instead of calling
         // `driverInstance.moveNext()` directly, so the incoming step's `before()` runs right
         // before the move instead of having run for every step back at `start()`, and so the
@@ -730,6 +775,8 @@ export function createTour(options: CreateTourOptions): Tour {
         if (driverInstance.getActiveIndex() === 0) return;
         e.stopPropagation();
         e.preventDefault();
+        // D46: same drop-but-consume as the ArrowRight branch above — see that comment.
+        if (transitionInFlight) return;
         const activeIndex = driverInstance.getActiveIndex() ?? 0;
         // Passes the CURRENT active index, same reasoning as the ArrowRight branch above:
         // `transitionTo()` computes the first backward candidate itself (`fromIndex - 1`).
@@ -869,6 +916,13 @@ export function createTour(options: CreateTourOptions): Tour {
     // `await`, que ya no es la vigente (ver los dos checks de `isCurrentGeneration` abajo).
     const generation = claimTourGeneration(options.tourId);
     ownGeneration = generation;
+    // D46: a fresh `start()` never inherits a stuck in-flight flag from a previous run of this
+    // same `Tour` instance (e.g. `stop()` + `start()` again, or a superseding `start()` landing
+    // while a transition from the PREVIOUS generation was still suspended on an await — that
+    // previous transition's own `finally` will still clear the flag when it settles, but this
+    // reset makes the new generation's navigation available immediately rather than depending
+    // on that unrelated settle).
+    transitionInFlight = false;
 
     // D36: la hoja de estilos del tour se espera CONCURRENTEMENTE con el import de driver.js —
     // nunca en serie después — así el motor garantiza que `driver.css` (importado por
@@ -938,11 +992,19 @@ export function createTour(options: CreateTourOptions): Tour {
       // gets the identical `after()`-then-candidate-walk ordering (D45) as a keyboard-driven
       // transition — including the engine's own skip-ahead when the immediately next step's
       // anchor never materialises.
+      //
+      // D46: both hooks drop the click while a transition is already in flight
+      // (`transitionInFlight`) instead of starting a second, independent `transitionTo()` walk
+      // from the same stale `getActiveIndex()` — see the doc block on `transitionInFlight` and
+      // on `transitionTo()` itself for why an independent second walk is exactly the defect
+      // this task closes.
       onNextClick: () => {
+        if (transitionInFlight) return;
         const activeIndex = driverInstance?.getActiveIndex() ?? 0;
         void transitionTo(activeIndex, 'next');
       },
       onPrevClick: () => {
+        if (transitionInFlight) return;
         const activeIndex = driverInstance?.getActiveIndex() ?? 0;
         void transitionTo(activeIndex, 'previous');
       },
