@@ -182,14 +182,37 @@ test.describe('email editor tour (/dashboard/templates/email)', () => {
     // `force: true`. Re-asserting the single-instance invariant after each click is what
     // would have caught the original bug: a second, independently-driven instance left the
     // popover count at 2 (or its overlay intercepting pointer events on the "real" click).
+    //
+    // Paced by observed progress, not a fixed click budget (B44): the engine now labels
+    // "Next" as "Done" only on the genuinely last step, so the walk must go the full
+    // distance — and it now drops (never queues) a Next click that arrives while the
+    // previous transition is still in flight (D46), so clicking again immediately after
+    // a click can silently lose an iteration instead of advancing. Reading the popover's
+    // own progress text (`.driver-popover-progress-text`, e.g. "3 of 15") before each click
+    // and waiting for it to change afterwards paces the walk to the engine's real speed,
+    // and the "of N" part gives a real bound instead of a magic number.
     const nextBtn = tourNextButton(page);
-    for (let i = 0; i < 20; i++) {
+    const progressText = popover.locator('.driver-popover-progress-text');
+    const initialProgress = (await progressText.textContent())?.trim() ?? '';
+    const totalSteps = Number(initialProgress.match(/of\s+(\d+)/)?.[1] ?? 20);
+    const maxIterations = totalSteps + 5;
+    for (let i = 0; i < maxIterations; i++) {
       await expect(popover, `exactly one popover mid-walk (step ${i})`).toHaveCount(1);
       await expect(overlay, `exactly one overlay mid-walk (step ${i})`).toHaveCount(1);
       await expect(nextBtn).toBeVisible();
       const isDone = await nextBtn.evaluate((el) => el.classList.contains('driver-popover-done-btn'));
+      const beforeClickProgress = await progressText.textContent();
       await nextBtn.click({ timeout: 60_000 });
       if (isDone) break;
+      // The engine drops an overlapping click rather than queuing it (D46), so wait for
+      // the observable proof the tour actually moved on — the progress text changing —
+      // before clicking again, instead of racing the next click against an in-flight
+      // transition. Bounded but generous: the engine can spend up to ~2s on a step whose
+      // anchor has to be waited for.
+      await expect(
+        progressText,
+        `tour advanced past step "${beforeClickProgress}" (step ${i})`,
+      ).not.toHaveText(beforeClickProgress ?? '', { timeout: 5_000 });
     }
 
     // The tour finished (Done clicked) — no popover/overlay left, and no test in this loop
@@ -491,14 +514,27 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
     await expect(overlay, 'exactly one overlay on first visit').toHaveCount(1);
     await expect(popover).toHaveClass(/md-tour/);
 
+    // Paced by observed progress, not a fixed click budget (B44) — see the matching
+    // email-editor test above for the full rationale (B36's "Done"-early fix means the
+    // walk must now go the full distance, and D46's dropped-overlapping-click behaviour
+    // means clicking again immediately after a click can silently lose an iteration).
     const nextBtn = tourNextButton(page);
-    for (let i = 0; i < 20; i++) {
+    const progressText = popover.locator('.driver-popover-progress-text');
+    const initialProgress = (await progressText.textContent())?.trim() ?? '';
+    const totalSteps = Number(initialProgress.match(/of\s+(\d+)/)?.[1] ?? 20);
+    const maxIterations = totalSteps + 5;
+    for (let i = 0; i < maxIterations; i++) {
       await expect(popover, `exactly one popover mid-walk (step ${i})`).toHaveCount(1);
       await expect(overlay, `exactly one overlay mid-walk (step ${i})`).toHaveCount(1);
       await expect(nextBtn).toBeVisible();
       const isDone = await nextBtn.evaluate((el) => el.classList.contains('driver-popover-done-btn'));
+      const beforeClickProgress = await progressText.textContent();
       await nextBtn.click({ timeout: 60_000 });
       if (isDone) break;
+      await expect(
+        progressText,
+        `tour advanced past step "${beforeClickProgress}" (step ${i})`,
+      ).not.toHaveText(beforeClickProgress ?? '', { timeout: 5_000 });
     }
 
     await expect(popover, 'tour finished, no popover left').toHaveCount(0);
