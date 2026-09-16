@@ -110,10 +110,19 @@ T8a/T8b share `tourSteps.ts`, so they are ordered, never parallel):**
 
 | Task | What                                                                       | Scope                                                                        | Decisions   |
 | ---- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------- |
-| T7a  | engine owns Next/Done routing and step skipping                             | `packages/product-tour/src/createTour.ts` + its `tests/`                     | D44/D45/D47 |
+| T7a  | engine owns Next/Done routing and step skipping — **DONE `04b429a`, green** | `packages/product-tour/src/createTour.ts` + `tests/engineOwnedRouting.test.ts` | D44/D45/D45b/D47 |
 | T7b  | at most one transition in flight; extra clicks/arrows dropped               | `packages/product-tour/src/createTour.ts` + its `tests/`                      | D46         |
 | T8a  | inspector element tab in the document store + `breakpoints` step opens it   | `builder42` store slice + `InspectorForm.tsx` + `app/tour/tourSteps.ts` + tests | D48         |
 | T8b  | breadcrumb/profileMenu steps gated out of the embed                         | `builder42` `app/tour/tourSteps.ts` + `useBuilder42Tour.ts` + tests            | D49         |
+
+**T7a gate (orchestrator, `a959d44..04b429a`):** scope respected (2 files), zero deletions, history
+intact, `pnpm --filter @md/product-tour test` **12 files / 89 tests green** (baseline 11/84),
+`typecheck` 0 errors. The new test file is a pure addition (`407 0` on `--numstat`), so no
+pre-existing assertion was touched — and the subagent reported needing none, which the numstat
+confirms. Mutation-tested by the orchestrator: restored `createTour.ts` from `a959d44` →
+**5 of 5 new tests red**, by name (a/b/c/d/d.2); restored with `git checkout HEAD --`, tree clean.
+The D35.5 reconciliation loop was removed and replaced by `findNextActivatableIndex()`, as the
+contract authorised.
 
 **State at hand-off (2026-09-16, sixth session): `HEAD = 455ee07`, branch `feat/ui-polish-p1`, tree
 clean** except the pre-existing untracked `.cursor/hooks/` and `.kiro/` (not this chain's).
@@ -1171,6 +1180,22 @@ names alone and should have been in the contract, not discovered by the implemen
 **D14**, and the work is salvaged by a narrow follow-up (B9b) rather than reverted.
 
 ## Findings
+
+**B42 — under D45 the engine runs `before()` for candidates it then SKIPS, and nothing ever undoes
+that `before()`.** Noticed by the orchestrator reading T7a's `findNextActivatableIndex()`. Running
+`before()` on a candidate is unavoidable — it is what mounts the anchor, so it has to run before the
+engine can know whether the step is takeable. But when the anchor still does not appear and the
+engine skips the candidate, that candidate's `after()` deliberately does NOT run (per D45: a step
+that was never highlighted must not run its exit hook), so any host state its `before()` mutated
+stays mutated. Concretely for the landing tour: `expandInspectorPanel()`'s snapshot-and-restore
+closure keeps its `restoreInspectorPanel` pending forever and the panel stays expanded. Pre-D45 this
+could not happen, because a skipped step's `before()` never ran at all (driver.js skipped it
+synchronously, behind the engine's back). Impact judged small and arguably benign (the tour leaves a
+panel open rather than corrupting anything), and after T8a/T8b the embed should have no
+missing-anchor candidates left to skip — which is why it was logged instead of turned into a task.
+If it ever needs closing, the honest fix is a third hook (an "aborted" counterpart) or making
+`after()` run for a candidate whose `before()` ran, and that is a public-contract change to
+`steps.ts`, not a patch. Owner: unassigned.
 
 **B40 — B34 is factually WRONG: driver.js@1.8.0 DOES read `waitForElement`, and D43's stated
 premise ("the option is never read anywhere else", "the waiting is fiction") is false.** Measured by
