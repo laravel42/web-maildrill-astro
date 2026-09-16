@@ -376,6 +376,88 @@ function isEditableTarget(target: EventTarget | null): boolean {
   return (target as HTMLElement).isContentEditable === true;
 }
 
+/** Tolerancia de comparación de rects para D50 — ver `ratesEqual()`. Medio píxel, como pide el contrato. */
+const D50_RECT_TOLERANCE_PX = 0.5;
+/** Intervalo de muestreo del settle de D50 — "cada ~50 ms", como pide el contrato (nunca `requestAnimationFrame`, ver el bloque D50). */
+const D50_SETTLE_SAMPLE_INTERVAL_MS = 50;
+/** Presupuesto del settle POSTERIOR al `moveTo()`/`drive()` (mitad 2 de D50) — acotado a "unos 400 ms", nunca al presupuesto de la mitad 1. */
+const D50_POST_MOVE_SETTLE_BUDGET_MS = 400;
+
+/** Snapshot mínimo de un `DOMRect` que D50 necesita comparar — evita acoplarse al tipo completo. */
+interface D50RectSnapshot {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Lee el rect de `element` de forma defensiva (D50): si `getBoundingClientRect` no existe en el
+ * nodo resuelto (no debería pasar en un DOM real, pero el contrato pide guardia explícita),
+ * devuelve `null` en vez de lanzar. `element` puede ser `null` (ancla nunca resuelta).
+ */
+function readRectSafely(element: Element | null): D50RectSnapshot | null {
+  if (!element || typeof element.getBoundingClientRect !== 'function') return null;
+  const rect = element.getBoundingClientRect();
+  return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+}
+
+/** `true` si dos snapshots de rect son iguales dentro de `D50_RECT_TOLERANCE_PX` en las cuatro dimensiones (D50). */
+function ratesEqual(a: D50RectSnapshot | null, b: D50RectSnapshot | null): boolean {
+  if (a === null || b === null) return a === b;
+  return (
+    Math.abs(a.x - b.x) <= D50_RECT_TOLERANCE_PX &&
+    Math.abs(a.y - b.y) <= D50_RECT_TOLERANCE_PX &&
+    Math.abs(a.width - b.width) <= D50_RECT_TOLERANCE_PX &&
+    Math.abs(a.height - b.height) <= D50_RECT_TOLERANCE_PX
+  );
+}
+
+/** `await`ea `ms` milisegundos vía `setTimeout` — nunca `requestAnimationFrame` (D50: no existe en todo runtime de test de este paquete, y un settle real de ~150ms puede producir dos frames rAF idénticos a mitad de camino). */
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * D50 (mitad 1) — dado que `element` ya resolvió, espera hasta que dos muestras consecutivas de
+ * su `getBoundingClientRect()`, tomadas cada `D50_SETTLE_SAMPLE_INTERVAL_MS` (~50 ms, nunca
+ * `requestAnimationFrame`), sean iguales dentro de medio píxel — y entonces devuelve `element`.
+ * Acotado por `deadline` (un `Date.now()` absoluto, no una duración): nunca espera más allá de
+ * él, y si el presupuesto se agota a mitad de un muestreo, devuelve `element` de todos modos con
+ * lo que tenga — esta función NUNCA lanza y NUNCA cuelga, exactamente el contrato que ya tenía
+ * `waitForStepAnchor()` antes de D50, ahora extendido a "existe Y dejó de moverse".
+ *
+ * Primera comparación SIN esperar temporizador: toma una muestra inicial y otra inmediatamente
+ * después, en el mismo tick — si ya coinciden (medio píxel), resuelve ahí mismo, sin ningún
+ * `setTimeout`. Solo si esas dos primeras muestras DIFIEREN (señal real de que el rect sigue en
+ * movimiento) se pasa al muestreo por temporizador de ~50 ms que pide el contrato, reintentando
+ * hasta que dos muestras consecutivas coincidan o se agote `deadline`.
+ *
+ * Guardado explícito para runtimes sin motor de layout real (happy-dom, el entorno de test de
+ * este paquete): ahí `getBoundingClientRect()` devuelve típicamente todo-ceros en cualquier
+ * instante, así que las dos primeras muestras (mismo tick, sin `setTimeout` de por medio) son
+ * trivialmente iguales y esta función resuelve de inmediato — comportamiento correcto e
+ * inofensivo, no un caso especial que haya que detectar, y crucialmente: no introduce ningún
+ * retraso nuevo en un entorno donde nada se mueve de verdad, que es exactamente lo que exigen
+ * las pruebas existentes de este paquete (temporización real, sin fake timers).
+ */
+async function waitForRectToSettle(element: Element, deadline: number): Promise<Element> {
+  let previous = readRectSafely(element);
+  let current = readRectSafely(element);
+  if (ratesEqual(previous, current)) return element;
+  previous = current;
+
+  while (Date.now() < deadline) {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+    await delay(Math.min(D50_SETTLE_SAMPLE_INTERVAL_MS, remaining));
+    current = readRectSafely(element);
+    if (ratesEqual(previous, current)) return element;
+    previous = current;
+  }
+  return element;
+}
+
 /**
  * D43 — espera, como máximo, la ancla de UN paso candidato a la vez, acotada por su propio
  * `waitForElementMs` (por defecto 2000 ms), sin importar si aparece o no: nunca lanza y nunca
@@ -393,9 +475,36 @@ function isEditableTarget(target: EventTarget | null): boolean {
  * en el que resuelve `null` en vez de rechazar. Esto NO reintroduce D23/D24 (resolución de
  * TODAS las anclas al arrancar): solo se llama dentro del recorrido candidato-a-candidato de
  * `transitionTo()`/`start()` (D45/D45b) — nunca por adelantado para el resto de los pasos.
+ *
+ * **D50 (mitad 1) — "ready" ya no significa "existe", significa "existe Y dejó de moverse".**
+ * Defecto medido en navegador real por el orquestador (B46): en pasos cuyo `before()` cambia lo
+ * que el panel objetivo renderiza (cambiar de pestaña, seleccionar un nodo), esta función
+ * resolvía en el instante en que `resolveAnchor()` encontraba el elemento — el frame en el que
+ * el contenido SALIENTE todavía estaba montado, así que la ancla ENTRANTE se medía mientras
+ * estaba debajo de él. React confirmaba luego la remoción, la ancla saltaba hacia arriba, y
+ * nada volvía a recalcular el stage de driver.js — el cut-out quedaba dibujado más abajo de
+ * donde correspondía, permanentemente (nunca se autocorregía).
+ *
+ * Bajo D50, tras que `waitForAnchor()` resuelva el elemento, esta función le resta el tiempo ya
+ * consumido al `timeoutMs` total y gasta el resto (si queda algo) esperando a que su rect se
+ * asiente vía `waitForRectToSettle()` — el settle se COBRA contra el mismo presupuesto de
+ * `waitForElementMs`, nunca se añade encima como espera nueva sin cota: si el elemento nunca se
+ * asienta, esta función igual devuelve el elemento (con lo último que midió) en cuanto se agota
+ * el presupuesto total, en vez de colgar el tour. Si `waitForAnchor()` nunca encontró el
+ * elemento (`null`), no hay nada que asentar — se devuelve `null` de inmediato, sin gastar
+ * settle en un elemento que no existe.
  */
-function waitForStepAnchor(root: TourRoot, step: TourStep): Promise<Element | null> {
-  return waitForAnchor(root, step.anchorKey, { timeoutMs: step.waitForElementMs ?? 2000, intervalMs: 25 });
+async function waitForStepAnchor(root: TourRoot, step: TourStep): Promise<Element | null> {
+  const timeoutMs = step.waitForElementMs ?? 2000;
+  const startedAt = Date.now();
+  const overallDeadline = startedAt + timeoutMs;
+
+  const found = await waitForAnchor(root, step.anchorKey, { timeoutMs, intervalMs: 25 });
+  if (!found) return null;
+
+  // D50: el settle se cobra contra lo que quede del mismo presupuesto — nunca por encima.
+  if (Date.now() >= overallDeadline) return found;
+  return waitForRectToSettle(found, overallDeadline);
 }
 
 export interface CreateTourOptions {
@@ -519,6 +628,54 @@ export function createTour(options: CreateTourOptions): Tour {
       return;
     }
     void after();
+  }
+
+  /**
+   * D50 (mitad 2) — cubre lo que la mitad 1 (`waitForStepAnchor()`) no puede: un movimiento
+   * causado por driver.js MISMO, después de que ya dibujó el stage. Se llama alrededor de CADA
+   * punto en el que este motor pide un movimiento real de paso — `instance.moveTo(index)` en
+   * `transitionTo()` y `instance.drive(index)` para el primer paso en `start()` — nunca antes de
+   * llamar a `move()`, siempre inmediatamente antes y después.
+   *
+   * Captura el rect de `anchorElement` (si existe) justo antes de invocar `move()`, invoca
+   * `move()` de forma sincrónica (así que el stage que driver.js dibuja al montar el paso queda
+   * intacto — D50 nunca retrasa el primer pintado), y entonces vuelve a muestrear el mismo
+   * elemento acotado a `D50_POST_MOVE_SETTLE_BUDGET_MS` (~400 ms): si el rect cambió (tolerancia
+   * de medio píxel, `ratesEqual()`), llama a `driverInstance.refresh()` EXACTAMENTE una vez — la
+   * única operación pública de driver.js@1.8.0 que recalcula el stage de la instancia activa sin
+   * remontar el paso (ver el bloque D50 al inicio del archivo). Si el rect nunca cambió, jamás
+   * llama a `refresh()` — el contrato prohíbe explícitamente un refresh gratuito en el caso común.
+   *
+   * `anchorElement` se resuelve por el llamador ANTES de invocar este helper (vía
+   * `resolveAnchor()`, la misma función síncrona que ya usa `buildDriveStep()`) — si la ancla del
+   * candidato nunca resolvió (`skipMissingElement === false`, popover centrado sobre el
+   * `driver-dummy-element` de driver.js), `anchorElement` es `null` y no hay nada que vigilar:
+   * esta función se convierte en un no-op salvo por invocar `move()`.
+   *
+   * Revalida liveness (`isLive()` + una relectura de `driverInstance`) tras el único `await`
+   * interno (el settle posterior), igual que el resto de este archivo: si el tour dejó de ser
+   * la generación vigente mientras esperaba, nunca llama a `refresh()` sobre una instancia que
+   * ya no es la actual.
+   */
+  async function moveAndRefreshIfMoved(
+    anchorElement: Element | null,
+    move: () => void,
+    isLive: () => boolean,
+  ): Promise<void> {
+    const beforeMoveRect = readRectSafely(anchorElement);
+    move();
+
+    if (!anchorElement) return;
+
+    const deadline = Date.now() + D50_POST_MOVE_SETTLE_BUDGET_MS;
+    await waitForRectToSettle(anchorElement, deadline);
+
+    if (!driverInstance || !isLive()) return;
+
+    const afterMoveRect = readRectSafely(anchorElement);
+    if (!ratesEqual(beforeMoveRect, afterMoveRect)) {
+      driverInstance.refresh();
+    }
   }
 
   /**
@@ -675,7 +832,17 @@ export function createTour(options: CreateTourOptions): Tour {
         return;
       }
 
-      instance.moveTo(candidateIndex);
+      // D50 (mitad 2): resuelve la ancla del candidato ENTRANTE (síncronamente, misma función
+      // que usa `buildDriveStep()`) ANTES de mover, para que `moveAndRefreshIfMoved()` pueda
+      // capturar su rect justo antes de `moveTo()` y comparar contra el rect posterior — cubre
+      // el movimiento causado por driver.js MISMO después de dibujar el stage, que la mitad 1
+      // (dentro de `waitForStepAnchor()`, ya corrida arriba por `findNextActivatableIndex()`) no
+      // puede ver porque ocurre DESPUÉS del `moveTo()`, no antes. Si la ancla del candidato nunca
+      // resolvió (`skipMissingElement === false`, popover centrado), `resolveAnchor()` también
+      // devuelve `null` y el helper se reduce a invocar `moveTo()` sin vigilar nada.
+      const incomingAnchorKey = currentDriveSteps[candidateIndex]?.data?.tourStep?.anchorKey;
+      const incomingAnchor = incomingAnchorKey ? resolveAnchor(root, incomingAnchorKey) : null;
+      await moveAndRefreshIfMoved(incomingAnchor, () => instance!.moveTo(candidateIndex), isLive);
     } finally {
       transitionInFlight = false;
     }
@@ -1140,7 +1307,21 @@ export function createTour(options: CreateTourOptions): Tour {
     // `findNextActivatableIndex()` above — drive directly to that index instead of `drive()`
     // (which always means index 0) so a leading run of unactivatable candidates is skipped by
     // the ENGINE, never by driver.js (which, under D44, cannot skip anything on its own).
-    driverInstance.drive(firstActivatableIndex);
+    //
+    // D50 (mitad 2): same treatment as `transitionTo()`'s `moveTo()` call — the tour's very
+    // first popover must not be stale either. Resolve the first step's anchor synchronously
+    // before driving, so `moveAndRefreshIfMoved()` can capture its rect immediately before
+    // `drive()` and compare against the post-drive rect, calling `driverInstance.refresh()`
+    // exactly once if driver.js itself moved it after drawing the stage.
+    const firstAnchorKey = currentDriveSteps[firstActivatableIndex]?.data?.tourStep?.anchorKey;
+    const firstAnchor = firstAnchorKey ? resolveAnchor(root, firstAnchorKey) : null;
+    const instanceAtDrive = driverInstance;
+    if (!instanceAtDrive) return;
+    await moveAndRefreshIfMoved(
+      firstAnchor,
+      () => instanceAtDrive.drive(firstActivatableIndex),
+      () => isCurrentGeneration(options.tourId, generation),
+    );
   }
 
   function stop(): void {
