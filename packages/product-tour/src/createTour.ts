@@ -21,14 +21,24 @@
  *     2. Las anclas se resuelven de forma perezosa: cada `DriveStep.element` es una función
  *        (`() => resolveAnchor(root, step.anchorKey) ?? undefined`), no un valor ya resuelto —
  *        driver.js la invoca en el momento de intentar resaltar ese paso (verificado leyendo
- *        `driver.js@1.8.0`'s `dist/driver.js.mjs`, helper `f(e)`), nunca antes. `skipMissingElement`
- *        (`step.skipMissingElement ?? true`) y `waitForElement` (`step.waitForElementMs ?? 2000`)
- *        se declaran igual que antes, pero ahora es driver.js quien hace el polling/timeout
- *        (su propio `MutationObserver` + `setTimeout` en el internal `m()`/`p()`) y quien decide
- *        omitir el paso (`F()`) — este paquete ya no tiene su propio polling. Consecuencia:
- *        construir los `driveSteps` a partir de `eligibleSteps` es ahora SINCRÓNICO justo
- *        después del `await import('driver.js')` — no hay ninguna resolución de anclas en
- *        `start()`.
+ *        `driver.js@1.8.0`'s `dist/driver.js.mjs`, helper `f(e)`), nunca antes.
+ *        `skipMissingElement` (`step.skipMissingElement ?? true`) SÍ es real y SINCRÓNICO
+ *        (`F(e,t)`: omite cuando la bandera está puesta y `f(t.element)` es falsy; `I(e,from,dir)`
+ *        camina al siguiente índice no-omitible; cuando no queda ninguno, `L()` enruta a
+ *        `onDoneClick`, que en este motor persiste el completado y emite `tour_completed`).
+ *        `waitForElement` (`step.waitForElementMs ?? 2000`) se sigue DECLARANDO igual que antes,
+ *        pero — corregido bajo **D43**, ver ese bloque más abajo — driver.js@1.8.0 NUNCA LO LEE:
+ *        el valor por defecto `waitForElement: 0` vive dentro de los defaults de `ne()` y no se
+ *        vuelve a consultar en ningún otro punto del bundle (verificado leyendo el mismo
+ *        `dist/driver.js.mjs`). No hay ningún `MutationObserver` ni `setTimeout` propio de
+ *        driver.js esperando una ancla ausente — esa afirmación, presente en una versión previa
+ *        de este bloque D35, era falsa. Este paquete ya no tenía (bajo D35) ni sigue teniendo
+ *        (bajo D43) ningún polling PROPIO en la ruta de `start()` — pero D43 añade una espera
+ *        acotada en la ruta de ACTIVACIÓN de cada paso (ver más abajo), que es distinta:
+ *        construir los `driveSteps` a partir de `eligibleSteps` sigue siendo SINCRÓNICO justo
+ *        después del `await import('driver.js')` — no hay ninguna resolución de anclas de TODOS
+ *        los pasos en `start()`; D43 espera, como máximo, la ancla de UN paso a la vez, el que
+ *        se está activando.
  *     3. El motor es dueño de las transiciones a través de UN solo helper interno,
  *        `transitionTo(intendedIndex, move)`, usado por los tres puntos de entrada: el
  *        `onNextClick`/`onPrevClick` GLOBALES (pasados a `driver()`, que por eso le entrega a
