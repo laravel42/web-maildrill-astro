@@ -69,16 +69,25 @@ describe('createTour — no start-time anchor resolution at all (D35, supersedes
 
     const startPromise = tour.start();
 
-    // The critical measurement: `start()` must resolve WITHOUT this test ever advancing the
-    // fake clock (no `vi.advanceTimersByTime`/`vi.runAllTimers`/`vi.runOnlyPendingTimers` call
-    // anywhere in this test). Under D35 there is no `setInterval`/`setTimeout`-based anchor
-    // wait left inside `start()` for any step — the only asynchronous work `start()` still
-    // does is `await import('driver.js')` (a real, one-time module-loader macrotask, unrelated
-    // to anchors) and, for the first step, its `before()`. `vi.waitFor` here polls on REAL
-    // timers under the hood for the assertion callback itself (vitest's own polling, not this
-    // package's), while the fake clock installed by `vi.useFakeTimers()` above is never
-    // advanced — proving that whatever `start()` is awaiting is not a fake timer, which is
-    // exactly what an anchor-polling `setInterval`/timeout would have been pre-D35.
+    // The critical measurement: `start()` must resolve WITHOUT this test ever CALLING a fake-
+    // clock-advance API itself (no `vi.advanceTimersByTime`/`vi.runAllTimers`/
+    // `vi.runOnlyPendingTimers` anywhere in this test). Under D35 there is no
+    // `setInterval`/`setTimeout`-based ANCHOR wait left inside `start()` for any step beyond the
+    // one it activates — the asynchronous work `start()` still does is `await
+    // import('driver.js')` (a real, one-time module-loader macrotask, unrelated to anchors),
+    // the first step's `before()`, and — under D50b — a real, time-separated rect-settle wait
+    // (`waitForRectToSettle()`, ~50ms-interval polling, bounded to the step's own
+    // `waitForElementMs` before `drive()` and to `D50_POST_MOVE_SETTLE_BUDGET_MS` (~400ms) right
+    // after it) that DOES use a real `setTimeout` under the fake-timer installation from
+    // `beforeEach()`. `vi.waitFor`/`vi.waitUntil` poll on REAL wall-clock time under the hood
+    // for their own callback re-checks and, as an accepted side effect of that real-time
+    // polling, nudge Sinon's installed fake clock forward by the same real elapsed amount (see
+    // https://github.com/vitest-dev/vitest/pull/6802) — so a `setTimeout` scheduled against the
+    // fake clock still eventually fires as real time passes, with NO test code ever calling an
+    // explicit advance API. That is what both `vi.waitFor` calls below do: the fake clock is
+    // never advanced BY THIS TEST, only nudged forward by vitest's own real-time polling
+    // machinery — proving `start()`'s remaining awaits are driven by genuine timers, not a
+    // resurrected anchor-polling loop this file exists to rule out.
     await vi.waitFor(
       () => {
         expect(tour.isActive()).toBe(true);
@@ -86,7 +95,18 @@ describe('createTour — no start-time anchor resolution at all (D35, supersedes
       { timeout: 2000, interval: 5 },
     );
 
-    await startPromise;
+    // D50b: `start()` itself does not resolve until AFTER the post-drive settle wait
+    // (`moveAndRefreshIfMoved()`, bounded to `D50_POST_MOVE_SETTLE_BUDGET_MS` ~400ms) completes
+    // — `tour.isActive()` above already flips true earlier (synchronously inside `drive()`,
+    // before that wait even starts), so a bare `await startPromise` right after would have
+    // nothing left driving the fake clock forward and would hang. `vi.waitFor` here keeps
+    // nudging the same fake clock via real-time polling until `startPromise` itself settles.
+    await vi.waitFor(
+      async () => {
+        await startPromise;
+      },
+      { timeout: 2000, interval: 5 },
+    );
 
     expect(tour.isActive()).toBe(true);
 
@@ -134,7 +154,19 @@ describe('createTour — no start-time anchor resolution at all (D35, supersedes
       steps,
     });
 
-    await tour.start();
+    // D50b: `start()` now includes a real, time-separated rect-settle wait after `drive()`
+    // (`moveAndRefreshIfMoved()`, bounded to ~400ms) — a bare `await tour.start()` under the
+    // fake timers this file installs would hang (nothing nudges the fake clock forward). Start
+    // the call ONCE, then poll its settlement via `vi.waitFor`, whose own real-time polling
+    // nudges the same fake clock forward as real time passes (see the longer comment on the
+    // test above) — never calling `tour.start()` more than once.
+    const startPromise = tour.start();
+    await vi.waitFor(
+      async () => {
+        await startPromise;
+      },
+      { timeout: 2000, interval: 5 },
+    );
 
     // Pre-D35 (the old sequential-before/concurrent-wait code this file used to assert on),
     // this would already read ['a', 'b', 'c'] — ALL three `before()` hooks ran during

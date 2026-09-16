@@ -255,7 +255,7 @@ describe('createTour — anchor rect settling (T11, D50)', () => {
     tour.stop();
   });
 
-  it('(c) an anchor that moves AFTER the move triggers exactly one refresh()', async () => {
+  it('(c) an anchor that moves AFTER the move triggers exactly one refresh() for that move — on top of the unconditional refresh already fired for the FIRST step`s drive()', async () => {
     document.body.innerHTML = '<button data-tour="a">a</button><button data-tour="b">b</button>';
     const anchorB = document.querySelector('[data-tour="b"]') as HTMLElement;
 
@@ -284,6 +284,11 @@ describe('createTour — anchor rect settling (T11, D50)', () => {
     expect(popoverTitle()).toBe('Step A');
     expect(refreshSpies).toHaveLength(1);
     const refreshSpy = refreshSpies[0];
+    // D50b: `refresh()` is now UNCONDITIONAL at every `moveAndRefreshIfMoved()` call site,
+    // including the first-step `drive()` in `start()` — so by the time Step A's popover has
+    // painted, exactly one `refresh()` has already fired for that first-step drive, whether or
+    // not anchor A's rect ever moved (it did not; anchor A is never stubbed in this test).
+    expect(refreshSpy).toHaveBeenCalledTimes(1);
 
     dispatchArrow('ArrowRight');
     await waitUntil(() => popoverTitle() === 'Step B', 2000);
@@ -292,12 +297,15 @@ describe('createTour — anchor rect settling (T11, D50)', () => {
 
     expect(popoverTitle()).toBe('Step B');
     expect(tour.isActive()).toBe(true);
-    expect(refreshSpy).toHaveBeenCalledTimes(1);
+    // D50b: two calls total — one already fired for the first step's drive() (asserted above),
+    // one for this move (the anchor DID move here, so this call was always expected — but the
+    // count must be exactly 2, not 1, now that the first-step drive() call site also refreshes).
+    expect(refreshSpy).toHaveBeenCalledTimes(2);
 
     tour.stop();
   });
 
-  it('(d) an anchor that does NOT move after the move triggers NO refresh()', async () => {
+  it('(d) an anchor that does NOT move after the move still gets its refresh() — D50b made this unconditional', async () => {
     document.body.innerHTML = '<button data-tour="a">a</button><button data-tour="b">b</button>';
     const anchorB = document.querySelector('[data-tour="b"]') as HTMLElement;
 
@@ -315,6 +323,9 @@ describe('createTour — anchor rect settling (T11, D50)', () => {
     expect(popoverTitle()).toBe('Step A');
     expect(refreshSpies).toHaveLength(1);
     const refreshSpy = refreshSpies[0];
+    // D50b: the first-step drive() in start() already fired its own unconditional refresh() by
+    // this point, whether or not anchor A ever moved (it did not; anchor A is never stubbed).
+    expect(refreshSpy).toHaveBeenCalledTimes(1);
 
     dispatchArrow('ArrowRight');
     await waitUntil(() => popoverTitle() === 'Step B', 2000);
@@ -324,7 +335,10 @@ describe('createTour — anchor rect settling (T11, D50)', () => {
 
     expect(popoverTitle()).toBe('Step B');
     expect(tour.isActive()).toBe(true);
-    expect(refreshSpy).not.toHaveBeenCalled();
+    // D50b: refresh() is now unconditional at the moveTo() call site too — the rect never
+    // changed here, but it must STILL have been called once for this move, on top of the one
+    // already fired for the first step's drive() — two calls total, never zero.
+    expect(refreshSpy).toHaveBeenCalledTimes(2);
 
     tour.stop();
   });
@@ -365,6 +379,133 @@ describe('createTour — anchor rect settling (T11, D50)', () => {
     expect(tour.isActive()).toBe(true);
     expect(popoverTitle()).toBe('Step First');
     expect(rectSpy.mock.calls.length).toBeGreaterThanOrEqual(2);
+
+    tour.stop();
+  });
+
+  it('(f) D50b: two getBoundingClientRect() reads taken in the SAME task (no real delay between them) must NOT be accepted as "settled" — a real navigator never gives two same-task reads that legitimately differ, so the engine may not trust that comparison; only a TIME-SEPARATED pair may resolve the wait', async () => {
+    document.body.innerHTML = '<button data-tour="a">a</button><button data-tour="b">b</button>';
+    const anchorB = document.querySelector('[data-tour="b"]') as HTMLElement;
+
+    // Keyed off ELAPSED WALL-CLOCK TIME, not call count — this is the crux of the D50b fix.
+    // Before ~120ms of real elapsed time since the stub was installed, every read reports
+    // y=500 (mid-move); from ~120ms onward it reports the settled value y=10 forever after.
+    // Two reads taken back-to-back in the SAME synchronous task (no `await` between them) can
+    // NEVER straddle that 120ms boundary in a way that matters here: either both land before it
+    // (both y=500 — happens to "agree", but for the wrong reason: nothing was actually measured
+    // moving, just the same instant sampled twice) or both land after it (both y=10). A
+    // pre-D50b implementation that takes its first comparison from two SYNCHRONOUS calls (no
+    // `setTimeout` in between) would see `y=500 === y=500` on its very first pair — since
+    // `stubRectSequence`-based tests never modelled that shape, THIS is the test that would
+    // have let a same-task pair slip through undetected. The correct implementation
+    // (`waitForRectToSettle()` under D50b) never compares two reads that were not separated by
+    // a real `delay()` tick, so its first VALID comparison can only happen at t>=~50ms — by
+    // which point (given the fixture's ~120ms threshold) the rect is still reporting y=500, so
+    // the engine must poll at least once more before it ever sees two equal, time-separated
+    // samples once the real threshold passes and the rect genuinely stops changing at y=10.
+    const installedAt = Date.now();
+    let sameTaskPairObserved: { first: number; second: number } | null = null;
+    const rectFn = vi.fn(() => {
+      const elapsed = Date.now() - installedAt;
+      const y = elapsed < 120 ? 500 : 10;
+      return { x: 0, y, width: 100, height: 40, top: y, left: 0, right: 100, bottom: y + 40, toJSON: () => ({}) } as DOMRect;
+    });
+    (anchorB as unknown as { getBoundingClientRect: typeof rectFn }).getBoundingClientRect = rectFn;
+
+    // Independently verify the SAME-TASK claim this test is named for: two back-to-back,
+    // synchronous reads of this exact stub, taken right now (well before the 120ms threshold),
+    // are equal to each other — proving the stub genuinely produces the failure shape a
+    // call-count-based stub (varies every call, never used here) could not: two reads with NO
+    // time between them agreeing is exactly what a real browser always does, and exactly what
+    // must NOT be trusted as "settled".
+    const firstSameTaskRead = anchorB.getBoundingClientRect();
+    const secondSameTaskRead = anchorB.getBoundingClientRect();
+    sameTaskPairObserved = { first: firstSameTaskRead.y, second: secondSameTaskRead.y };
+    expect(sameTaskPairObserved.first).toBe(sameTaskPairObserved.second);
+    // Reset the call spy's history so the assertions below only count calls made by the
+    // engine itself, not this test's own probe above.
+    rectFn.mockClear();
+
+    const steps: TourStep[] = [
+      { anchorKey: 'a', popover: { title: 'Step A' } },
+      { anchorKey: 'b', popover: { title: 'Step B' }, waitForElementMs: 2000 },
+    ];
+
+    const tour = createTour({ tourId: 'd50b-same-task-not-settled-id', version: 1, storagePrefix: 'test:', steps });
+    await tour.start();
+    await waitForOverlay();
+    expect(popoverTitle()).toBe('Step A');
+
+    expect(refreshSpies).toHaveLength(1);
+    const moveToSpy = moveToSpies[0];
+    if (!moveToSpy) throw new Error('expected a moveTo spy to have been registered');
+
+    let rectAtMoveToCall: unknown;
+    onMoveToCallbacks.push(() => {
+      rectAtMoveToCall = anchorB.getBoundingClientRect();
+    });
+
+    const dispatchedAt = Date.now();
+    dispatchArrow('ArrowRight');
+    await waitUntil(() => moveToSpy.mock.calls.length > 0, 2000);
+    const elapsedUntilMove = Date.now() - dispatchedAt;
+
+    // The engine must not hand the anchor to moveTo() while it is still reporting the
+    // mid-move value — proof that a same-task pair (which would have resolved instantly,
+    // possibly while still y=500) was never accepted, and the engine kept polling on REAL
+    // time-separated samples until the fixture's genuine settle (y=10) was reached.
+    expect(rectAtMoveToCall).toMatchObject({ y: 10 });
+    // The wait took real elapsed time — it could not have resolved on an initial same-task
+    // pair, which would take ~0ms. Bounded loosely above by the step's own waitForElementMs
+    // (2000ms) plus polling overhead.
+    expect(elapsedUntilMove).toBeGreaterThanOrEqual(100);
+
+    await waitUntil(() => popoverTitle() === 'Step B', 2000);
+    expect(popoverTitle()).toBe('Step B');
+
+    tour.stop();
+  });
+
+  it('(g) D50b: refresh() fires unconditionally after a move even when the anchor`s rect is IDENTICAL before and after — the "only if it changed" condition the previous task shipped is gone', async () => {
+    document.body.innerHTML = '<button data-tour="a">a</button><button data-tour="b">b</button>';
+    const anchorA = document.querySelector('[data-tour="a"]') as HTMLElement;
+    const anchorB = document.querySelector('[data-tour="b"]') as HTMLElement;
+
+    // Both anchors report the EXACT same static rect, for every single sample, before AND
+    // after every move in the whole tour — the strongest possible form of "the rect never
+    // changed". Against the pre-D50b implementation (conditional refresh, `beforeMoveRect`
+    // vs. `afterMoveRect` comparison) this is precisely the case that suppresses refresh()
+    // entirely — this test must FAIL there and PASS here.
+    stubStaticRect(anchorA, rect(0, 42));
+    stubStaticRect(anchorB, rect(0, 42));
+
+    const steps: TourStep[] = [
+      { anchorKey: 'a', popover: { title: 'Step A' } },
+      { anchorKey: 'b', popover: { title: 'Step B' }, waitForElementMs: 2000 },
+    ];
+
+    const tour = createTour({ tourId: 'd50b-unconditional-refresh-id', version: 1, storagePrefix: 'test:', steps });
+    await tour.start();
+    await waitForOverlay();
+    expect(popoverTitle()).toBe('Step A');
+    expect(refreshSpies).toHaveLength(1);
+    const refreshSpy = refreshSpies[0];
+    if (!refreshSpy) throw new Error('expected a refresh spy to have been registered');
+
+    // The first step's drive() already ran its own unconditional post-move settle+refresh by
+    // now — exactly one call, even though anchor A's rect never moved even a single pixel.
+    expect(refreshSpy).toHaveBeenCalledTimes(1);
+
+    dispatchArrow('ArrowRight');
+    await waitUntil(() => popoverTitle() === 'Step B', 2000);
+    // Give the post-move settle window (bounded ~400ms) time to run to completion.
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    expect(popoverTitle()).toBe('Step B');
+    expect(tour.isActive()).toBe(true);
+    // Exactly one MORE call for this move (two total) — proving refresh() is called EXACTLY
+    // once per move regardless of whether the rect changed, never conditioned on it.
+    expect(refreshSpy).toHaveBeenCalledTimes(2);
 
     tour.stop();
   });

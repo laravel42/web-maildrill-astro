@@ -15,8 +15,18 @@ import type { TourStep } from '@/steps';
  * `afterEach`, `@/` alias imports.
  */
 
+/**
+ * D50b: bumped from 0ms to comfortably exceed one `D50_SETTLE_SAMPLE_INTERVAL_MS` (~50ms) tick
+ * in `createTour.ts`'s `waitForRectToSettle()`. Under D50b, a settle sample pair must be
+ * separated in TIME (two synchronous reads are no longer accepted as evidence of anything — see
+ * D50b in `createTour.ts`), so every step transition in this file now genuinely waits at least
+ * one real ~50ms interval before `moveTo()`/`drive()` fires (the anchors here are never stubbed,
+ * so happy-dom's all-zero `getBoundingClientRect()` settles on the FIRST time-separated sample —
+ * still one real tick, not zero). A 0ms flush no longer reliably outlives that tick; this value
+ * does, with margin for CI jitter.
+ */
 function flushMicrotasks() {
-  return new Promise((resolve) => setTimeout(resolve, 0));
+  return new Promise((resolve) => setTimeout(resolve, 120));
 }
 
 async function waitForOverlay(): Promise<void> {
@@ -687,3 +697,4 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
     }
   });
 });
+
