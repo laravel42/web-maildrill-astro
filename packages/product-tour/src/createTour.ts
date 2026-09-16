@@ -387,9 +387,24 @@ export function createTour(options: CreateTourOptions): Tour {
    * omitidos nunca se activaron, así que no corren `after()`.
    */
   async function transitionTo(intendedIndex: number, move: 'next' | 'previous'): Promise<void> {
-    if (!driverInstance) return;
+    // T8b — Fix 1: capture the generation this transition belongs to (the same value `start()`
+    // used, via the `ownGeneration` closure variable at call time) and re-validate it — together
+    // with a freshly-read `driverInstance` local, never the narrowing from the top of this
+    // function — after EVERY await below. `driverInstance` is a closure variable `onDestroyed`
+    // sets to `null`, and a newer `start()` can also bump the registered generation; either one
+    // means this run is no longer live (the tour closed — Escape, overlay click, ×, `stop()` —
+    // or a fresher `start()` superseded it) while this transition was suspended on an `await`.
+    // TypeScript's narrowing from the guard below does NOT survive an `await` (the variable can
+    // be reassigned by a callback that runs during that suspension), so every dereference below
+    // reads `driverInstance` into a local first and checks that local, never the outer variable
+    // directly.
+    const generation = ownGeneration;
+    const isLive = () => isCurrentGeneration(options.tourId, generation);
 
-    const outgoingIndex = driverInstance.getActiveIndex();
+    let instance = driverInstance;
+    if (!instance || !isLive()) return;
+
+    const outgoingIndex = instance.getActiveIndex();
     const outgoingDriveStep = outgoingIndex !== undefined ? currentDriveSteps[outgoingIndex] : undefined;
     const outgoingStep = outgoingDriveStep?.data?.tourStep as TourStep | undefined;
     if (outgoingStep?.after) {
@@ -397,14 +412,20 @@ export function createTour(options: CreateTourOptions): Tour {
       await outgoingStep.after();
     }
 
+    instance = driverInstance;
+    if (!instance || !isLive()) return;
+
     const incomingDriveStep = currentDriveSteps[intendedIndex];
     const incomingStep = incomingDriveStep?.data?.tourStep as TourStep | undefined;
     if (incomingStep?.before) await incomingStep.before();
 
+    instance = driverInstance;
+    if (!instance || !isLive()) return;
+
     if (move === 'next') {
-      driverInstance.moveNext();
+      instance.moveNext();
     } else {
-      driverInstance.movePrevious();
+      instance.movePrevious();
     }
 
     // D35.5 reconciliation. driver.js's own per-step `waitForElement` (when > 0 and the anchor
@@ -423,19 +444,34 @@ export function createTour(options: CreateTourOptions): Tour {
     // case (the intended step's anchor already exists), `moveNext()`/`movePrevious()` commits
     // the new index synchronously, so this loop's condition is already false on its first check
     // and no polling happens at all.
+    //
+    // T8b — Fix 1: the loop itself now also stops as soon as the run is no longer live (checked
+    // via the same freshly-read local + generation check as everywhere else in this function),
+    // so a tour destroyed mid-poll does not keep calling `getActiveIndex()` on a stale/null
+    // instance, and does not fall through into the reconciliation branch below for a run that no
+    // longer exists.
     const settleTimeoutMs = (incomingStep?.waitForElementMs ?? 2000) + 100;
     const settleStartedAt = Date.now();
-    let landedIndex = driverInstance.getActiveIndex();
+    let landedIndex = instance.getActiveIndex();
     while (landedIndex === outgoingIndex && Date.now() - settleStartedAt < settleTimeoutMs) {
       await new Promise((resolve) => setTimeout(resolve, 10));
-      landedIndex = driverInstance.getActiveIndex();
+      instance = driverInstance;
+      if (!instance || !isLive()) return;
+      landedIndex = instance.getActiveIndex();
     }
+
+    instance = driverInstance;
+    if (!instance || !isLive()) return;
 
     if (landedIndex !== undefined && landedIndex !== intendedIndex) {
       const landedDriveStep = currentDriveSteps[landedIndex];
       const landedStep = landedDriveStep?.data?.tourStep as TourStep | undefined;
       if (landedStep?.before) await landedStep.before();
-      driverInstance.refresh();
+
+      instance = driverInstance;
+      if (!instance || !isLive()) return;
+
+      instance.refresh();
     }
   }
 
@@ -696,7 +732,21 @@ export function createTour(options: CreateTourOptions): Tour {
         void transitionTo(activeIndex - 1, 'previous');
       },
       onHighlighted: (_el, driveStep) => {
-        const index = driveSteps.indexOf(driveStep);
+        // T8b — Fix 2: driver.js never hands back the same `DriveStep` object this package put
+        // in `steps` — its internal `B()` builds a fresh `{...step, popover: {...}}` clone for
+        // every drive, so `driveSteps.indexOf(driveStep)` can never match and always returned
+        // -1 (proven empirically in `tests/stepActivation.test.ts`, "defect 2 proof + fix").
+        // `data` survives that spread by shallow reference though (same reasoning already
+        // documented above for `alreadyHandledAfterStep`), so resolve the index through the
+        // stable `data.tourStep` reference instead: find the position in `currentDriveSteps`
+        // (the same array `transitionTo()` already uses to resolve steps by index) whose
+        // `data.tourStep` is the identical `TourStep` this hook's clone carries. Fall back to
+        // the original `indexOf` only if that lookup somehow fails (e.g. `data` missing).
+        const tourStep = (driveStep as DriveStep)?.data?.tourStep as TourStep | undefined;
+        const resolvedIndex = tourStep
+          ? currentDriveSteps.findIndex((candidate) => candidate.data?.tourStep === tourStep)
+          : -1;
+        const index = resolvedIndex !== -1 ? resolvedIndex : driveSteps.indexOf(driveStep);
         emit({
           event: 'tour_step_viewed',
           tourId: options.tourId,

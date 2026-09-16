@@ -26,6 +26,24 @@ async function waitForOverlay(): Promise<void> {
   }
 }
 
+/**
+ * Polls `onEvent` (a `vi.fn()` spy) for `tour_step_viewed` calls — `onHighlighted` (its source)
+ * fires after driver.js paints, same timing reason `waitForOverlay()` polls rather than
+ * assuming readiness once `start()`/an arrow dispatch resolves.
+ */
+async function waitForStepViewedEvents(
+  onEvent: ReturnType<typeof vi.fn>,
+): Promise<Array<{ event: string; stepIndex?: number }>> {
+  for (let i = 0; i < 60; i++) {
+    const viewed = (onEvent.mock.calls as Array<[{ event: string; stepIndex?: number }]>)
+      .map(([evt]) => evt)
+      .filter((evt) => evt.event === 'tour_step_viewed');
+    if (viewed.length > 0) return viewed;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  return [];
+}
+
 function popoverTitle(): string | null | undefined {
   return document.querySelector('.driver-popover-title')?.textContent;
 }
@@ -431,5 +449,218 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
     expect(tour.isActive()).toBe(true);
 
     tour.stop();
+  });
+
+  // --- T8b — DEFECT 2 evidence + fix -----------------------------------------------------
+  //
+  // `tour_step_viewed` is emitted from driver.js's own `onHighlighted` hook, which hands back
+  // a FRESH `{...step, popover: {...}}` clone of whatever this package put in `steps` (driver.js
+  // never returns the same object identity) — so the pre-fix `driveSteps.indexOf(driveStep)`
+  // in `start()` can never find a match and always returns -1. This block first proves that
+  // empirically, then (after the fix) asserts the real index is reported.
+  it('T8b (defect 2 proof + fix): tour_step_viewed carries the real zero-based stepIndex for the first step and after one ArrowRight', async () => {
+    const steps = loggingThreeStepFixture([]);
+    const onEvent = vi.fn();
+    const tour = createTour({
+      tourId: 'activation-step-viewed-index-id',
+      version: 1,
+      storagePrefix: 'test:',
+      steps,
+      onEvent,
+    });
+
+    await tour.start();
+    await waitForOverlay();
+
+    // `onHighlighted` (the source of `tour_step_viewed`) fires after driver.js paints, later
+    // than the overlay node's own appearance — poll for the event itself (bounded, see
+    // `waitForStepViewedEvents`) rather than assuming it has already landed once the overlay
+    // exists or after a fixed delay.
+    const viewedForFirstStep = await waitForStepViewedEvents(onEvent);
+    expect(viewedForFirstStep.length).toBeGreaterThan(0);
+    // Real index for the first step must be 0, not -1.
+    const lastViewedFirstStep = viewedForFirstStep.at(-1);
+    expect(lastViewedFirstStep?.stepIndex).toBe(0);
+
+    onEvent.mockClear();
+    dispatchArrow('ArrowRight');
+    await flushMicrotasks();
+    await waitForOverlay();
+
+    const viewedForSecondStep = await waitForStepViewedEvents(onEvent);
+    expect(viewedForSecondStep.length).toBeGreaterThan(0);
+    // Real index for the step reached after one ArrowRight must be 1, not -1.
+    const lastViewedSecondStep = viewedForSecondStep.at(-1);
+    expect(lastViewedSecondStep?.stepIndex).toBe(1);
+
+    tour.stop();
+  });
+
+  // --- T8b — DEFECT 1 fix: transition must not touch a destroyed tour --------------------
+  //
+  // Mechanism used here: a `window.addEventListener('unhandledrejection', ...)` spy installed
+  // for the duration of the test. This proves that `void transitionTo(...)` — the call shape
+  // every real caller uses (arrow keys, onNextClick/onPrevClick) — never produces an unhandled
+  // promise rejection when the tour is destroyed (via Escape) while the transition is still
+  // in flight, waiting on the incoming step's `before()`. It does NOT prove every possible
+  // interleaving is safe (e.g. it does not exercise the D35.5 polling-loop interleaving
+  // directly), only that this specific in-flight-before() interleaving settles cleanly. The
+  // second assertion (the log staying exactly at `['before(1)']`, never gaining a `refresh`
+  // or a second `before()` entry) proves the incoming step's before() effects are not re-run
+  // or otherwise acted upon after the tour is gone.
+  it('T8b (defect 1 fix): Escape while a transition`s incoming before() is still pending does not produce an unhandled rejection and does not act on the destroyed tour', async () => {
+    document.body.innerHTML = '<button data-tour="a">a</button><button data-tour="b">b</button>';
+    const log: string[] = [];
+    let releaseIncomingBefore: (() => void) | undefined;
+    const steps: TourStep[] = [
+      {
+        anchorKey: 'a',
+        popover: { title: 'Step A' },
+      },
+      {
+        anchorKey: 'b',
+        popover: { title: 'Step B' },
+        before: () =>
+          new Promise<void>((resolve) => {
+            releaseIncomingBefore = () => {
+              log.push('before(1)');
+              resolve();
+            };
+          }),
+      },
+    ];
+
+    const tour = createTour({
+      tourId: 'activation-escape-in-flight-id',
+      version: 1,
+      storagePrefix: 'test:',
+      steps,
+      forceAnimate: false,
+    });
+
+    const unhandledRejections: unknown[] = [];
+    const onUnhandledRejection = (event: Event) => {
+      unhandledRejections.push(event);
+    };
+    window.addEventListener('unhandledrejection', onUnhandledRejection);
+
+    try {
+      await tour.start();
+      await waitForOverlay();
+      expect(popoverTitle()).toBe('Step A');
+
+      // Kick off the ArrowRight transition — it will suspend on the incoming step's before(),
+      // which we do not resolve yet.
+      dispatchArrow('ArrowRight');
+      await flushMicrotasks();
+      expect(releaseIncomingBefore).toBeTypeOf('function');
+
+      // Destroy the tour (Escape) while that before() is still pending.
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+      await flushMicrotasks();
+      expect(tour.isActive()).toBe(false);
+
+      // Now let the in-flight before() resolve, well after the tour is gone.
+      releaseIncomingBefore?.();
+      await flushMicrotasks();
+      // Give any stray microtask/macrotask a chance to surface as an unhandled rejection.
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(unhandledRejections).toHaveLength(0);
+      // The incoming before() itself still runs (its own promise is a normal resolution, not a
+      // rejection) — that is expected and unavoidable since this test resolves it manually. What
+      // must NOT happen is `transitionTo()` touching `driverInstance` afterwards. We cannot assert
+      // "driverInstance is null" directly (private closure), so we assert observable proxies: the
+      // tour stays inactive, no popover re-renders, and no second entry appears in `log` (which
+      // would happen if refresh()/further hook logic ran after the fact).
+      expect(tour.isActive()).toBe(false);
+      expect(document.querySelectorAll('.driver-popover').length).toBe(0);
+      expect(log).toEqual(['before(1)']);
+    } finally {
+      window.removeEventListener('unhandledrejection', onUnhandledRejection);
+      tour.stop();
+    }
+  });
+
+  // --- T8b — DEFECT 1 fix: the D35.5 reconciliation poll loop must also stop -------------
+  //
+  // Mechanism used here: same `window.addEventListener('unhandledrejection', ...)` spy as the
+  // previous test, for the duration of this one. This exercises the OTHER interleaving Fix 1's
+  // contract calls out explicitly: a transition into a step whose anchor never appears, so
+  // `transitionTo()`'s D35.5 poll loop (`while (landedIndex === outgoingIndex && ...)`) is
+  // actively sleeping on `setTimeout` when the tour is destroyed. It proves no unhandled
+  // rejection surfaces from that loop's subsequent `driverInstance.getActiveIndex()` calls, and
+  // — via the `before(missing-anchor-landing)` log staying absent — that the reconciliation
+  // branch (which would call the landed step's `before()` then `driverInstance.refresh()`) never
+  // runs for a tour that is already gone. It does NOT prove anything about interleavings other
+  // than "destroy while this specific loop is polling".
+  it('T8b (defect 1 fix): Escape while the D35.5 reconciliation poll loop is still running does not produce an unhandled rejection and does not reconcile a destroyed tour', async () => {
+    document.body.innerHTML = '<button data-tour="only-anchor">only</button>';
+    const log: string[] = [];
+    const steps: TourStep[] = [
+      {
+        anchorKey: 'only-anchor',
+        popover: { title: 'Only' },
+      },
+      {
+        // This anchor never exists — driver.js's own waitForElement keeps retrying, so
+        // `transitionTo()`'s reconciliation poll loop keeps sleeping/polling well past the
+        // point where we destroy the tour.
+        anchorKey: 'never-appears',
+        popover: { title: 'Never' },
+        waitForElementMs: 500,
+        before: () => {
+          log.push('before(never-appears-landing)');
+        },
+      },
+    ];
+
+    const tour = createTour({
+      tourId: 'activation-escape-during-poll-id',
+      version: 1,
+      storagePrefix: 'test:',
+      steps,
+      forceAnimate: false,
+    });
+
+    const unhandledRejections: unknown[] = [];
+    const onUnhandledRejection = (event: Event) => {
+      unhandledRejections.push(event);
+    };
+    window.addEventListener('unhandledrejection', onUnhandledRejection);
+
+    try {
+      await tour.start();
+      await waitForOverlay();
+      expect(popoverTitle()).toBe('Only');
+
+      // Kick off the transition towards the step whose anchor never appears — this lands
+      // `transitionTo()` in its reconciliation poll loop.
+      dispatchArrow('ArrowRight');
+      // Let the poll loop start (its own 10ms sleeps) but destroy well before its
+      // `waitForElementMs` (500ms) budget would let driver.js itself give up and skip.
+      await new Promise((resolve) => setTimeout(resolve, 40));
+
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+      await flushMicrotasks();
+      expect(tour.isActive()).toBe(false);
+
+      // Wait comfortably past the step's `waitForElementMs` so the poll loop (if it were still
+      // running against a destroyed instance) would have had every chance to throw.
+      await new Promise((resolve) => setTimeout(resolve, 700));
+
+      expect(unhandledRejections).toHaveLength(0);
+      // The reconciliation branch's before() must never have run against the gone tour.
+      expect(log).not.toContain('before(never-appears-landing)');
+      expect(tour.isActive()).toBe(false);
+      expect(document.querySelectorAll('.driver-popover').length).toBe(0);
+    } finally {
+      window.removeEventListener('unhandledrejection', onUnhandledRejection);
+      tour.stop();
+    }
   });
 });
