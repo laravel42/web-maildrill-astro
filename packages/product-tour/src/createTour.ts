@@ -149,7 +149,7 @@
  */
 
 import type { Driver, DriveStep } from 'driver.js';
-import { isSupportedRoot, resolveAnchor, type TourRoot } from './anchors';
+import { isSupportedRoot, resolveAnchor, waitForAnchor, type TourRoot } from './anchors';
 import { toDriverPopover, type TourStep } from './steps';
 import { createLocalStoragePersistence, type TourPersistence } from './persistence';
 import { createAnalyticsEmitter, type TourAnalyticsCallback } from './analytics';
@@ -304,6 +304,26 @@ function isEditableTarget(target: EventTarget | null): boolean {
   const tagName = target.tagName;
   if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT') return true;
   return (target as HTMLElement).isContentEditable === true;
+}
+
+/**
+ * D43 — espera, como máximo, la ancla de UN paso (el que se está ACTIVANDO), acotada por su
+ * propio `waitForElementMs` (por defecto 2000 ms), sin importar si aparece o no: nunca lanza y
+ * nunca cuelga el tour. Forzado por B34: `waitForElement` es config muerta en driver.js@1.8.0 —
+ * no la lee en ningún punto del bundle (verificado leyendo `dist/driver.js.mjs`) — así que un
+ * `before()` que recién abre un panel React (D40) pierde la carrera contra el resaltado
+ * síncrono de driver.js y el paso se omite al instante; una corrida de pasos omitidos termina
+ * el tour como "completado" sin que el usuario lo haya visto.
+ *
+ * Delega en `waitForAnchor()` (`anchors.ts`), que ya resuelve síncronamente si la ancla existe
+ * y si no, hace polling — aquí con el intervalo que pide D43 (25 ms) — hasta el timeout, momento
+ * en el que resuelve `null` en vez de rechazar. Esto NO reintroduce D23/D24 (resolución de
+ * TODAS las anclas al arrancar): solo se llama en dos puntos — `transitionTo()`, tras el
+ * `before()` del paso ENTRANTE, y `start()`, tras el `before()` del PRIMER paso, antes de
+ * `drive()` — nunca por adelantado para el resto de los pasos.
+ */
+function waitForStepAnchor(root: TourRoot, step: TourStep): Promise<Element | null> {
+  return waitForAnchor(root, step.anchorKey, { timeoutMs: step.waitForElementMs ?? 2000, intervalMs: 25 });
 }
 
 export interface CreateTourOptions {
@@ -467,6 +487,19 @@ export function createTour(options: CreateTourOptions): Tour {
     instance = driverInstance;
     if (!instance || !isLive()) return;
 
+    // D43: wait for the INCOMING step's own anchor, bounded by its own `waitForElementMs`,
+    // now that its `before()` has had the chance to mount it. driver.js's `waitForElement` is
+    // dead config (B34) — without this wait, `moveNext()`/`movePrevious()` below highlights (or
+    // skips) the step using whatever is in the DOM the instant `before()` resolves, which loses
+    // the race against any React state update `before()` triggered. This does not replace the
+    // D35.5 reconciliation loop further down: that loop observes driver.js's own decision AFTER
+    // the move call; this wait runs BEFORE it, giving the anchor a fair chance to exist so the
+    // move doesn't have to be reconciled away in the first place.
+    if (incomingStep) await waitForStepAnchor(root, incomingStep);
+
+    instance = driverInstance;
+    if (!instance || !isLive()) return;
+
     if (move === 'next') {
       instance.moveNext();
     } else {
@@ -568,17 +601,32 @@ export function createTour(options: CreateTourOptions): Tour {
         // persists completion and emits `tour_completed` (see `start()`) — so a keypress must
         // not silently finish and persist the tour. Checked BEFORE stopping propagation/default:
         // a no-op arrow on the last step must not behave as if the tour had consumed the key.
-        if (driverInstance.isLastStep()) return;
+        //
+        // T5/D43 correction: this used to read `driverInstance.isLastStep()`, which is NOT a
+        // plain index-bounds check — reading driver.js@1.8.0's source (`I()`/`F()`, called from
+        // both `isLastStep()` and its own internal `moveNext()`-equivalent routing) shows it
+        // walks forward from the active index and, for each candidate step, SYNCHRONOUSLY calls
+        // the step's `element` resolver right now to decide whether that step currently counts
+        // as reachable (respecting `skipMissingElement`). D43 exists precisely because a step's
+        // anchor can still be missing at the exact moment its `before()` is about to mount it —
+        // so on the second-to-last step, `isLastStep()` incorrectly read `true` and this guard
+        // swallowed a legitimate ArrowRight before `transitionTo()` (and D43's wait inside it)
+        // ever ran, silently breaking keyboard navigation into precisely the step D43 is meant
+        // to reach. The correct bounds check is the plain array this package already owns for
+        // every other index computation in this file (`transitionTo()`, D35.5): there is a next
+        // step to move to iff `activeIndex + 1 < currentDriveSteps.length`, independent of
+        // whether that step's anchor exists yet.
+        const activeIndexForRight = driverInstance.getActiveIndex() ?? 0;
+        if (activeIndexForRight + 1 >= currentDriveSteps.length) return;
         e.stopPropagation();
         e.preventDefault();
-        const activeIndex = driverInstance.getActiveIndex() ?? 0;
         // D35: route through the shared `transitionTo()` helper instead of calling
         // `driverInstance.moveNext()` directly, so the incoming step's `before()` runs right
         // before the move instead of having run for every step back at `start()`.
         // `transitionTo()` is async; calling it as `void ...()` here (rather than making this
         // handler `async`) keeps `stopPropagation()`/`preventDefault()` above running
         // synchronously, exactly when they always have.
-        void transitionTo(activeIndex + 1, 'next');
+        void transitionTo(activeIndexForRight + 1, 'next');
       } else {
         // D21: symmetric no-op at the other boundary — ArrowLeft on the first step must not
         // move backwards (there is nowhere to go, and driver.js has no "before the first step"
@@ -888,6 +936,12 @@ export function createTour(options: CreateTourOptions): Tour {
     if (firstStep?.before) await firstStep.before();
     // A `start()` más nuevo pudo haber reclamado el registro mientras esperábamos ese
     // `before()` — abortar sin llamar a `drive()` si ya no somos la generación vigente.
+    if (!isCurrentGeneration(options.tourId, generation)) return;
+    // D43: same wait as `transitionTo()`, for the FIRST step — its `before()` can mount UI
+    // (a panel, a drawer) whose anchor does not exist synchronously yet; without this, `drive()`
+    // would highlight/skip the first step using driver.js's own (dead, per B34) `waitForElement`
+    // config, losing the same race D43 fixes for every later step.
+    if (firstStep) await waitForStepAnchor(root, firstStep);
     if (!isCurrentGeneration(options.tourId, generation)) return;
     driverInstance.drive();
   }

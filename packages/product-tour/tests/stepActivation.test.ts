@@ -592,10 +592,29 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
   // `transitionTo()`'s D35.5 poll loop (`while (landedIndex === outgoingIndex && ...)`) is
   // actively sleeping on `setTimeout` when the tour is destroyed. It proves no unhandled
   // rejection surfaces from that loop's subsequent `driverInstance.getActiveIndex()` calls, and
-  // — via the `before(missing-anchor-landing)` log staying absent — that the reconciliation
-  // branch (which would call the landed step's `before()` then `driverInstance.refresh()`) never
-  // runs for a tour that is already gone. It does NOT prove anything about interleavings other
-  // than "destroy while this specific loop is polling".
+  // that the reconciliation branch (which would call the landed step's `before()` a SECOND time,
+  // then `driverInstance.refresh()`) never runs for a tour that is already gone. It does NOT
+  // prove anything about interleavings other than "destroy while this specific loop is polling".
+  //
+  // T5/D43 correction (documented per the subagent contract's rule 7 — the assertion this
+  // replaces is now literally obsolete, not weakened): BEFORE D43, `driverInstance.isLastStep()`
+  // — read by this file's D21 guard at the time — synchronously re-evaluated whether the
+  // NEXT step's anchor currently existed (driver.js@1.8.0's `I()`/`F()`, verified reading
+  // `dist/driver.js.mjs`); with only two steps here and the second one's anchor never present,
+  // that guard read `true` and silently swallowed the dispatched ArrowRight before
+  // `transitionTo()` ever ran — so `before(never-appears-landing)` never logged at all, and the
+  // OLD assertion was `expect(log).not.toContain('before(never-appears-landing)')`. That was
+  // masking exactly the D43 bug (a legitimate keyboard transition into the very step this suite
+  // is testing was dropped) rather than proving the reconciliation guarantee the comment above
+  // describes. D43 fixes the guard to use the plain array-bounds check this package already
+  // uses everywhere else (`currentDriveSteps.length`), so ArrowRight now correctly reaches
+  // `transitionTo()`, which runs the incoming step's `before()` ONCE (D35.3, unconditionally,
+  // exactly like the sibling test above) and then D43's own `waitForStepAnchor()` wait — which is
+  // what is still actively polling when Escape arrives ~40ms in, below. The guarantee this test
+  // must still prove is unchanged in kind, only relocated: `before()` for that step runs EXACTLY
+  // ONCE (the normal call — not twice, which is what a live D35.5 reconciliation branch running
+  // against a destroyed tour would additionally produce), no unhandled rejection surfaces, and
+  // the tour stays destroyed with no popover left behind.
   it('T8b (defect 1 fix): Escape while the D35.5 reconciliation poll loop is still running does not produce an unhandled rejection and does not reconcile a destroyed tour', async () => {
     document.body.innerHTML = '<button data-tour="only-anchor">only</button>';
     const log: string[] = [];
@@ -654,8 +673,12 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
       await new Promise((resolve) => setTimeout(resolve, 700));
 
       expect(unhandledRejections).toHaveLength(0);
-      // The reconciliation branch's before() must never have run against the gone tour.
-      expect(log).not.toContain('before(never-appears-landing)');
+      // BEFORE (obsolete under D43): `expect(log).not.toContain('before(never-appears-landing)')`
+      // — relied on the pre-D43 D21 bug swallowing the ArrowRight entirely (see the class-level
+      // comment above this test). AFTER: the incoming step's `before()` legitimately runs once,
+      // as the normal D35.3 call inside `transitionTo()` — what must still never happen is a
+      // SECOND call from a reconciliation branch running after the tour was destroyed.
+      expect(log).toEqual(['before(never-appears-landing)']);
       expect(tour.isActive()).toBe(false);
       expect(document.querySelectorAll('.driver-popover').length).toBe(0);
     } finally {
