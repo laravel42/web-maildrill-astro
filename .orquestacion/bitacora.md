@@ -171,6 +171,31 @@ to change after each non-final click. Nothing weakened. Re-measured by the orche
 exact command from the handoff: **6 passed of 6** (`--repeat-each=3` over both editors' walk tests),
 where before the change the email one failed 2 of 3.
 
+**T11b gate (orchestrator, `d651fc8..944c1a9`) — the one that actually works, proven in the browser.**
+Scope respected (6 files), zero deletions, history intact. `pnpm --filter @md/product-tour test`
+**14 files / 103 tests green** (was 14/101), `typecheck` 0 errors. Five pre-existing test files were
+touched and I read every one of those diffs: three are a one-line bump of a local `flushMicrotasks()`
+helper from `setTimeout(…, 0)` to 80–120 ms with the reason written into a new comment, and
+`anchorResolutionConcurrency.test.ts` wraps two bare `await`s in `vi.waitFor` so a genuine timer can
+fire under its fake clock. **No assertion was changed in any of them** — these are pacing changes
+forced by the settle wait becoming real, the same shape as T10. The `refresh()` call-count
+expectations in `anchorRectSettle.test.ts` did change (1 → 2, since `start()`'s first-step `drive()`
+now refreshes too), which D50b point 2 makes literally obsolete, and the subagent disclosed it.
+**Browser re-measurement by the orchestrator, same probe as B46's (deleted after use):
+all 15 landing steps now report `dx = 0` and `dy = -5` — perfect alignment at every single step**,
+including step 11 (the user's report), the +40/+329/+228 px steps 9/14/15, and even step 13's 4 px
+residue. Regression checks: `tour.spec.ts` **24 passed / 1 failed of 25**, the failure being B39 by
+name (unchanged, pre-existing); `pnpm check` 339 files / 0 errors / 0 warnings / 3 hints; root
+`pnpm test` 44 files / 313 green; `pnpm build` Complete. Cost noted honestly: the package's unit
+suite went from ~4 s to ~24 s of test time, because the settle wait is now a real timer.
+
+**T11 gate (orchestrator, `5344fc3..d592db6`) — mechanically clean, functionally inert; kept, not
+reverted.** Scope respected (2 files), zero deletions, test file a pure addition (`371 0`), 14 files /
+101 tests green, typecheck clean. But the browser re-measurement came back identical to pre-fix, which
+is what exposed **B47**. Not reverted, deliberately: its constants, helpers and the two call-site
+hooks are the right scaffolding and T11b corrects them in place — reverting would have thrown away
+correct structure to re-derive it. The lesson is recorded in B47, not in a revert.
+
 **T8b gate (orchestrator, `ce66b97..e3a0f25`):** scope respected (5 files), zero deletions, history
 intact, `pnpm --filter builder42 test` **16 files / 163 tests green** (was 15/159). New spec is a
 pure addition (`93 0`); the only change to a pre-existing test file is `2 0` — literally two
