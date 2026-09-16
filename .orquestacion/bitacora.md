@@ -17,13 +17,15 @@ consults a stale anchor check) — this is now confirmed to BREAK a pre-existing
 against a freshly restarted dev server before trusting either verdict; do not restart it
 autonomously — ask the user. T6 is DONE.**
 
-**State at hand-off (2026-09-16, sixth session): `HEAD = 316c490`, branch `feat/ui-polish-p1`, tree
+**State at hand-off (2026-09-16, sixth session): `HEAD = 455ee07`, branch `feat/ui-polish-p1`, tree
 clean** except the pre-existing untracked `.cursor/hooks/` and `.kiro/` (not this chain's).
-**Not pushed.** T5 landed green: `@md/product-tour` **11 files / 84 tests** (was 10/81 — +3 new
-tests in `waitForStepAnchor.test.ts`, per T5's DONE WHEN), `builder42` **14 files / 153 tests**
+**Not pushed** (17 commits ahead of `origin/feat/ui-polish-p1`). T5+T6 both landed green:
+`@md/product-tour` **11 files / 84 tests** (was 10/81), `builder42` **14 files / 153 tests**
 (unchanged), `email-builder-standalone` **13 files / 123 tests** (unchanged), `pnpm check` 339
-files 0 errors / 0 warnings / 3 hints (unchanged). `tests/e2e/tour.spec.ts` NOT re-run this session
-— still last measured 22 passed at `22d2b10`, before T1–T5. Re-measure before trusting.
+files 0 errors / 0 warnings / 3 hints (unchanged). `tests/e2e/tour.spec.ts`: the 3 new T6 tests are
+green and stable (6+ reruns); the REST of the file has two now-failing pre-existing tests, B38
+(deterministic, likely a real regression) and B39 (deterministic this session, likely environment
+degradation, B20) — see item 2 below and both findings before trusting a bare "22 passed" number.
 
 **T5, what actually happened (read before touching this area again):** the relaunch went smoothly
 for the code T5's contract described (`waitForStepAnchor()`, wired at both call sites, using the
