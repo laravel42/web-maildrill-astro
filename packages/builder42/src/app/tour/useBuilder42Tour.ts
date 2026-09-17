@@ -77,7 +77,14 @@ export function createConfigBackedTourPersistence(): TourPersistence {
     if (version !== currentVersion) {
       return { seen: false, completed: false, version: currentVersion };
     }
-    return { seen, completed: seen, version };
+    const completed = readConfig("tourCompleted");
+    const lastStepIndex = readConfig("tourLastStepIndex");
+    return {
+      seen,
+      completed,
+      version,
+      ...(lastStepIndex >= 0 ? { lastStepIndex } : {}),
+    };
   }
   return {
     read,
@@ -88,9 +95,20 @@ export function createConfigBackedTourPersistence(): TourPersistence {
     markCompleted(_tourId, currentVersion) {
       writeConfig("tourSeen", true);
       writeConfig("tourVersion", currentVersion);
+      writeConfig("tourCompleted", true);
+      // Un tour completado no tiene "progreso a medias" que reanudar — mismo criterio que
+      // `createLocalStoragePersistence`'s `markCompleted` (`persistence.ts`).
+      writeConfig("tourLastStepIndex", -1);
+    },
+    saveProgress(_tourId, stepIndex, currentVersion) {
+      writeConfig("tourSeen", true);
+      writeConfig("tourVersion", currentVersion);
+      writeConfig("tourLastStepIndex", stepIndex);
     },
     reset() {
       writeConfig("tourSeen", false);
+      writeConfig("tourCompleted", false);
+      writeConfig("tourLastStepIndex", -1);
     },
   };
 }
@@ -101,6 +119,35 @@ function ensureTourThemeCss(): void {
   if (themeCssLoaded) return;
   themeCssLoaded = true;
   void import("@md/product-tour/style.css");
+}
+
+/**
+ * D51 — resolves the tour overlay's REAL color/opacity, forwarded to `createTour`'s
+ * `overlayColor`/`overlayOpacity` (reenviadas tal cual a driver.js's own `driver()` config).
+ * `chrome/tour.css`'s `--md-tour-overlay` (and any CSS `.driver-overlay` rule) is INERT for
+ * this purpose — driver.js paints its overlay `<path>`'s `fill`/`fill-opacity` via inline JS
+ * attributes, never from CSS (a `<path>` has no `background`) — so the only way to make the
+ * overlay reflect this chrome's own ink color is to read it via `getComputedStyle` and hand
+ * driver.js a plain color plus a separate numeric opacity, mirroring the email editor's own
+ * `alphaHex(theme.palette.text.primary, 0.55)` (`useEmailBuilderTour.ts`) at the same 0.55.
+ *
+ * Reads `--pb-chrome-text` (this chrome's tinta principal — `--text`/`--ink` on the host,
+ * exactly the token email builder's `text.primary` mirrors) rather than `--pb-chrome-bg`
+ * (`--ink-band`, a dedicated SOLID dark-band token, not a scrim) — same reasoning as the
+ * `chrome/tour.css` fix. Reading via `getComputedStyle` (not the raw custom-property string)
+ * is required because `--pb-chrome-text` ultimately resolves through `var(--text, #1f1e1b)`
+ * and dark-mode overrides — only the computed style gives the final concrete color driver.js
+ * can use directly (it does not evaluate CSS `var()`/`color-mix()` itself).
+ *
+ * Falls back to driver.js's own defaults (`undefined`) when `document` is unavailable (SSR —
+ * never actually reached, this hook only runs client-side, but keeps this function callable
+ * without guards at every call site) or when the computed value is empty.
+ */
+function resolveTourOverlayColor(): { overlayColor?: string; overlayOpacity?: number } {
+  if (typeof document === "undefined" || typeof window === "undefined") return {};
+  const computed = window.getComputedStyle(document.documentElement).getPropertyValue("--pb-chrome-text").trim();
+  if (!computed) return {};
+  return { overlayColor: computed, overlayOpacity: 0.55 };
 }
 
 /**
@@ -117,13 +164,26 @@ function ensureTourThemeCss(): void {
  * - `persistedSeen` is `TourPersistenceState.seen` at the current tour version —
  *   `false` either on a true first run, or right after a version bump (the
  *   persistence layer itself treats a stale version as unseen).
+ * - `persistedCompleted` is `TourPersistenceState.completed` at the current tour version.
+ *   **Progreso persistido**: un tour visto pero NO completado (cerrado a medias por
+ *   Escape, click en el overlay, ×, o cierre de pestaña) todavía debe auto-arrancar en
+ *   el siguiente mount — `createTour()`'s `start()` ya sabe reanudar desde
+ *   `lastStepIndex` en vez de reiniciar en el paso 0 (ver `persistence.ts`), pero ese
+ *   mecanismo nunca se alcanza si este guard sigue exigiendo `!persistedSeen`: la
+ *   PRIMERA llamada a `start()` ya marca `seen = true` (vía `markSeen`), así que sin
+ *   este cambio ningún cierre a medias volvía a auto-arrancar jamás — el usuario tenía
+ *   que usar `requestBuilder42TourRestart()` (`ProfileMenu`) a mano, reiniciando desde
+ *   el paso 0, exactamente el defecto reportado ("no se persiste el step en el que me
+ *   quedé"). Solo `seen && completed` (tour ya terminado con "Listo") sigue sin
+ *   auto-arrancar — ese caso es intencional, no un progreso pendiente.
  */
 export function shouldAutoStartTour(
   onboardingResolved: boolean,
   alreadyStartedThisMount: boolean,
   persistedSeen: boolean,
+  persistedCompleted: boolean,
 ): boolean {
-  return onboardingResolved && !alreadyStartedThisMount && !persistedSeen;
+  return onboardingResolved && !alreadyStartedThisMount && !(persistedSeen && persistedCompleted);
 }
 
 export interface UseBuilder42TourOptions {
@@ -183,6 +243,7 @@ export function useBuilder42Tour({
       onEvent: (event) => onTourEventRef.current?.(event),
       labels: getBuilder42TourLabels(),
       popoverClass: "md-tour",
+      ...resolveTourOverlayColor(),
     });
   }
 
@@ -208,7 +269,7 @@ export function useBuilder42Tour({
 
     const persistence = createConfigBackedTourPersistence();
     const state = persistence.read(TOUR_ID, TOUR_VERSION);
-    if (!shouldAutoStartTour(onboardingResolved, autoStartedRef.current, state.seen)) return;
+    if (!shouldAutoStartTour(onboardingResolved, autoStartedRef.current, state.seen, state.completed)) return;
 
     autoStartedRef.current = true;
     const tour = buildTour();

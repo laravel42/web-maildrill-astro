@@ -109,6 +109,27 @@ export interface ConfigMap {
    */
   tourSeen: boolean;
   tourVersion: number;
+  /**
+   * Si el usuario llegó al último paso y cerró con "Listo" (no con Escape/click fuera/×) —
+   * espejo local de `TourPersistenceState.completed` (`@md/product-tour`'s `persistence.ts`).
+   * Independiente de `tourSeen`: `tourSeen` se marca en CADA `start()` (incluida la primera
+   * llamada, mucho antes de que el usuario llegue al final), así que derivar `completed` de
+   * `seen` (como hacía antes este puente) reportaba el tour como completado desde el primer
+   * paso — rompiendo la reanudación (`createTour.ts`'s `start()` solo reanuda desde
+   * `lastStepIndex` cuando `seen && !completed`) y el auto-arranque tras un cierre a medias
+   * (`shouldAutoStartTour` exige lo mismo). Bug real reportado: "el tour no persiste cuando
+   * se queda a mitad del recorrido".
+   */
+  tourCompleted: boolean;
+  /**
+   * Índice (0-based) del último paso del tour que el usuario llegó a ver antes de un cierre
+   * sin completar (Escape, click en el overlay, ×, cierre de pestaña) — espejo local de
+   * `TourPersistenceState.lastStepIndex` (`@md/product-tour`'s `persistence.ts`), mismo
+   * motivo que `tourSeen`/`tourVersion` arriba: permite reanudar desde ahí en vez de reiniciar
+   * siempre en el paso 0. `-1` = sin progreso guardado (equivalente a `undefined` en el tipo
+   * del paquete — `useLocalConfig` no admite `undefined` como valor persistido).
+   */
+  tourLastStepIndex: number;
 }
 
 const DEFAULTS: ConfigMap = {
@@ -126,6 +147,8 @@ const DEFAULTS: ConfigMap = {
   experienceLevelChosen: false,
   tourSeen: false,
   tourVersion: 0,
+  tourCompleted: false,
+  tourLastStepIndex: -1,
 };
 
 // ---------------------------------------------------------------------------
