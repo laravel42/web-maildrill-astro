@@ -1,6 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { db, memberships, tenants, type Membership, type User } from '@maildrill/database';
 import { provisionTenantEntity } from './infobip-entity';
+import { provisionSesTenant } from './ses-tenant';
 
 export interface WorkspaceMembership {
   tenantId: string;
@@ -31,9 +32,11 @@ export async function ensurePersonalWorkspace(user: User): Promise<void> {
 
   const tenant = (await db.insert(tenants).values({ name: user.email }).returning())[0]!;
   await db.insert(memberships).values({ userId: user.id, tenantId: tenant.id, role: 'owner' });
-  // Tag this workspace's future Infobip traffic with its own entity. Remote
-  // provisioning is best-effort inside — a signup must never fail on it.
+  // Tag this workspace's future Infobip traffic with its own entity, and
+  // assign it an SES tenant name for when/if SES is the active email driver.
+  // Both remote calls are best-effort inside — a signup must never fail on them.
   await provisionTenantEntity({ id: tenant.id, name: tenant.name });
+  await provisionSesTenant({ id: tenant.id, name: tenant.name });
 }
 
 export async function isMember(userId: string, tenantId: string): Promise<boolean> {

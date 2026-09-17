@@ -13,12 +13,25 @@ const RELEVANT_KEYS = [
   'AWS_SES_FROM_EMAIL',
   'AWS_SES_CONFIGURATION_SET',
 ] as const;
+// SES_MAX_SEND_RATE / SES_MAX_SEND_PER_DAY are deliberately NOT in this list:
+// they're numeric (z.coerce.number()), so forcing them to '' would coerce to
+// 0 rather than fall through to the schema default (14 / 50_000) the way an
+// empty string does for the string fields above. Neither is set in this
+// checkout's real `.env`, so leaving them untouched here reliably exercises
+// the schema default.
 
 let snapshot: Record<string, string | undefined>;
 
 beforeEach(() => {
   snapshot = Object.fromEntries(RELEVANT_KEYS.map((k) => [k, process.env[k]]));
-  for (const k of RELEVANT_KEYS) delete process.env[k];
+  // Force-empty rather than delete: dotenv only fills in *missing* keys, so a
+  // deleted key would leak this checkout's real `.env` values (which may
+  // already have SES fully configured) back in, making these tests
+  // machine-dependent. An explicit '' reliably means "unset" to the schema —
+  // except PROVIDER_DRIVER, whose enum has no '' member, so it gets a valid
+  // default instead; every test that cares overrides it explicitly anyway.
+  for (const k of RELEVANT_KEYS) process.env[k] = '';
+  process.env.PROVIDER_DRIVER = 'mock';
   vi.resetModules();
 });
 
@@ -61,6 +74,8 @@ describe('email provider selection (PROVIDER_DRIVER / PROVIDER_EMAIL_DRIVER)', (
       region: 'us-east-1',
       from: 'campaigns@maildrill.net',
       configurationSet: 'maildrill-campaigns',
+      maxSendRate: 14,
+      maxSendPerDay: 50_000,
     });
   });
 

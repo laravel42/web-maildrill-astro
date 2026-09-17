@@ -56,9 +56,15 @@ function parseSnsEnvelope(raw: string): SnsEnvelope | null {
  * `ingestWebhook` intake every other provider uses, so `SesProvider.
  * normalizeWebhook` is the only place that ever sees the SES-specific shape.
  *
- * Setup: SES Configuration Set → Event destination → Amazon SNS → topic;
- * subscribe that topic with protocol HTTPS, endpoint
- * `https://<api-host>/webhooks/ses/sns?secret=<WEBHOOK_INFOBIP_SECRET>`.
+ * This is a fallback/manual-testing path — the same relationship Infobip's
+ * `/webhooks/infobip/*` routes have to its PostHog pipeline. Production
+ * points the SNS subscription at PostHog instead (Hog does the same event
+ * mapping `normalizeWebhook` does here, then the existing campaign-delivery
+ * poller HogQL-reads it back) — see `docs/posthog-ses-hog.md`.
+ *
+ * Setup for THIS route specifically: SES Configuration Set → Event
+ * destination → Amazon SNS → topic; subscribe that topic with protocol
+ * HTTPS, endpoint `https://<api-host>/webhooks/ses/sns?secret=<WEBHOOK_INFOBIP_SECRET>`.
  */
 export async function sesWebhookRoutes(appRaw: FastifyInstance): Promise<void> {
   const app = appRaw.withTypeProvider<ZodTypeProvider>();

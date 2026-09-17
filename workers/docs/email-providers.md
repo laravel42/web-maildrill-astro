@@ -55,25 +55,52 @@ also used for Cloudflare, Stripe, and the Infobip billing callback.
    config. Local dev can fall back to the `AWS_ACCESS_KEY_ID` /
    `AWS_SECRET_ACCESS_KEY` already in `.env.example` for S3 media, or an AWS
    CLI profile (`AWS_PROFILE`).
-4. **Delivery events** (bounce/complaint/delivery/open/click/etc.) — set up
-   once per SES account/region:
-   - SES console → **Configuration sets** → create one, note its name for
-     `AWS_SES_CONFIGURATION_SET`.
-   - That configuration set → **Event destinations** → add destination →
-     **Amazon SNS** → choose or create a topic → select every event type you
-     want (Send, Reject, Bounce, Complaint, Delivery, Open, Click,
-     Rendering Failure, DeliveryDelay, Subscription).
-   - SNS console → that topic → **Create subscription** → protocol **HTTPS**,
-     endpoint `https://<api-host>/webhooks/ses/sns?secret=<WEBHOOK_INFOBIP_SECRET>`.
-   - Maildrill's endpoint (`apps/api/src/routes/ses-webhook.ts`) auto-confirms
-     the subscription handshake on first delivery — no manual "click to
-     confirm" step, but check the API logs for `ses sns SubscriptionConfirmation
-     confirmed` to be sure it landed.
-   - A send with no configuration set attached (`AWS_SES_CONFIGURATION_SET`
-     empty) is fire-and-forget: SES accepts it, but nothing ever calls back,
-     so the message stays `submitted` forever (until `DELIVERY_STALE_EXPIRE_MS`
-     terminates it). Set the configuration set before relying on SES delivery
-     status.
+4. **Delivery events** (bounce/complaint/delivery/open/click/etc.) — the
+   production path is **SES Configuration Set → SNS → PostHog**, the same
+   architecture Infobip already uses (Hog maps the payload, the existing
+   campaign-delivery poller HogQL-reads it back — zero SES-specific backend
+   code). See [`posthog-ses-hog.md`](./posthog-ses-hog.md) for the full setup
+   and the Hog source. A send with no configuration set attached
+   (`AWS_SES_CONFIGURATION_SET` empty) is fire-and-forget: SES accepts it, but
+   nothing ever calls back, so the message stays `submitted` forever (until
+   `DELIVERY_STALE_EXPIRE_MS` terminates it) — set the configuration set
+   before relying on SES delivery status.
+
+   `apps/api/src/routes/ses-webhook.ts` (`/webhooks/ses/sns`) also exists and
+   auto-confirms SNS subscriptions the same way, but it is a **fallback/
+   manual-testing path only** — the same relationship Infobip's
+   `/webhooks/infobip/*` routes have to its PostHog pipeline. Point the SNS
+   subscription at PostHog for production.
+
+5. **Per-workspace reputation isolation (SES Tenants)** — every workspace is
+   automatically assigned an SES Tenant at creation
+   (`packages/identity/src/ses-tenant.ts`, mirroring the Infobip CPaaS X
+   entity pattern exactly) and every SES send is tagged with it
+   (`SendEmail`'s `TenantName`). One workspace's bounces/complaints affect
+   only its own tenant's reputation and sending status inside the shared SES
+   account — no per-workspace domains or DNS required, since a single shared
+   identity/configuration set can be (and is) associated with every tenant.
+   Provisioning is skipped entirely unless SES is the active email driver, so
+   no other deployment needs AWS credentials for this.
+
+6. **Per-provider throttling** — `SES_MAX_SEND_RATE` /
+   `INFOBIP_MAX_SEND_RATE` / `CLOUDFLARE_MAX_SEND_RATE` (messages/sec) apply
+   an in-process token-bucket limiter per driver
+   (`packages/providers/src/rate-limiter.ts`), independent of the BullMQ
+   dispatch worker's own global `RATE_LIMIT_MAX`/`RATE_LIMIT_DURATION_MS`
+   limiter (which is shared across every channel/provider). SES defaults to
+   `14`/sec — a brand-new account's typical starting quota — set it just under
+   whatever `aws sesv2 get-account` actually reports once known. This is
+   per-process: divide the account's granted rate by the number of running
+   dispatch worker replicas.
+
+   `SES_MAX_SEND_PER_DAY` (default `50,000`) is a separate, **Redis-backed**
+   daily cap shared fleet-wide (unlike the per-process rate above), keyed by
+   UTC calendar day — a pragmatic simplification of SES's actual rolling
+   24-hour account quota, close enough for an in-process safety net. Once
+   over cap, sends are rejected with a retryable `rate_limit` error rather
+   than silently let through; the account's real quota remains the authority.
+   `0` disables either cap.
 
 Every SES send also carries `EmailTags`: `maildrill_message_id`,
 `maildrill_tenant_id`, and (when the send belongs to a campaign)
@@ -103,10 +130,16 @@ falling back to hand-built raw MIME:
 
 ## Event mapping
 
-`SesProvider.normalizeWebhook` maps the SES Configuration-Set event-publishing
-shape (keyed by `eventType`, with `notificationType` as a fallback for the
-older Bounce/Complaint/Delivery-only subscription shape) onto the same
-`ProviderOutcome` used everywhere else:
+The production path (SNS → PostHog, see above) does this mapping in Hog —
+[`posthog-ses.hog`](./posthog-ses.hog) — onto the same `status_group`/
+`notification_type` vocabulary Infobip's Hog function already produces, so
+`campaign-delivery.ts` never sees a provider name. `SesProvider.normalizeWebhook`
+(used only by the fallback `/webhooks/ses/sns` route) maps the same SES
+Configuration-Set event-publishing shape (keyed by `eventType`, with
+`notificationType` as a fallback for the older Bounce/Complaint/Delivery-only
+subscription shape) onto `ProviderOutcome` directly — the two mappings are
+equivalent, just implemented on two different sides of the SNS boundary for
+their respective paths:
 
 | SES `eventType`     | Outcome     | Notes                                                        |
 | -------------------- | ----------- | ------------------------------------------------------------- |

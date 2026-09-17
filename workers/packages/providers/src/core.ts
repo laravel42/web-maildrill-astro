@@ -21,6 +21,15 @@ export interface SendInput {
    * one-off/transactional sends, which belong to no campaign.
    */
   campaignReferenceId?: string;
+  /**
+   * AWS SES Tenant this workspace's email is sent under (SES Multi-Tenant
+   * Management — `SendEmail`'s `TenantName`), for per-workspace reputation and
+   * sending-status isolation inside the one shared SES account. Resolved by
+   * the caller (providers has no database access); SES-only, ignored by every
+   * other driver. A send with no tenant falls back to the account's default
+   * (unisolated) reputation tracking — see `SesProvider`.
+   */
+  sesTenantName?: string;
 }
 
 export interface ProviderSendError {

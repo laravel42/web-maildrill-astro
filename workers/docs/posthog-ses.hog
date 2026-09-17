@@ -1,0 +1,280 @@
+// Amazon SES → PostHog incoming webhook (source_webhook).
+//
+// Fed by: SES Configuration Set → SNS topic → SNS "sqs" subscription →
+// EventBridge Pipe (sqs-email-events-pipe) → this webhook, via an API
+// Destination target.
+//
+// This does NOT receive raw SNS HTTP(S) notifications directly — SNS always
+// posts those as `Content-Type: text/plain`, which PostHog's source_webhook
+// cannot parse (confirmed live: request.body AND request.stringBody both come
+// back empty for text/plain, even though the exact same body parses
+// correctly under application/json — and SNS's content-type for HTTP(S)
+// delivery is not configurable on AWS's side). Routing through SQS sidesteps
+// this entirely — but a bare `<$.body>` InputTemplate (a single placeholder
+// referencing a STRING field) gets inserted UNESCAPED by EventBridge Pipes,
+// corrupting the JSON. The Pipe's InputTemplate is instead the documented
+// "dynamic JSON" wrapper form — `{"sqsBody": <$.body>}` — which forces proper
+// JSON-string escaping. Pipes' target-transformation stage always wraps that
+// in a batch array (even at BatchSize=1), but unwraps the single element
+// again before actually invoking a non-batch target like an API Destination
+// (confirmed live via this function's own request logs), so what actually
+// arrives here is the bare object:
+//   { "sqsBody": <the full SNS envelope, already JSON-parsed by Pipes'
+//                  implicit SQS body parsing> }
+// `sqsBody.Message` is still the SES event as a JSON-encoded string (SNS's
+// own double encoding, untouched) — unwrapped below the same way a direct
+// HTTPS subscription's body would need to be.
+//
+// See ../docs/posthog-ses-hog.md for the full pipe/connection/destination
+// setup.
+
+if (inputs.debug) {
+    print('SES/SNS webhook:', request.method, request.headers, request.body)
+}
+
+if (request.method != inputs.method) {
+    return {
+        'httpResponse': {
+            'status': 405,
+            'body': 'Method not allowed'
+        }
+    }
+}
+
+if (notEmpty(inputs.auth_header) and notEquals(inputs.auth_header, request.headers['authorization'])) {
+    print('Incoming request denied due to bad authorization header')
+    return {
+        'httpResponse': {
+            'status': 401,
+            'body': 'Unauthorized'
+        }
+    }
+}
+
+let envelope := request.body.sqsBody
+if (empty(envelope)) {
+    return {
+        'httpResponse': {
+            'status': 400,
+            'body': {'error': 'empty or unparseable body'}
+        }
+    }
+}
+
+// SNS subscription handshake: confirm once, so a brand-new topic subscription
+// needs no manual "click to confirm" step. Never actually fires for the
+// SQS-sourced pipe above (an SQS subscription is confirmed at `sns subscribe`
+// time, not per-message) — kept for robustness if this URL is ever also used
+// as a direct HTTPS subscription target for a provider whose content-type
+// PostHog CAN parse.
+if (envelope.Type == 'SubscriptionConfirmation' or envelope.Type == 'UnsubscribeConfirmation') {
+    if (not empty(envelope.SubscribeURL)) {
+        let res := fetch(envelope.SubscribeURL, {'method': 'GET'})
+        print('sns confirmation fetch status', res.status)
+    }
+    return {
+        'httpResponse': {
+            'status': 200,
+            'body': {'ok': true}
+        }
+    }
+}
+
+if (envelope.Type != 'Notification' or empty(envelope.Message)) {
+    return {
+        'httpResponse': {
+            'status': 200,
+            'body': {'ok': true, 'ignored': envelope.Type}
+        }
+    }
+}
+
+let body := jsonParse(toString(envelope.Message))
+if (empty(body)) {
+    return {
+        'httpResponse': {
+            'status': 400,
+            'body': {'error': 'unparseable SNS Message'}
+        }
+    }
+}
+
+let eventType := body.eventType
+if (empty(eventType)) {
+    eventType := body.notificationType
+}
+if (empty(eventType)) {
+    return {
+        'httpResponse': {
+            'status': 400,
+            'body': {'error': 'missing eventType/notificationType'}
+        }
+    }
+}
+
+let mail := body.mail
+if (empty(mail)) {
+    mail := {}
+}
+let tags := mail.tags
+if (empty(tags)) {
+    tags := {}
+}
+
+// SES tags are arrays of values (one value per send, here); Maildrill's own
+// message/tenant/campaign ids ride these instead of Infobip's callbackData
+// string-splitting hack — SES gives us structured tags directly.
+// Hog's `and`/`or` do NOT short-circuit — both sides always evaluate — so
+// `not empty(x) and length(x) >= 1` crashes with "Cannot read properties of
+// null" the moment a tag is missing (e.g. a transactional send with no
+// campaign id). Nested `if`s instead, matching posthog-infobip.hog's own
+// `if (not empty(cb)) { ... if (length(parts) >= 3) ... }` pattern.
+let messageIdTag := tags.maildrill_message_id
+let tenantIdTag := tags.maildrill_tenant_id
+let campaignIdTag := tags.maildrill_campaign_id
+let maildrillMessageId := ''
+if (not empty(messageIdTag)) {
+    if (length(messageIdTag) >= 1) {
+        maildrillMessageId := toString(messageIdTag[1])
+    }
+}
+let tenantId := ''
+if (not empty(tenantIdTag)) {
+    if (length(tenantIdTag) >= 1) {
+        tenantId := toString(tenantIdTag[1])
+    }
+}
+let campaignId := ''
+if (not empty(campaignIdTag)) {
+    if (length(campaignIdTag) >= 1) {
+        campaignId := toString(campaignIdTag[1])
+    }
+}
+let messageId := toString(mail.messageId)
+let distinctId := maildrillMessageId
+if (empty(distinctId)) {
+    distinctId := messageId
+}
+if (empty(distinctId)) {
+    distinctId := 'anonymous'
+}
+
+// --- Tracking-shaped events: Open / Click / Complaint / Subscription ---
+if (eventType == 'Open' or eventType == 'Click' or eventType == 'Complaint' or eventType == 'Subscription') {
+    let notificationType := 'OPENED'
+    let url := ''
+    if (eventType == 'Click') {
+        notificationType := 'CLICKED'
+        url := body.click.link
+    } else if (eventType == 'Complaint') {
+        notificationType := 'COMPLAINED'
+    } else if (eventType == 'Subscription') {
+        notificationType := 'UNSUBSCRIBED'
+    }
+
+    let at := body.open.timestamp
+    if (eventType == 'Click') {
+        at := body.click.timestamp
+    } else if (eventType == 'Complaint') {
+        at := body.complaint.timestamp
+    } else if (eventType == 'Subscription') {
+        at := body.subscription.timestamp
+    }
+    if (empty(at)) {
+        at := mail.timestamp
+    }
+
+    let insertId := f'ses:track:{messageId}:{notificationType}:{toString(at)}'
+
+    postHogCapture({
+        'event': 'message_tracking_report',
+        'distinct_id': distinctId,
+        'properties': {
+            '$insert_id': insertId,
+            '$ip': request.ip,
+            '$lib': 'posthog-webhook',
+            'provider': 'ses',
+            'kind': 'tracking',
+            'notification_type': notificationType,
+            'message_id': messageId,
+            'url': url,
+            'tenant_id': tenantId,
+            'channel': 'email',
+            'maildrill_message_id': maildrillMessageId,
+            'campaign_id': campaignId
+        }
+    })
+
+    return {
+        'httpResponse': {
+            'status': 200,
+            'body': {'ok': true, 'captured': 1}
+        }
+    }
+}
+
+// --- Delivery-shaped events: Send / Delivery / Bounce / Reject / DeliveryDelay / Rendering Failure ---
+let statusGroup := 'SENT'
+let errorName := ''
+let errorDescription := ''
+let errorPermanent := false
+let at := mail.timestamp
+
+if (eventType == 'Delivery') {
+    statusGroup := 'DELIVERED'
+    at := body.delivery.timestamp
+} else if (eventType == 'Bounce') {
+    statusGroup := 'UNDELIVERABLE'
+    errorName := body.bounce.bounceType
+    errorDescription := f'{toString(body.bounce.bounceType)}/{toString(body.bounce.bounceSubType)}'
+    errorPermanent := body.bounce.bounceType == 'Permanent'
+    at := body.bounce.timestamp
+} else if (eventType == 'Reject') {
+    statusGroup := 'REJECTED'
+    errorName := 'Reject'
+    errorDescription := toString(body.reject.reason)
+    errorPermanent := true
+} else if (eventType == 'DeliveryDelay') {
+    statusGroup := 'PENDING'
+    errorName := toString(body.deliveryDelay.delayType)
+    at := body.deliveryDelay.timestamp
+} else if (eventType == 'Rendering Failure') {
+    statusGroup := 'UNDELIVERABLE'
+    errorName := 'RenderingFailure'
+    errorDescription := toString(body.failure.errorMessage)
+    errorPermanent := true
+}
+if (empty(at)) {
+    at := mail.timestamp
+}
+
+let insertId := f'ses:{messageId}:{eventType}:{toString(at)}'
+
+postHogCapture({
+    'event': 'message_delivery_report',
+    'distinct_id': distinctId,
+    'properties': {
+        '$insert_id': insertId,
+        '$ip': request.ip,
+        '$lib': 'posthog-webhook',
+        'provider': 'ses',
+        'kind': 'delivery',
+        'message_id': messageId,
+        'status_group': statusGroup,
+        'status_name': eventType,
+        'tenant_id': tenantId,
+        'channel': 'email',
+        'maildrill_message_id': maildrillMessageId,
+        'campaign_id': campaignId,
+        'error_name': errorName,
+        'error_description': errorDescription,
+        'error_permanent': errorPermanent
+    }
+})
+
+return {
+    'httpResponse': {
+        'status': 200,
+        'body': {'ok': true, 'captured': 1}
+    }
+}

@@ -10,6 +10,7 @@
     "@aws-sdk/client-sesv2": "^3.1127.0",
     "@maildrill/config": "workspace:*",
     "@maildrill/domain": "workspace:*",
+    "@maildrill/queues": "workspace:*",
     "nodemailer": "^9.0.3"
   }
 }

@@ -1271,6 +1271,9 @@ importers:
       '@maildrill/domain':
         specifier: workspace:*
         version: link:../domain
+      '@maildrill/queues':
+        specifier: workspace:*
+        version: link:../queues
       nodemailer:
         specifier: ^9.0.3
         version: 9.0.3

@@ -7,7 +7,7 @@ import {
   sendMessageJobV1,
   type MessageState,
 } from '@maildrill/domain';
-import { tenantInfobipEntityId } from '@maildrill/identity';
+import { tenantInfobipEntityId, tenantSesTenantName } from '@maildrill/identity';
 import { getProvider } from '@maildrill/providers';
 import { createLogger, metrics } from '@maildrill/observability';
 import { tryCompleteCampaign } from './campaign-delivery';
@@ -94,6 +94,14 @@ export async function handleDispatch(raw: unknown): Promise<void> {
     // Tag the send with the workspace's own CPaaS X entity (memoised; falls
     // back to the account-wide INFOBIP_ENTITY_ID when unset).
     entityId: (await tenantInfobipEntityId(message.tenantId)) ?? undefined,
+    // SES-only: tag the send with the workspace's own SES Tenant for
+    // per-workspace reputation isolation. Looked up only for SES sends —
+    // every other provider ignores this field, so there is no reason to
+    // spend the lookup on their behalf.
+    sesTenantName:
+      message.provider === 'ses'
+        ? ((await tenantSesTenantName(message.tenantId)) ?? undefined)
+        : undefined,
   });
   const completedAt = new Date();
 
