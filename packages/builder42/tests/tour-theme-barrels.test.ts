@@ -119,12 +119,20 @@ describe("Builder42 tour theme — full --md-tour-* coverage (F5)", () => {
     expect(accentLine).not.toMatch(/--pb-chrome-header-brand\b/);
   });
 
-  it("overlay uses the ink-band-derived token, not a hardcoded pure black", () => {
-    const tourCss = read("src/styles/chrome/tour.css");
-    const overlayLine = tourCss.split("\n").find((line) => line.trim().startsWith("--md-tour-overlay:"));
-    expect(overlayLine).toBeDefined();
-    expect(overlayLine).toMatch(/--pb-chrome-bg\b/);
-    expect(overlayLine).not.toMatch(/#000\b|rgba?\(\s*0\s*,\s*0\s*,\s*0\b/);
+  it("overlay uses the ink/text-derived token at low opacity, not a hardcoded pure black", () => {
+    // D51: the overlay's real color/opacity is resolved at runtime by
+    // `useBuilder42Tour.ts`'s `resolveTourOverlayColor()` (reads `--pb-chrome-text` via
+    // `getComputedStyle`, forwarded to `createTour()`'s `overlayColor`/`overlayOpacity`) —
+    // NOT via a `--md-tour-overlay` CSS variable here, which would be inert (driver.js paints
+    // its overlay `<path>`'s fill via inline JS attributes, never from CSS). Assert the runtime
+    // source directly instead of a CSS declaration.
+    const hookSource = read("src/app/tour/useBuilder42Tour.ts");
+    const readLine = hookSource
+      .split("\n")
+      .find((line) => line.includes("getPropertyValue"));
+    expect(readLine).toBeDefined();
+    expect(readLine).toMatch(/--pb-chrome-text\b/);
+    expect(readLine).not.toMatch(/--pb-chrome-bg\b/);
   });
 });
 
@@ -156,14 +164,13 @@ describe("Builder42 tour theme — dark override (F5)", () => {
     }
   });
 
-  it("the color tokens tour.css depends on that are constant across themes (--pb-chrome-accent-text, --pb-chrome-bg) are explicitly reasserted in the F5 block, not left to accidental cascade", () => {
+  it("the color tokens tour.css depends on that are constant across themes (--pb-chrome-accent-text) are explicitly reasserted in the F5 block, not left to accidental cascade", () => {
     const darkCss = read("src/styles/chrome/dark.css");
     const f5BlockStart = darkCss.indexOf("Tour (F5");
     expect(f5BlockStart).toBeGreaterThanOrEqual(0);
     const f5Block = darkCss.slice(f5BlockStart);
 
     expect(f5Block).toMatch(/--pb-chrome-accent-text\s*:/);
-    expect(f5Block).toMatch(/--pb-chrome-bg\s*:/);
   });
 
   it("chrome/tour.css only maps --md-tour-accent from tokens already proven dark-safe elsewhere in this chrome (--pb-chrome-accent is reused as-is by header.css/inspector.css in both themes, per tokens.css's own comment)", () => {

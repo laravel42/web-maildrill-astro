@@ -93,25 +93,21 @@ export function buildEmailBuilderTourCssVars(theme: Theme): Record<string, strin
     '--md-tour-accent': theme.palette.primary.main,
     '--md-tour-accent-text': theme.palette.primary.contrastText,
     '--md-tour-font': theme.typography.fontFamily,
-    '--md-tour-overlay': alphaHex(theme.palette.text.primary, 0.55),
   };
 }
 
 /**
- * Minimal, dependency-free `alpha()` for a `#rrggbb`/`#rgb` color — used only for
- * `--md-tour-overlay`. Avoids importing `@mui/material/styles`' own `alpha()` here to
- * keep this helper trivially testable with plain hex fixtures; falls back to the input
- * color unchanged if it isn't a hex string (e.g. a theme customized to `rgb(...)`).
+ * D51 — the tour overlay's REAL color/opacity, forwarded to `createTour`'s `overlayColor`/
+ * `overlayOpacity` (passed straight through to driver.js's own `driver()` config). Extracted
+ * out of {@link buildEmailBuilderTourCssVars} because it is NOT a CSS variable this popover
+ * theme consumes — `--md-tour-overlay` (and `theme.css`'s old `.driver-overlay` rule) was
+ * INERT for this purpose: driver.js paints its overlay `<path>`'s `fill`/`fill-opacity` via
+ * inline JS attributes, never from CSS (a `<path>` has no `background`), so no CSS variable
+ * mapping could ever have reached it. `createTour()`'s `overlayColor`/`overlayOpacity` options
+ * are the only mechanism that actually does.
  */
-function alphaHex(color: string, opacity: number): string {
-  const match = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.exec(color.trim());
-  if (!match) return color;
-  const hex = match[1];
-  const full = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex;
-  const r = parseInt(full.slice(0, 2), 16);
-  const g = parseInt(full.slice(2, 4), 16);
-  const b = parseInt(full.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+export function resolveEmailBuilderTourOverlayColor(theme: Theme): { overlayColor: string; overlayOpacity: number } {
+  return { overlayColor: theme.palette.text.primary, overlayOpacity: 0.55 };
 }
 
 /** Applies every `--md-tour-*` variable from {@link buildEmailBuilderTourCssVars} onto a popover wrapper. */
@@ -194,6 +190,15 @@ export function useEmailBuilderTour({ config, onTourEvent }: UseEmailBuilderTour
   // this file, within F5's scope (`packages/email-builder-standalone/src/tour/**`).
   const theme = useTheme();
   useTourThemeVars(theme);
+  // D51: read via a ref (same pattern as configRef/onTourEventRef above) so the two
+  // effects below — both keyed on [tourEnabled]/[restartNonce, tourEnabled], never on
+  // `theme` — can pick up the CURRENT theme's overlay color at build/restart time
+  // without retriggering auto-start on every theme change (a live theme change while the
+  // tour is already open is handled by `useTourThemeVars`'s own popover-only concerns;
+  // the overlay's driver.js-level color only needs to be current the next time a `Tour`
+  // is actually built).
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
 
   useEffect(() => {
     if (!tourEnabled) return;
@@ -207,6 +212,7 @@ export function useEmailBuilderTour({ config, onTourEvent }: UseEmailBuilderTour
         onEvent: (event) => onTourEventRef.current?.(event),
         labels: getEmailBuilderTourLabels(),
         popoverClass: 'md-tour',
+        ...resolveEmailBuilderTourOverlayColor(themeRef.current),
       });
     }
 
@@ -219,7 +225,14 @@ export function useEmailBuilderTour({ config, onTourEvent }: UseEmailBuilderTour
       tourRef.current = tour;
       const persistence = createLocalStoragePersistence(TOUR_STORAGE_PREFIX);
       const state = persistence.read(TOUR_ID, TOUR_VERSION);
-      if (!state.seen) {
+      // Progreso persistido: un tour visto pero NO completado (cerrado a medias por Escape,
+      // click en el overlay, ×, o cierre de pestaña) debe seguir auto-arrancando — `createTour`
+      // ya reanuda desde `lastStepIndex` en vez del paso 0 (ver `persistence.ts`), pero ese
+      // mecanismo nunca se alcanza si aquí se sigue exigiendo `!state.seen`: la PRIMERA llamada
+      // a `start()` ya marca `seen = true`, así que un cierre a medias nunca volvía a
+      // auto-arrancar (el defecto reportado: "no se persiste el step en el que me quedé"). Solo
+      // `seen && completed` (tour ya terminado con "Listo") sigue sin auto-arrancar.
+      if (!(state.seen && state.completed)) {
         ensureTourThemeCss();
         void tour.start();
       }
@@ -281,6 +294,7 @@ export function useEmailBuilderTour({ config, onTourEvent }: UseEmailBuilderTour
       onEvent: (event) => onTourEventRef.current?.(event),
       labels: getEmailBuilderTourLabels(),
       popoverClass: 'md-tour',
+      ...resolveEmailBuilderTourOverlayColor(themeRef.current),
     });
     tourRef.current = tour;
     ensureTourThemeCss();

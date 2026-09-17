@@ -18,7 +18,14 @@
  *   --md-tour-accent        acento del botón primario / anillo de foco
  *   --md-tour-accent-text   texto sobre `--md-tour-accent`
  *   --md-tour-font          familia tipográfica
- *   --md-tour-overlay       color del overlay (con alpha)
+ *
+ * **D51 — el color del overlay NO se controla desde aquí.** driver.js pinta el `fill`/
+ * `fill-opacity` de su `<path>` de overlay vía JS (atributo inline sobre el SVG), nunca lee
+ * `background` de CSS — un `<path>` ni siquiera tiene esa propiedad. La regla `.driver-overlay`
+ * que vivía en este archivo era, por tanto, INERTE: nunca pintó nada, el overlay siempre se vio
+ * con el default de driver.js (`#000` al 50%) sin importar qué calculara el consumidor. El color
+ * real se configura con las opciones `overlayColor`/`overlayOpacity` de `createTour()`
+ * (`CreateTourOptions`, reenviadas tal cual a `driver()`) — ver ese archivo para el detalle.
  */
 
 @import 'driver.js/dist/driver.css';
@@ -84,10 +91,6 @@
 
 .driver-popover.md-tour .driver-popover-arrow {
   border-color: var(--md-tour-surface);
-}
-
-.driver-overlay {
-  background: var(--md-tour-overlay);
 }
 
 @media (prefers-reduced-motion: reduce) {

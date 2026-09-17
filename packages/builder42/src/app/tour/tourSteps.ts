@@ -21,6 +21,7 @@ import type { TourStep } from "@md/product-tour";
 import i18n from "@/i18n";
 import { useDocumentStore, type SideTab } from "@/builder/store/documentStore";
 import type { InspectorTab } from "@/builder/inspector/form/types";
+import type { Breakpoint } from "@/builder/model/types";
 import { readConfig, writeConfig } from "@/hooks/useLocalConfig";
 import { BUILDER42_TOUR_ANCHORS } from "./tourAnchors";
 
@@ -69,6 +70,48 @@ function firstRootChildId(): string | null {
   const root = document.nodes[document.rootId];
   const [first] = root?.children ?? [];
   return first ?? null;
+}
+
+/**
+ * Garantiza que el lienzo tenga al menos un nodo seleccionable antes de un paso que lo
+ * requiere (`canvasNodeActions`, `inspectorTabs`, `inspectorBreakpoints` — §1.4.5): si ya
+ * hay contenido, selecciona el primer hijo del root y no toca el documento. Si el lienzo
+ * está VACÍO (sitio recién creado, o el usuario borró todo antes de llegar a este paso),
+ * inserta un componente `"text"` de relleno como hijo del root para que el paso tenga algo
+ * que resaltar en vez de omitirse — antes de este fix, un lienzo vacío hacía que `when()`
+ * descartara el paso entero (§1.4.5 original), lo que en la práctica dejaba SIEMPRE fuera
+ * del tour justo los pasos que enseñan a duplicar/borrar/inspeccionar un elemento en el
+ * caso más común para un usuario nuevo: un sitio que todavía no tiene nada.
+ *
+ * Devuelve el id insertado si (y solo si) este helper creó el nodo — nunca el id de un
+ * nodo que ya existía —, para que el `after()` del paso pueda revertirlo (`removeExample-
+ * NodeIfInserted`) y dejar el documento exactamente como estaba si el usuario nunca pidió
+ * ese contenido. `addComponent` ya selecciona el nodo insertado (ver `tree.ts`), así que no
+ * hace falta un `select()` explícito tras insertarlo.
+ */
+function ensureSelectableNodeForStep(): { insertedExampleId: string | null } {
+  const existing = firstRootChildId();
+  if (existing) {
+    useDocumentStore.getState().select(existing);
+    return { insertedExampleId: null };
+  }
+  const { document, addComponent } = useDocumentStore.getState();
+  addComponent("text", { parentId: document.rootId, index: 0 });
+  const insertedId = firstRootChildId();
+  return { insertedExampleId: insertedId };
+}
+
+/**
+ * Revierte el nodo de ejemplo insertado por `ensureSelectableNodeForStep()`, si lo hubo
+ * (`insertedExampleId !== null`) — no-op si el paso encontró contenido real del usuario.
+ * Selecciona el nodo antes de borrarlo porque `removeSelected()` opera sobre `selectedId`
+ * (no acepta un id explícito) — ver `tree.ts`.
+ */
+function removeExampleNodeIfInserted(insertedExampleId: string | null): void {
+  if (!insertedExampleId) return;
+  const { select, removeSelected } = useDocumentStore.getState();
+  select(insertedExampleId);
+  removeSelected();
 }
 
 /**
@@ -246,45 +289,73 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
 
   // 9. pbx.canvas.nodeActions — NodeActionsRail.tsx (duplicar/borrar el nodo
   // seleccionado). Requiere un nodo seleccionado que NO sea el root (el rail se
-  // posiciona junto al nodo, §1.4.5): si el lienzo está vacío no hay nada que
-  // seleccionar, así que el paso se omite por completo vía `when` (no solo se salta
-  // el highlight — no debe contar en la barra de progreso de un tour sin nodos).
-  steps.push({
-    anchorKey: BUILDER42_TOUR_ANCHORS.canvasNodeActions,
-    popover: {
-      title: t("steps.canvasNodeActions.title"),
-      description: t("steps.canvasNodeActions.description"),
-      side: "right",
-    },
-    when: () => firstRootChildId() !== null,
-    before: () => {
-      const childId = firstRootChildId();
-      if (childId) useDocumentStore.getState().select(childId);
-    },
-    skipMissingElement: true,
-  });
+  // posiciona junto al nodo, §1.4.5). Si el lienzo está vacío, `before` inserta un
+  // nodo de ejemplo (`ensureSelectableNodeForStep`) en vez de omitir el paso — un
+  // lienzo vacío ya no debe dejar SIEMPRE fuera del tour el paso que enseña a
+  // duplicar/borrar; `after` lo retira si fue este paso quien lo creó. `before`
+  // también fuerza el breakpoint "sm" (móvil, `ViewportDropdown`): en breakpoints
+  // más anchos el Inspector sidepanel puede tapar el nodo seleccionado (y por
+  // tanto el propio `NodeActionsRail`, que se posiciona junto a él) — mismo
+  // patrón snapshot-en-closure que el paso 7 usa para `sidebarTab`; `after`
+  // restaura el breakpoint que estaba activo antes del paso.
+  steps.push(
+    (() => {
+      let insertedExampleId: string | null = null;
+      let previousBreakpoint: Breakpoint = "xl";
+      return {
+        anchorKey: BUILDER42_TOUR_ANCHORS.canvasNodeActions,
+        popover: {
+          title: t("steps.canvasNodeActions.title"),
+          description: t("steps.canvasNodeActions.description"),
+          side: "right",
+        },
+        before: () => {
+          insertedExampleId = ensureSelectableNodeForStep().insertedExampleId;
+
+          const { activeBreakpoint, setActiveBreakpoint } = useDocumentStore.getState();
+          previousBreakpoint = activeBreakpoint;
+          setActiveBreakpoint("sm");
+        },
+        after: () => {
+          removeExampleNodeIfInserted(insertedExampleId);
+          insertedExampleId = null;
+          useDocumentStore.getState().setActiveBreakpoint(previousBreakpoint);
+        },
+        skipMissingElement: true,
+      } satisfies TourStep;
+    })(),
+  );
 
   // 10. pbx.inspector.tabs — InspectorForm.tsx (tabs Contenido/Estilo/Interactividad).
   // Requiere nodo seleccionado (el Inspector solo monta `InspectorForm` con un nodo
   // activo) y el panel expandido (`inspectorCollapsed = false`, §1.4.5). Se expande
   // con `writeConfig` (D40, finding B29) — nunca con `localStorage.setItem` directo,
   // que persistiría el valor sin notificar a los suscriptores del hook y dejaría el
-  // panel colapsado a tiempo para este paso.
-  steps.push({
-    anchorKey: BUILDER42_TOUR_ANCHORS.inspectorTabs,
-    popover: {
-      title: t("steps.inspectorTabs.title"),
-      description: t("steps.inspectorTabs.description"),
-      side: "left",
-    },
-    when: () => firstRootChildId() !== null,
-    before: () => {
-      const childId = firstRootChildId();
-      if (childId) useDocumentStore.getState().select(childId);
-      writeConfig("inspectorCollapsed", false);
-    },
-    skipMissingElement: true,
-  });
+  // panel colapsado a tiempo para este paso. Si el lienzo está vacío, `before` inserta
+  // un nodo de ejemplo (mismo helper que el paso 9) en vez de omitir el paso; `after`
+  // lo retira si fue este paso quien lo creó.
+  steps.push(
+    (() => {
+      let insertedExampleId: string | null = null;
+      return {
+        anchorKey: BUILDER42_TOUR_ANCHORS.inspectorTabs,
+        popover: {
+          title: t("steps.inspectorTabs.title"),
+          description: t("steps.inspectorTabs.description"),
+          side: "left",
+        },
+        before: () => {
+          insertedExampleId = ensureSelectableNodeForStep().insertedExampleId;
+          writeConfig("inspectorCollapsed", false);
+        },
+        after: () => {
+          removeExampleNodeIfInserted(insertedExampleId);
+          insertedExampleId = null;
+        },
+        skipMissingElement: true,
+      } satisfies TourStep;
+    })(),
+  );
 
   // 11. pbx.inspector.breakpoints — InspectorForm.tsx tab "style" (segmented de
   // breakpoints, montado por `VisibilityStrip`). Misma precondición que el paso
@@ -298,10 +369,13 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
   // en esa tab y el ancla de `VisibilityStrip` (montada solo en "style") no
   // existe — el defecto original que este paso no podía avanzar. `after`
   // restaura la tab que estaba activa antes del paso, mismo patrón de
-  // snapshot-en-closure que el paso 7 usa para `sidebarTab`.
+  // snapshot-en-closure que el paso 7 usa para `sidebarTab`. Si el lienzo está
+  // vacío, `before` inserta un nodo de ejemplo (mismo helper que los pasos 9/10) en
+  // vez de omitir el paso; `after` lo retira si fue este paso quien lo creó.
   steps.push(
     (() => {
       let previousInspectorTab: InspectorTab = "props";
+      let insertedExampleId: string | null = null;
       return {
         anchorKey: BUILDER42_TOUR_ANCHORS.inspectorBreakpoints,
         popover: {
@@ -309,10 +383,8 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
           description: t("steps.inspectorBreakpoints.description"),
           side: "left",
         },
-        when: () => firstRootChildId() !== null,
         before: () => {
-          const childId = firstRootChildId();
-          if (childId) useDocumentStore.getState().select(childId);
+          insertedExampleId = ensureSelectableNodeForStep().insertedExampleId;
           writeConfig("inspectorCollapsed", false);
 
           const { inspectorTab, setInspectorTab } = useDocumentStore.getState();
@@ -321,6 +393,8 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
         },
         after: () => {
           useDocumentStore.getState().setInspectorTab(previousInspectorTab);
+          removeExampleNodeIfInserted(insertedExampleId);
+          insertedExampleId = null;
         },
         skipMissingElement: true,
       } satisfies TourStep;

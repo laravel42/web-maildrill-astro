@@ -537,6 +537,23 @@ export interface CreateTourOptions {
   /** Clase CSS aplicada al popover para el tema (`.md-tour` por convención, ver theme.css). */
   popoverClass?: string;
   /**
+   * D51 — color real del overlay, reenviado directamente a la opción `overlayColor` de
+   * `driver()`. **Necesario**: `theme.css`'s `.driver-overlay { background: var(--md-tour-
+   * overlay) }` es INERTE — driver.js pinta el `fill` de su `<path>` de overlay vía JS
+   * (atributo inline, ganando siempre sobre cualquier CSS), nunca lee ese `background`. Sin
+   * esta opción, el overlay siempre se ve con el color por defecto de driver.js (`#000`),
+   * sin importar lo que el consumidor calcule para `--md-tour-overlay`. Cualquier string CSS
+   * de color válido (hex, rgb, nombre) — nunca alpha aquí: el alpha real lo controla
+   * `overlayOpacity`, por debajo. Omitir deja el default de driver.js.
+   */
+  overlayColor?: string;
+  /**
+   * D51 — opacidad real del overlay (0–1), reenviada a `overlayOpacity` de `driver()`. Ver
+   * `overlayColor` arriba para por qué esto (y no CSS) es lo único que de verdad pinta el
+   * overlay. Omitir deja el default de driver.js (`0.5`).
+   */
+  overlayOpacity?: number;
+  /**
    * Fuerza el comportamiento de animación, ignorando `prefers-reduced-motion`. Solo para tests;
    * en producción se detecta automáticamente.
    */
@@ -1143,6 +1160,24 @@ export function createTour(options: CreateTourOptions): Tour {
       // Escape above, recreate a second, competing bubble-phase listener for the same keys.
       allowKeyboardControl: false,
       overlayClickBehavior: 'close',
+      // D51 — driver.js paints the overlay's cutout SVG `fill`/`fill-opacity` from its OWN
+      // `overlayColor`/`overlayOpacity` config, set inline by JS on the `<path>` element —
+      // never from CSS. `theme.css`'s `.driver-overlay { background: var(--md-tour-overlay) }`
+      // rule (D2's original approach) is INERT: an SVG `<path>`'s fill color is controlled by
+      // its `fill` attribute/property, which driver.js sets directly and which always wins
+      // over a `background` shorthand that doesn't even apply to `<path>` in the first place.
+      // Defect reported by the user: the overlay always rendered driver.js's OWN default
+      // (`overlayColor: '#000'`, `overlayOpacity: 0.5`) regardless of what either consumer's
+      // theme.css/useEmailBuilderTour.ts computed for `--md-tour-overlay` — completely
+      // unrelated to why the cutout looked unclipped (the cutout IS geometrically correct in
+      // the SVG path; a near-black, high-opacity fill just makes the cut region and the dimmed
+      // region look identically dark, so the "hole" reads as absent even though it exists).
+      // `options.overlayColor`/`options.overlayOpacity` let each consumer forward its actual
+      // computed color (see `CreateTourOptions` doc) straight into the mechanism that really
+      // paints it. Falls back to driver.js's own defaults when omitted (undefined lets
+      // driver.js's internal default apply, exactly as before this fix).
+      overlayColor: options.overlayColor,
+      overlayOpacity: options.overlayOpacity,
       popoverClass: options.popoverClass ?? 'md-tour',
       showProgress: true,
       progressText: options.labels?.progressText,
@@ -1196,6 +1231,12 @@ export function createTour(options: CreateTourOptions): Tour {
           ? currentDriveSteps.findIndex((candidate) => candidate.data?.tourStep === tourStep)
           : -1;
         const index = resolvedIndex !== -1 ? resolvedIndex : driveSteps.indexOf(driveStep);
+        // Reanudación (§ progreso persistido): guarda el índice de CADA paso visto, no solo
+        // en el cierre — un cierre accidental (crash de pestaña, cierre del navegador) nunca
+        // pasa por `onDestroyStarted`/`dismissActiveInstance`, así que el único momento
+        // fiable para persistir "hasta dónde llegó" es aquí, en cada highlight real.
+        // Sobrescribe cualquier `lastStepIndex` previo — solo importa el más reciente.
+        persistence.saveProgress(options.tourId, index, options.version);
         emit({
           event: 'tour_step_viewed',
           tourId: options.tourId,
@@ -1284,7 +1325,25 @@ export function createTour(options: CreateTourOptions): Tour {
     // just-created `driverInstance` and releasing the generation this call claimed) without any
     // of those side effects ever happening.
     if (!isCurrentGeneration(options.tourId, generation)) return;
-    const firstActivatableIndex = await findNextActivatableIndex(0, 1, () =>
+    // Reanudación (§ progreso persistido): si el usuario ya vio este tour bajo la MISMA
+    // versión, no lo completó (un tour completado no tiene progreso a medias que reanudar —
+    // `markCompleted` limpia `lastStepIndex`), y el índice guardado sigue dentro de rango de
+    // esta corrida (`eligibleSteps`/`driveSteps` pueden haber cambiado de tamaño entre
+    // sesiones si el host cambió flags), arranca la búsqueda del primer candidato activable
+    // desde ese índice en vez de desde 0 — así un cierre accidental (Escape, click fuera, ×,
+    // cierre de pestaña) no obliga a recorrer TODOS los pasos ya vistos de nuevo. Cualquier
+    // otro caso (nunca visto, versión distinta, ya completado, índice fuera de rango) cae al
+    // comportamiento de siempre: empezar en 0.
+    const persistedState = persistence.read(options.tourId, options.version);
+    const resumeFromIndex =
+      persistedState.seen &&
+      !persistedState.completed &&
+      persistedState.lastStepIndex !== undefined &&
+      persistedState.lastStepIndex >= 0 &&
+      persistedState.lastStepIndex < driveSteps.length
+        ? persistedState.lastStepIndex
+        : 0;
+    const firstActivatableIndex = await findNextActivatableIndex(resumeFromIndex, 1, () =>
       isCurrentGeneration(options.tourId, generation),
     );
 

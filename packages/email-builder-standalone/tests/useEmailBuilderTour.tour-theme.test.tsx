@@ -23,7 +23,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
-import { useEmailBuilderTour, buildEmailBuilderTourCssVars } from '../src/tour/useEmailBuilderTour';
+import { useEmailBuilderTour, buildEmailBuilderTourCssVars, resolveEmailBuilderTourOverlayColor } from '../src/tour/useEmailBuilderTour';
 import { editorStateStore, setTour, resetDocument } from '../src/documents/editor/EditorContext';
 import type { EmailBuilderTourStepsConfig } from '../src/tour/tourSteps';
 
@@ -111,11 +111,15 @@ describe('buildEmailBuilderTourCssVars — full --md-tour-* coverage (F5)', () =
     expect(vars['--md-tour-accent']?.toLowerCase()).not.toBe('#ff441f');
   });
 
-  it('overlay is a translucent color (has an alpha component), not opaque pure black', () => {
-    const vars = buildEmailBuilderTourCssVars(createTheme());
-    expect(vars['--md-tour-overlay']).toMatch(/rgba\(/);
-    expect(vars['--md-tour-overlay']).not.toBe('#000000');
-    expect(vars['--md-tour-overlay']).not.toBe('rgb(0, 0, 0)');
+  it('overlay color/opacity (D51): resolveEmailBuilderTourOverlayColor derives a translucent scrim from text.primary, forwarded to createTour — never a CSS variable (driver.js paints its overlay <path> fill via inline JS attributes, so a CSS mapping would be inert)', () => {
+    const { overlayColor, overlayOpacity } = resolveEmailBuilderTourOverlayColor(createTheme());
+    expect(overlayColor).toBe(createTheme().palette.text.primary);
+    expect(overlayOpacity).toBeGreaterThan(0);
+    expect(overlayOpacity).toBeLessThan(1);
+    // buildEmailBuilderTourCssVars no longer produces --md-tour-overlay — asserted by the
+    // full-coverage test above via extractConsumedMdTourVars/produced comparison, but also
+    // explicit here since this is the test that used to assert the OLD variable existed.
+    expect(buildEmailBuilderTourCssVars(createTheme())).not.toHaveProperty('--md-tour-overlay');
   });
 
   it('reflects dark-mode palette values (surface/text flip) when given a dark theme', () => {
@@ -159,7 +163,6 @@ describe('useEmailBuilderTour — runtime --md-tour-* mapping on the popover wra
       expect(wrapper.style.getPropertyValue(name), name).toBe(value);
     }
     expect(wrapper.style.getPropertyValue('--md-tour-radius')).toMatch(/px$/);
-    expect(wrapper.style.getPropertyValue('--md-tour-overlay')).toMatch(/rgba\(/);
   });
 
   it('does not stamp variables onto an unrelated popover-shaped element without the md-tour class', async () => {

@@ -101,7 +101,7 @@ describe("buildBuilder42TourSteps — pbx.publish depende del adapter de publica
 });
 
 describe("buildBuilder42TourSteps — pasos dependientes de nodo seleccionado (§1.4.5)", () => {
-  it("omite canvasNodeActions/inspectorTabs/inspectorBreakpoints (when === false) con el lienzo vacío", () => {
+  it("con el lienzo vacío, before() inserta un nodo de ejemplo y lo selecciona (ya no se omiten por when())", () => {
     resetDocumentState();
     const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
     for (const anchorKey of [
@@ -109,22 +109,38 @@ describe("buildBuilder42TourSteps — pasos dependientes de nodo seleccionado (�
       BUILDER42_TOUR_ANCHORS.inspectorTabs,
       BUILDER42_TOUR_ANCHORS.inspectorBreakpoints,
     ]) {
+      resetDocumentState();
       const step = steps.find((s) => s.anchorKey === anchorKey);
       expect(step, `debería existir un paso para "${anchorKey}"`).toBeDefined();
-      expect(step!.when?.(), `when() de "${anchorKey}" debería ser false sin nodos`).toBe(false);
+      expect(step!.when, `"${anchorKey}" ya no debe declarar when()`).toBeUndefined();
+
+      step!.before?.();
+      const { selectedId, document } = useDocumentStore.getState();
+      const root = document.nodes[document.rootId]!;
+      expect(selectedId, `"${anchorKey}" debería seleccionar el nodo de ejemplo insertado`).not.toBeNull();
+      expect(root.children, `"${anchorKey}" debería insertar un hijo en el root`).toContain(selectedId);
+
+      // after() debe retirar el nodo de ejemplo que este paso insertó, dejando el
+      // lienzo tan vacío como estaba antes del paso.
+      step!.after?.();
+      const rootAfter = useDocumentStore.getState().document.nodes[useDocumentStore.getState().document.rootId]!;
+      expect(rootAfter.children ?? [], `"${anchorKey}" debería retirar el nodo de ejemplo en after()`).toEqual([]);
     }
   });
 
-  it("cuando el documento tiene un nodo hijo del root, when() es true y before() lo selecciona", () => {
+  it("cuando el documento tiene un nodo hijo del root, before() lo selecciona y after() no lo borra", () => {
     insertChildUnderRoot("child-1");
 
     const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
     const nodeActionsStep = steps.find((s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.canvasNodeActions);
     expect(nodeActionsStep).toBeDefined();
-    expect(nodeActionsStep!.when?.()).toBe(true);
 
     nodeActionsStep!.before?.();
     expect(useDocumentStore.getState().selectedId).toBe("child-1");
+
+    nodeActionsStep!.after?.();
+    const root = useDocumentStore.getState().document;
+    expect(root.nodes[root.rootId]!.children).toContain("child-1");
   });
 });
 

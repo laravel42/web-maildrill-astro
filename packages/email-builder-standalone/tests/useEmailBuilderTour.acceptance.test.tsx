@@ -116,13 +116,29 @@ describe('useEmailBuilderTour — F4 acceptance', () => {
     expect(persistence.read(TOUR_ID, 1).seen).toBe(false);
   });
 
-  it('"already seen" persists across a fresh read — a second mount does not need to start again', () => {
-    // Simulate a previous session having already marked the tour as seen at version 1.
+  it('"seen but not completed" persists across a fresh read — the mount effect still auto-starts to resume (§ progreso persistido)', () => {
+    // Simulate a previous session having started the tour (marked "seen") at version 1
+    // but closing before completing it (Escape/overlay/×/tab close — never reaching
+    // onDoneClick, so `completed` stays false). The auto-start effect's own gate
+    // (`!(state.seen && state.completed)`) must still allow a fresh mount to call
+    // `tour.start()` again — that's what lets `createTour()`'s own resume-from-
+    // `lastStepIndex` logic (`persistence.ts`) ever run. Only `seen && completed`
+    // (the tour actually finished) should suppress a further auto-start.
     const persistence = createLocalStoragePersistence(TOUR_STORAGE_PREFIX);
     persistence.markSeen(TOUR_ID, 1);
 
     const stateAfterReload = createLocalStoragePersistence(TOUR_STORAGE_PREFIX).read(TOUR_ID, 1);
     expect(stateAfterReload.seen).toBe(true);
+    expect(stateAfterReload.completed).toBe(false);
+  });
+
+  it('a tour marked completed does not report pending progress (mirrors the auto-start gate)', () => {
+    const persistence = createLocalStoragePersistence(TOUR_STORAGE_PREFIX);
+    persistence.markCompleted(TOUR_ID, 1);
+
+    const state = createLocalStoragePersistence(TOUR_STORAGE_PREFIX).read(TOUR_ID, 1);
+    expect(state.seen).toBe(true);
+    expect(state.completed).toBe(true);
   });
 
   it('bumping the tour version re-offers it to someone who already saw a previous version', () => {

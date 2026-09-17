@@ -15,6 +15,16 @@ export interface TourPersistenceState {
   completed: boolean;
   /** Versión del tour bajo la que se marcó `seen`/`completed`. */
   version: number;
+  /**
+   * Índice (0-based, sobre los `driveSteps` elegibles de la corrida que lo guardó) del
+   * último paso que el usuario llegó a VER (`onHighlighted`) antes de que el tour se
+   * cerrara sin completarse — Escape, click en el overlay, ×, recarga de página. `undefined`
+   * si el tour nunca arrancó, o si ya se completó (`markCompleted` lo limpia: un tour
+   * completado no tiene "progreso a medias" que reanudar). Permite que `start()` reanude
+   * desde ahí en vez de reiniciar siempre en el paso 0 cuando el usuario vuelve a abrir el
+   * editor tras un cierre accidental.
+   */
+  lastStepIndex?: number;
 }
 
 const DEFAULT_STATE: TourPersistenceState = { seen: false, completed: false, version: 0 };
@@ -28,8 +38,14 @@ export interface TourPersistence {
   read(tourId: string, currentVersion: number): TourPersistenceState;
   /** Marca el tour como visto (arrancado), bajo `currentVersion`. */
   markSeen(tourId: string, currentVersion: number): void;
-  /** Marca el tour como completado (llegó al final), bajo `currentVersion`. */
+  /** Marca el tour como completado (llegó al final), bajo `currentVersion`. Limpia `lastStepIndex` — un tour completado no tiene progreso a medias que reanudar. */
   markCompleted(tourId: string, currentVersion: number): void;
+  /**
+   * Guarda `stepIndex` como el último paso visto, bajo `currentVersion` — llamado en cada
+   * `tour_step_viewed` (ver `createTour.ts`'s `onHighlighted`). Sobrescribe cualquier
+   * `lastStepIndex` previo: solo importa el más reciente.
+   */
+  saveProgress(tourId: string, stepIndex: number, currentVersion: number): void;
   /** Borra el estado persistido de `tourId` (útil para "ver de nuevo" / testing). */
   reset(tourId: string): void;
 }
@@ -64,11 +80,25 @@ export function createLocalStoragePersistence(prefix: string): TourPersistence {
       write(storage, memoryFallback, key(tourId), state);
     },
     markCompleted(tourId, currentVersion) {
+      // Un tour completado no tiene "progreso a medias" que reanudar — limpia
+      // `lastStepIndex` explícitamente (en vez de dejar el valor del `read()` previo) para que
+      // un futuro `reset()` + relanzamiento no herede un índice de una corrida ya terminada.
+      const { lastStepIndex, ...rest } = this.read(tourId, currentVersion);
+      void lastStepIndex;
       const state: TourPersistenceState = {
-        ...this.read(tourId, currentVersion),
+        ...rest,
         seen: true,
         completed: true,
         version: currentVersion,
+      };
+      write(storage, memoryFallback, key(tourId), state);
+    },
+    saveProgress(tourId, stepIndex, currentVersion) {
+      const state: TourPersistenceState = {
+        ...this.read(tourId, currentVersion),
+        seen: true,
+        version: currentVersion,
+        lastStepIndex: stepIndex,
       };
       write(storage, memoryFallback, key(tourId), state);
     },
