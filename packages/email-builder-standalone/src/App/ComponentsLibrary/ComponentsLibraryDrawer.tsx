@@ -324,15 +324,18 @@ function LibraryCard({
           src={thumbnailUrl}
           alt={item.name}
           loading={thumbnailPending}
-          // Point 8 (EMAIL_BUILDER_TASKS.md): Templates previews were too
-          // small — double the default 120px height for that category only.
-          // Homologado con Builder42 (`.pbx-palette__item`, min-height
-          // 76px): ese 76px es el alto TOTAL del tile (icono + label +
-          // padding + gap), no solo la zona del ícono. Con el padding
-          // (10px×2=20px), border (2px) y gap (8px) de este componente,
-          // la zona del ícono debe rondar ~28-30px para que la card
-          // completa (icono + label ~18px) sume ~76px.
-          height={category === 'template' ? 240 : 28}
+          // Caja del preview. Para sections/layouts es la caja del icono
+          // diseñado: 48px (COMPONENT_ICONS_PLAN.md §20) — escala exacta
+          // 2× sobre el `viewBox 24`, que es lo que hace nítido el trazo
+          // y duplica el tamaño absoluto del detalle. La card pasa de
+          // ~76px a ~96px de alto (48 + label ~18 + padding 20 + gap 8 +
+          // border 2), desviación consciente del `min-height: 76px` de
+          // `.pbx-palette__item`, que está calibrado para glifos.
+          //
+          // La rama `template` es inalcanzable: `LibraryCard` retorna
+          // antes con `.eb-template-card` (PNG propio) para esa
+          // categoría. Se deja el 240 documentado como tal.
+          height={category === 'template' ? 240 : 48}
           placeholderText={t('componentsLibrary.thumbnail.placeholder', 'No preview')}
           // Draft icon review (COMPONENT_ICONS_PLAN.md, Tanda 1) — only
           // renders when this item's id has a hand-designed icon; falls
@@ -560,7 +563,10 @@ function CategoryListingBody({
         <LibrarySkeletonGrid
           columns={columns ?? 2}
           count={4}
-          thumbnailHeight={category === 'template' ? 168 : 120}
+          // Sections: misma altura que la caja real del icono (48px), no
+          // 120 — el 120 venía del thumbnail PNG original y provocaba
+          // salto de layout al pasar de skeleton a card.
+          thumbnailHeight={category === 'template' ? 168 : 48}
         />
       );
     }
@@ -721,9 +727,15 @@ function SectionsCategoryContent({
       category="section"
       loading={loading}
       error={error}
-      // Homologado con Builder42 (`.pbx-palette`, sidebar.css:
-      // `grid-template-columns: repeat(3, 1fr)`) — antes 2 columnas.
-      columns={3}
+      // 2 columnas (COMPONENT_ICONS_PLAN.md §20). Antes 3, homologado
+      // con `.pbx-palette` de Builder42 (`repeat(3, 1fr)`), pero ese
+      // grid es para tiles de TIPO DE BLOQUE (un glifo + una palabra).
+      // Las cards de secciones llevan un diagrama de layout que necesita
+      // caja de 48px para leerse: a 3 columnas la card tiene ~79px de
+      // contenido, a 2 sube a ~128px (drawer 312 − px:1.5×2 = 288, gap
+      // 4px). El grid de bloques base sigue en 2 columnas
+      // (BlocksCategoryContent.tsx), así que ambos coinciden.
+      columns={2}
       groupLabelKey="componentsLibrary.sectionRole"
       search={search}
       sort={sort}

@@ -53,15 +53,45 @@ export type SectionIconEntry = {
   svg: React.ReactNode;
 };
 
+/**
+ * Stroke system (COMPONENT_ICONS_PLAN.md §19/§20) — TWO weights only.
+ *
+ * Why: these are layout *diagrams* (up to 12 shapes on a 24×24 grid), not
+ * 3-5 stroke glyphs. The set previously used the Lucide default
+ * (`strokeWidth: 2`) plus 10 ad-hoc weights (1, 1.2, 1.6, 1.8, 2.4, 2.5,
+ * 2.6, 3, 3.2, 4). Measured on the old render (28px box, viewBox 24 →
+ * 1 unit = 1.17px) that base stroke was **2.33px**, so any two parallel
+ * strokes closer than 2 units overlapped: 50 of the 98 icons read as a
+ * blob. Halving the base to 1 unit is what actually separates them.
+ *
+ * Pixel math with the current box (48px, `LibraryCardThumbnail`):
+ * scale = 48/24 = 2, so 1 unit = 2px exactly and the 0.5-unit grid the
+ * whole set is authored on lands on whole pixels → axis-aligned strokes
+ * are crisp instead of antialiased across two rows (which is what a
+ * non-integer 1.1667 scale produced at 28px).
+ *
+ *   SW_HAIRLINE (1u → 2px)  — everything structural and every detail.
+ *   SW_ACCENT   (2u → 4px)  — the emphasized element only: accent bar,
+ *                             highlighted tier border, "big number"
+ *                             line, category header, wordmark slab.
+ *                             Used sparingly, and never on a shape
+ *                             thinner than ~3u (the stroke would fill
+ *                             it). If an icon needs three levels,
+ *                             simplify the geometry instead.
+ *
+ * Emphasis beyond those two levels is expressed with **geometry and
+ * `fillOpacity`**, not with a third stroke weight. The old set had 11
+ * weights; the 10 non-default ones collapsed into these two (values
+ * below the old base → hairline, values above it → accent).
+ */
+export const SW_HAIRLINE = 1;
+export const SW_ACCENT = 2;
+
 const strokeProps = {
   viewBox: '0 0 24 24',
   fill: 'none',
   stroke: 'currentColor',
-  // Corregido: `ComponentTypeIcon.tsx` (Builder42) NO pasa `strokeWidth`
-  // explícito a sus iconos Lucide (`.pbx-palette__icon`) — usan el
-  // default real de Lucide, que es `strokeWidth={2}`, no 1.25/1.5 como
-  // se había asumido antes sin confirmar contra el código fuente.
-  strokeWidth: 2,
+  strokeWidth: SW_HAIRLINE,
   strokeLinecap: 'round' as const,
   strokeLinejoin: 'round' as const,
 };
@@ -73,8 +103,13 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'banner',
     svg: (
       <svg {...strokeProps}>
-        <rect x={1.5} y={9.5} width={21} height={5} rx={0.8} />
-        <line x1={4} y1={12} x2={20} y2={12} />
+        {/* Franja a sangre completa, sin radio — el único rasgo que la
+            separa de #2 (misma estructura `Container > NotionText`,
+            mismo `backgroundColor: #111827`; en el dato solo difieren
+            en `mobilePadding`, invisible a este tamaño). El relleno
+            tenue representa ese fondo oscuro. */}
+        <rect x={1.5} y={9.5} width={21} height={5} fill="currentColor" fillOpacity={0.08} />
+        <line x1={5} y1={12} x2={19} y2={12} />
       </svg>
     ),
   },
@@ -84,8 +119,10 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'banner',
     svg: (
       <svg {...strokeProps}>
-        <rect x={3.5} y={8.5} width={17} height={7} rx={1.2} />
-        <line x1={6} y1={12} x2={18} y2={12} />
+        {/* Card con margen lateral y esquinas redondeadas — contraparte
+            de la franja a sangre de #1. */}
+        <rect x={4} y={8.5} width={16} height={7} rx={1.5} fill="currentColor" fillOpacity={0.08} />
+        <line x1={7} y1={12} x2={17} y2={12} />
       </svg>
     ),
   },
@@ -95,11 +132,17 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'banner',
     svg: (
       <svg {...strokeProps}>
-        <rect x={3} y={3} width={18} height={18} rx={1.5} />
-        <path d="M3 3h5v2.5a1 1 0 0 1-1 1H3z" strokeWidth={1.2} />
-        <line x1={5.5} y1={11.5} x2={16} y2={11.5} />
-        <line x1={5.5} y1={14} x2={14} y2={14} />
-        <rect x={5.5} y={16.8} width={7} height={2.8} rx={1} />
+        {/* Esquinas opuestas redondeadas (top-left + bottom-right), las
+            otras dos en escuadra — es el `shape` real del bloque:
+            `{topLeft: 24, topRight: 0, bottomLeft: 0, bottomRight: 24}`.
+            Mismo footprint que #4 (Promo CTA) a propósito: lo único que
+            los distingue son las esquinas y el botón fullWidth. */}
+        <path d="M5.5 1.5H22.5V18.5a4 4 0 0 1-4 4H1.5V5.5a4 4 0 0 1 4-4z" />
+        {/* Badge en la esquina (no centrado como en #4). */}
+        <rect x={4.5} y={5} width={5} height={2} rx={1} />
+        <line x1={4.5} y1={12} x2={19.5} y2={12} />
+        {/* Button `fullWidth: true` — abarca todo el ancho útil. */}
+        <rect x={4.5} y={16} width={15} height={3} rx={1} />
       </svg>
     ),
   },
@@ -109,11 +152,16 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'banner',
     svg: (
       <svg {...strokeProps}>
-        <rect x={3} y={3} width={18} height={18} rx={1.5} />
-        <rect x={8.5} y={5.5} width={7} height={2.5} rx={1.2} />
-        <line x1={5.5} y1={11.5} x2={18.5} y2={11.5} />
-        <line x1={5.5} y1={14} x2={15.5} y2={14} />
-        <rect x={8.5} y={16.8} width={7} height={2.8} rx={1} />
+        {/* Card con radio uniforme en las 4 esquinas (`shape` real:
+            16 en las cuatro) — contraste directo con las esquinas
+            asimétricas de #3. */}
+        <rect x={1.5} y={1.5} width={21} height={21} rx={2.5} />
+        {/* Badge centrado, alineado con el botón. */}
+        <rect x={8.5} y={5} width={7} height={2.5} rx={1} />
+        <line x1={5} y1={12} x2={19} y2={12} />
+        {/* Button `fullWidth: false` — pill centrado, más angosto que la
+            card, frente al botón a todo el ancho de #3. */}
+        <rect x={8.5} y={16} width={7} height={3} rx={1.5} />
       </svg>
     ),
   },
@@ -123,10 +171,14 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'banner',
     svg: (
       <svg {...strokeProps}>
-        <rect x={2} y={8} width={20} height={8} rx={1} />
-        <line x1={4.5} y1={11} x2={11} y2={11} />
-        <line x1={4.5} y1={13.5} x2={9} y2={13.5} />
-        <rect x={14.5} y={10.5} width={5.5} height={3} rx={0.8} />
+        {/* Banda oscura a sangre con un split real de 2 columnas — es el
+            único `banner` respaldado por un `ColumnsContainer`
+            (`fixedWidths: [60, 40]`): texto a la izquierda, chip de
+            precio/CTA a la derecha, en la misma fila. */}
+        <rect x={1.5} y={6.5} width={21} height={11} fill="currentColor" fillOpacity={0.08} />
+        <line x1={4} y1={10} x2={12} y2={10} />
+        <line x1={4} y1={14} x2={9.5} y2={14} />
+        <rect x={15} y={10} width={5.5} height={4} rx={1} />
       </svg>
     ),
   },
@@ -157,7 +209,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <line x1={15} y1={7} x2={19.5} y2={7} />
         <rect x={4.5} y={16} width={4.5} height={2.5} rx={0.6} />
         <rect x={15} y={16} width={4.5} height={2.5} rx={0.6} />
-        <path d="M11 2v20" strokeWidth={1} strokeDasharray="1.5 1.5" />
+        <path d="M11 2v20" strokeDasharray="1.5 1.5" />
       </svg>
     ),
   },
@@ -170,9 +222,9 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <rect x={2.5} y={3.5} width={8.5} height={17} rx={1} />
         <rect x={13} y={3.5} width={8.5} height={17} rx={1} />
         <rect x={4} y={5} width={5.5} height={6} rx={0.6} />
-        <path d="M4.8 9.2l1.5-2 1.2 1.5 1.4-1.8" strokeWidth={1.2} />
+        <path d="M4.8 9.2l1.5-2 1.2 1.5 1.4-1.8" />
         <rect x={14.5} y={5} width={5.5} height={6} rx={0.6} />
-        <path d="M15.3 9.2l1.5-2 1.2 1.5 1.4-1.8" strokeWidth={1.2} />
+        <path d="M15.3 9.2l1.5-2 1.2 1.5 1.4-1.8" />
         <line x1={4.5} y1={14.5} x2={9} y2={14.5} />
         <line x1={15} y1={14.5} x2={19.5} y2={14.5} />
       </svg>
@@ -201,9 +253,9 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={2.5} y={7.5} width={19} height={13} rx={1} />
-        {/* Acento 2x la base (antes 3 sobre base 1.5, ahora 4 sobre base 2 —
-            misma proporción relativa tras corregir strokeWidth a 2). */}
-        <line x1={2.5} y1={8.3} x2={21.5} y2={8.3} strokeWidth={4} />
+        {/* Acento = 2× la hairline (SW_ACCENT) — es el borde superior
+            real del componente, no un nivel de detalle. */}
+        <line x1={2.5} y1={8.3} x2={21.5} y2={8.3} strokeWidth={SW_ACCENT} />
         <line x1={9.5} y1={10.5} x2={9.5} y2={20.5} />
         <line x1={15.5} y1={10.5} x2={15.5} y2={20.5} />
         <line x1={2.5} y1={13.5} x2={21.5} y2={13.5} />
@@ -251,7 +303,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <line x1={7} y1={8} x2={17} y2={8} />
         <line x1={8.5} y1={11} x2={15.5} y2={11} />
         <rect x={8.5} y={13.5} width={7} height={3} rx={1} />
-        <line x1={7.5} y1={19} x2={16.5} y2={19} strokeWidth={1} />
+        <line x1={7.5} y1={19} x2={16.5} y2={19} />
       </svg>
     ),
   },
@@ -261,7 +313,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'cta',
     svg: (
       <svg {...strokeProps}>
-        <rect x={1.5} y={1.5} width={21} height={21} rx={1} strokeWidth={1} />
+        <rect x={1.5} y={1.5} width={21} height={21} rx={1} />
         <rect x={3.5} y={3.5} width={17} height={17} rx={2.5} />
         <rect x={9} y={6.5} width={6} height={2} rx={1} />
         <line x1={7} y1={12} x2={17} y2={12} />
@@ -275,11 +327,11 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'cta',
     svg: (
       <svg {...strokeProps}>
-        <rect x={2} y={3} width={20} height={18} rx={1.5} strokeWidth={1} />
+        <rect x={2} y={3} width={20} height={18} rx={1.5} />
         <rect x={4.5} y={6} width={15} height={12} rx={1.8} />
         <line x1={7.5} y1={10} x2={16.5} y2={10} />
         <rect x={8.5} y={13} width={7} height={2.6} rx={1} />
-        <line x1={8} y1={17} x2={16} y2={17} strokeWidth={1} />
+        <line x1={8} y1={17} x2={16} y2={17} />
       </svg>
     ),
   },
@@ -291,9 +343,9 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <line x1={8} y1={2.5} x2={16} y2={2.5} />
         <line x1={2.5} y1={6} x2={10} y2={6} />
-        <line x1={2.5} y1={8.5} x2={8} y2={8.5} strokeWidth={1} />
+        <line x1={2.5} y1={8.5} x2={8} y2={8.5} />
         <line x1={2.5} y1={12} x2={10} y2={12} />
-        <line x1={2.5} y1={14.5} x2={8} y2={14.5} strokeWidth={1} />
+        <line x1={2.5} y1={14.5} x2={8} y2={14.5} />
         <rect x={2.5} y={17.5} width={19} height={5} rx={1.2} />
       </svg>
     ),
@@ -317,12 +369,12 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'faq',
     svg: (
       <svg {...strokeProps}>
-        <line x1={2.5} y1={3} x2={8.5} y2={3} strokeWidth={2.5} />
+        <line x1={2.5} y1={3} x2={8.5} y2={3} strokeWidth={SW_ACCENT} />
         <line x1={2.5} y1={6.5} x2={11} y2={6.5} />
-        <line x1={2.5} y1={9} x2={9} y2={9} strokeWidth={1} />
-        <line x1={2.5} y1={13} x2={8.5} y2={13} strokeWidth={2.5} />
+        <line x1={2.5} y1={9} x2={9} y2={9} />
+        <line x1={2.5} y1={13} x2={8.5} y2={13} strokeWidth={SW_ACCENT} />
         <line x1={2.5} y1={16.5} x2={11} y2={16.5} />
-        <line x1={2.5} y1={19} x2={9} y2={19} strokeWidth={1} />
+        <line x1={2.5} y1={19} x2={9} y2={19} />
       </svg>
     ),
   },
@@ -334,11 +386,11 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <line x1={7} y1={2.5} x2={17} y2={2.5} />
         <line x1={2.5} y1={6.5} x2={11} y2={6.5} />
-        <line x1={2.5} y1={9} x2={9} y2={9} strokeWidth={1} />
-        <line x1={2.5} y1={11.5} x2={21.5} y2={11.5} strokeWidth={1} />
+        <line x1={2.5} y1={9} x2={9} y2={9} />
+        <line x1={2.5} y1={11.5} x2={21.5} y2={11.5} />
         <line x1={2.5} y1={14} x2={11} y2={14} />
-        <line x1={2.5} y1={16.5} x2={9} y2={16.5} strokeWidth={1} />
-        <line x1={2.5} y1={19} x2={21.5} y2={19} strokeWidth={1} />
+        <line x1={2.5} y1={16.5} x2={9} y2={16.5} />
+        <line x1={2.5} y1={19} x2={21.5} y2={19} />
       </svg>
     ),
   },
@@ -350,13 +402,13 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <line x1={8} y1={2.2} x2={16} y2={2.2} />
         <line x1={2.5} y1={6} x2={9.5} y2={6} />
-        <line x1={2.5} y1={8.3} x2={7.5} y2={8.3} strokeWidth={1} />
+        <line x1={2.5} y1={8.3} x2={7.5} y2={8.3} />
         <line x1={2.5} y1={12} x2={9.5} y2={12} />
-        <line x1={2.5} y1={14.3} x2={7.5} y2={14.3} strokeWidth={1} />
+        <line x1={2.5} y1={14.3} x2={7.5} y2={14.3} />
         <line x1={14.5} y1={6} x2={21.5} y2={6} />
-        <line x1={14.5} y1={8.3} x2={19.5} y2={8.3} strokeWidth={1} />
+        <line x1={14.5} y1={8.3} x2={19.5} y2={8.3} />
         <line x1={14.5} y1={12} x2={21.5} y2={12} />
-        <line x1={14.5} y1={14.3} x2={19.5} y2={14.3} strokeWidth={1} />
+        <line x1={14.5} y1={14.3} x2={19.5} y2={14.3} />
       </svg>
     ),
   },
@@ -372,13 +424,13 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <line x1={9} y1={2.5} x2={15} y2={2.5} />
         <circle cx={4.5} cy={7} r={1.6} />
         <line x1={2.5} y1={11} x2={6.5} y2={11} />
-        <line x1={2.5} y1={13.3} x2={6.5} y2={13.3} strokeWidth={1} />
+        <line x1={2.5} y1={13.3} x2={6.5} y2={13.3} />
         <circle cx={12} cy={7} r={1.6} />
         <line x1={9.5} y1={11} x2={14.5} y2={11} />
-        <line x1={9.5} y1={13.3} x2={14.5} y2={13.3} strokeWidth={1} />
+        <line x1={9.5} y1={13.3} x2={14.5} y2={13.3} />
         <circle cx={19.5} cy={7} r={1.6} />
         <line x1={17.5} y1={11} x2={21.5} y2={11} />
-        <line x1={17.5} y1={13.3} x2={21.5} y2={13.3} strokeWidth={1} />
+        <line x1={17.5} y1={13.3} x2={21.5} y2={13.3} />
       </svg>
     ),
   },
@@ -390,9 +442,9 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <rect x={2} y={3.5} width={8.5} height={6} rx={1.2} />
         <line x1={12.5} y1={5.5} x2={21.5} y2={5.5} />
-        <line x1={12.5} y1={7.8} x2={19} y2={7.8} strokeWidth={1} />
+        <line x1={12.5} y1={7.8} x2={19} y2={7.8} />
         <line x1={2} y1={14.5} x2={10.5} y2={14.5} />
-        <line x1={2} y1={16.8} x2={8.5} y2={16.8} strokeWidth={1} />
+        <line x1={2} y1={16.8} x2={8.5} y2={16.8} />
         <rect x={13} y={12.5} width={8.5} height={6} rx={1.2} />
       </svg>
     ),
@@ -422,11 +474,11 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <line x1={9} y1={2.5} x2={15} y2={2.5} />
         <circle cx={6} cy={7} r={1.4} />
         <line x1={9.5} y1={6.3} x2={13.5} y2={6.3} />
-        <line x1={9.5} y1={8.3} x2={13} y2={8.3} strokeWidth={1} />
+        <line x1={9.5} y1={8.3} x2={13} y2={8.3} />
         <circle cx={18} cy={7} r={1.4} />
         <circle cx={6} cy={15} r={1.4} />
         <line x1={9.5} y1={14.3} x2={13.5} y2={14.3} />
-        <line x1={9.5} y1={16.3} x2={13} y2={16.3} strokeWidth={1} />
+        <line x1={9.5} y1={16.3} x2={13} y2={16.3} />
         <circle cx={18} cy={15} r={1.4} />
       </svg>
     ),
@@ -438,14 +490,14 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <line x1={9} y1={2.5} x2={15} y2={2.5} />
-        <path d="M2.5 6.5l1 1 1.8-2" strokeWidth={1.6} />
-        <line x1={6.5} y1={6.5} x2={11} y2={6.5} strokeWidth={1} />
-        <path d="M2.5 11.5l1 1 1.8-2" strokeWidth={1.6} />
-        <line x1={6.5} y1={11.5} x2={11} y2={11.5} strokeWidth={1} />
-        <path d="M13 6.5l1 1 1.8-2" strokeWidth={1.6} />
-        <line x1={17} y1={6.5} x2={21.5} y2={6.5} strokeWidth={1} />
-        <path d="M13 11.5l1 1 1.8-2" strokeWidth={1.6} />
-        <line x1={17} y1={11.5} x2={21.5} y2={11.5} strokeWidth={1} />
+        <path d="M2.5 6.5l1 1 1.8-2" />
+        <line x1={6.5} y1={6.5} x2={11} y2={6.5} />
+        <path d="M2.5 11.5l1 1 1.8-2" />
+        <line x1={6.5} y1={11.5} x2={11} y2={11.5} />
+        <path d="M13 6.5l1 1 1.8-2" />
+        <line x1={17} y1={6.5} x2={21.5} y2={6.5} />
+        <path d="M13 11.5l1 1 1.8-2" />
+        <line x1={17} y1={11.5} x2={21.5} y2={11.5} />
       </svg>
     ),
   },
@@ -457,11 +509,11 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <rect x={2} y={2} width={20} height={20} rx={1.5} fill="currentColor" fillOpacity={0.08} />
         <line x1={9} y1={5.5} x2={15} y2={5.5} />
-        <line x1={4.5} y1={10} x2={8} y2={10} strokeWidth={1} />
-        <line x1={10} y1={10} x2={13.5} y2={10} strokeWidth={1} />
-        <line x1={15.5} y1={10} x2={19} y2={10} strokeWidth={1} />
-        <line x1={2.5} y1={15} x2={21.5} y2={15} strokeWidth={1} />
-        <line x1={6} y1={18} x2={18} y2={18} strokeWidth={1} />
+        <line x1={4.5} y1={10} x2={8} y2={10} />
+        <line x1={10} y1={10} x2={13.5} y2={10} />
+        <line x1={15.5} y1={10} x2={19} y2={10} />
+        <line x1={2.5} y1={15} x2={21.5} y2={15} />
+        <line x1={6} y1={18} x2={18} y2={18} />
       </svg>
     ),
   },
@@ -475,10 +527,10 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <rect x={2.5} y={5.5} width={5.5} height={3.4} rx={1.7} />
         <rect x={9.2} y={5.5} width={5.5} height={3.4} rx={1.7} />
         <rect x={16} y={5.5} width={5.5} height={3.4} rx={1.7} />
-        <line x1={2.5} y1={12.5} x2={21.5} y2={12.5} strokeWidth={1} />
-        <line x1={4.5} y1={16} x2={9} y2={16} strokeWidth={1} />
-        <line x1={14} y1={16} x2={18.5} y2={16} strokeWidth={1} />
-        <line x1={6} y1={19.5} x2={18} y2={19.5} strokeWidth={1} />
+        <line x1={2.5} y1={12.5} x2={21.5} y2={12.5} />
+        <line x1={4.5} y1={16} x2={9} y2={16} />
+        <line x1={14} y1={16} x2={18.5} y2={16} />
+        <line x1={6} y1={19.5} x2={18} y2={19.5} />
       </svg>
     ),
   },
@@ -489,11 +541,11 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <line x1={9} y1={5.5} x2={15} y2={5.5} />
-        <line x1={4.5} y1={10} x2={8} y2={10} strokeWidth={1} />
-        <line x1={10} y1={10} x2={13.5} y2={10} strokeWidth={1} />
-        <line x1={15.5} y1={10} x2={19} y2={10} strokeWidth={1} />
-        <line x1={2.5} y1={15} x2={21.5} y2={15} strokeWidth={1} />
-        <line x1={6} y1={18} x2={18} y2={18} strokeWidth={1} />
+        <line x1={4.5} y1={10} x2={8} y2={10} />
+        <line x1={10} y1={10} x2={13.5} y2={10} />
+        <line x1={15.5} y1={10} x2={19} y2={10} />
+        <line x1={2.5} y1={15} x2={21.5} y2={15} />
+        <line x1={6} y1={18} x2={18} y2={18} />
       </svg>
     ),
   },
@@ -506,10 +558,10 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <line x1={5} y1={4.5} x2={9} y2={4.5} />
         <line x1={10.5} y1={4.5} x2={14} y2={4.5} />
         <line x1={15.5} y1={4.5} x2={19} y2={4.5} />
-        <line x1={5.5} y1={10} x2={9.5} y2={10} strokeWidth={1} />
-        <line x1={14.5} y1={10} x2={18.5} y2={10} strokeWidth={1} />
-        <line x1={2.5} y1={15} x2={21.5} y2={15} strokeWidth={1} />
-        <line x1={6} y1={18.5} x2={18} y2={18.5} strokeWidth={1} />
+        <line x1={5.5} y1={10} x2={9.5} y2={10} />
+        <line x1={14.5} y1={10} x2={18.5} y2={10} />
+        <line x1={2.5} y1={15} x2={21.5} y2={15} />
+        <line x1={6} y1={18.5} x2={18} y2={18.5} />
       </svg>
     ),
   },
@@ -520,7 +572,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <line x1={8} y1={10} x2={16} y2={10} />
-        <line x1={6} y1={14} x2={18} y2={14} strokeWidth={1} />
+        <line x1={6} y1={14} x2={18} y2={14} />
       </svg>
     ),
   },
@@ -539,9 +591,9 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <rect x={3} y={5.5} width={4} height={4} rx={0.6} />
         <rect x={10} y={5.5} width={4} height={4} rx={0.6} />
         <rect x={17} y={5.5} width={4} height={4} rx={0.6} />
-        <line x1={3} y1={14.5} x2={6.5} y2={14.5} strokeWidth={1} />
-        <line x1={10} y1={14.5} x2={13.5} y2={14.5} strokeWidth={1} />
-        <line x1={17} y1={14.5} x2={20.5} y2={14.5} strokeWidth={1} />
+        <line x1={3} y1={14.5} x2={6.5} y2={14.5} />
+        <line x1={10} y1={14.5} x2={13.5} y2={14.5} />
+        <line x1={17} y1={14.5} x2={20.5} y2={14.5} />
         <rect x={3} y={16.8} width={4} height={2} rx={0.6} />
         <rect x={10} y={16.8} width={4} height={2} rx={0.6} />
         <rect x={17} y={16.8} width={4} height={2} rx={0.6} />
@@ -577,9 +629,9 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <rect x={3} y={5.5} width={4} height={4} rx={0.6} />
         <rect x={10} y={5.5} width={4} height={4} rx={0.6} />
         <rect x={17} y={5.5} width={4} height={4} rx={0.6} />
-        <line x1={3} y1={14.5} x2={6.5} y2={14.5} strokeWidth={1} />
-        <line x1={10} y1={14.5} x2={13.5} y2={14.5} strokeWidth={1} />
-        <line x1={17} y1={14.5} x2={20.5} y2={14.5} strokeWidth={1} />
+        <line x1={3} y1={14.5} x2={6.5} y2={14.5} />
+        <line x1={10} y1={14.5} x2={13.5} y2={14.5} />
+        <line x1={17} y1={14.5} x2={20.5} y2={14.5} />
         <rect x={3} y={16.6} width={4} height={2.4} rx={1.2} />
         <rect x={10} y={16.6} width={4} height={2.4} rx={1.2} />
         <rect x={17} y={16.6} width={4} height={2.4} rx={1.2} />
@@ -592,7 +644,15 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'gallery',
     svg: (
       <svg {...strokeProps}>
-        <rect x={2} y={2} width={20} height={10.5} rx={1.4} fill="currentColor" fillOpacity={0.08} />
+        <rect
+          x={2}
+          y={2}
+          width={20}
+          height={10.5}
+          rx={1.4}
+          fill="currentColor"
+          fillOpacity={0.08}
+        />
         <line x1={8} y1={6} x2={16} y2={6} />
         <rect x={9.5} y={9} width={5} height={2.2} rx={1} />
         <rect x={2} y={15} width={5.7} height={6.5} rx={1} />
@@ -608,11 +668,11 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={2} y={3} width={9} height={9} rx={1.2} />
-        <line x1={2.5} y1={14.5} x2={10.5} y2={14.5} strokeWidth={1} />
-        <line x1={2.5} y1={17} x2={7.5} y2={17} strokeWidth={1} />
+        <line x1={2.5} y1={14.5} x2={10.5} y2={14.5} />
+        <line x1={2.5} y1={17} x2={7.5} y2={17} />
         <rect x={13} y={3} width={9} height={9} rx={1.2} />
-        <line x1={13.5} y1={14.5} x2={21.5} y2={14.5} strokeWidth={1} />
-        <line x1={13.5} y1={17} x2={18.5} y2={17} strokeWidth={1} />
+        <line x1={13.5} y1={14.5} x2={21.5} y2={14.5} />
+        <line x1={13.5} y1={17} x2={18.5} y2={17} />
       </svg>
     ),
   },
@@ -623,8 +683,8 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={8.5} y={6} width={7} height={6} rx={1} />
-        <line x1={6} y1={16.5} x2={18} y2={16.5} strokeWidth={1} />
-        <line x1={2.5} y1={20.5} x2={21.5} y2={20.5} strokeWidth={1} />
+        <line x1={6} y1={16.5} x2={18} y2={16.5} />
+        <line x1={2.5} y1={20.5} x2={21.5} y2={20.5} />
       </svg>
     ),
   },
@@ -636,7 +696,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <rect x={2.5} y={9} width={7.5} height={6} rx={1} />
         <rect x={14.5} y={10} width={7} height={4} rx={1} />
-        <line x1={2.5} y1={20.5} x2={21.5} y2={20.5} strokeWidth={1} />
+        <line x1={2.5} y1={20.5} x2={21.5} y2={20.5} />
       </svg>
     ),
   },
@@ -647,10 +707,10 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={2.5} y={9.5} width={7} height={5} rx={1} />
-        <line x1={13.5} y1={10.5} x2={16.5} y2={10.5} strokeWidth={1} />
-        <line x1={17.5} y1={10.5} x2={19.5} y2={10.5} strokeWidth={1} />
-        <line x1={20.5} y1={10.5} x2={21.5} y2={10.5} strokeWidth={1} />
-        <line x1={2.5} y1={20.5} x2={21.5} y2={20.5} strokeWidth={1} />
+        <line x1={13.5} y1={10.5} x2={16.5} y2={10.5} />
+        <line x1={17.5} y1={10.5} x2={19.5} y2={10.5} />
+        <line x1={20.5} y1={10.5} x2={21.5} y2={10.5} />
+        <line x1={2.5} y1={20.5} x2={21.5} y2={20.5} />
       </svg>
     ),
   },
@@ -660,9 +720,9 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'header',
     svg: (
       <svg {...strokeProps}>
-        <line x1={6} y1={5.5} x2={18} y2={5.5} strokeWidth={1} />
+        <line x1={6} y1={5.5} x2={18} y2={5.5} />
         <rect x={8.5} y={9.5} width={7} height={6} rx={1} />
-        <line x1={2.5} y1={20.5} x2={21.5} y2={20.5} strokeWidth={1} />
+        <line x1={2.5} y1={20.5} x2={21.5} y2={20.5} />
       </svg>
     ),
   },
@@ -675,7 +735,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <rect x={2.5} y={10} width={7} height={5} rx={1} />
         <rect x={12.5} y={10.7} width={3.6} height={3} rx={1.5} />
         <rect x={16.6} y={10.7} width={4.9} height={3} rx={1.5} />
-        <line x1={2.5} y1={20.5} x2={21.5} y2={20.5} strokeWidth={1} />
+        <line x1={2.5} y1={20.5} x2={21.5} y2={20.5} />
       </svg>
     ),
   },
@@ -688,11 +748,11 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'hero',
     svg: (
       <svg {...strokeProps}>
-        <line x1={10.5} y1={3} x2={13.5} y2={3} strokeWidth={1} />
+        <line x1={10.5} y1={3} x2={13.5} y2={3} />
         <line x1={6} y1={6.5} x2={18} y2={6.5} />
-        <line x1={7.5} y1={9.5} x2={16.5} y2={9.5} strokeWidth={1} />
+        <line x1={7.5} y1={9.5} x2={16.5} y2={9.5} />
         <rect x={9} y={12.5} width={6} height={3} rx={1.2} />
-        <line x1={8} y1={19} x2={16} y2={19} strokeWidth={1} />
+        <line x1={8} y1={19} x2={16} y2={19} />
       </svg>
     ),
   },
@@ -702,9 +762,17 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'hero',
     svg: (
       <svg {...strokeProps}>
-        <rect x={2.5} y={3} width={19} height={18} rx={2.5} fill="currentColor" fillOpacity={0.08} />
+        <rect
+          x={2.5}
+          y={3}
+          width={19}
+          height={18}
+          rx={2.5}
+          fill="currentColor"
+          fillOpacity={0.08}
+        />
         <line x1={7} y1={9} x2={17} y2={9} />
-        <line x1={8.5} y1={12} x2={15.5} y2={12} strokeWidth={1} />
+        <line x1={8.5} y1={12} x2={15.5} y2={12} />
         <rect x={9} y={15} width={6} height={3} rx={1.5} />
       </svg>
     ),
@@ -716,7 +784,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <line x1={2.5} y1={6} x2={10} y2={6} />
-        <line x1={2.5} y1={9} x2={9} y2={9} strokeWidth={1} />
+        <line x1={2.5} y1={9} x2={9} y2={9} />
         <rect x={2.5} y={12.5} width={6} height={3} rx={1.2} />
         <rect x={13} y={4} width={8.5} height={16} rx={1.4} />
       </svg>
@@ -734,9 +802,9 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <circle cx={4.8} cy={6} r={1.3} />
         <circle cx={8.4} cy={6} r={1.3} />
         <circle cx={12} cy={6} r={1.3} />
-        <line x1={3.5} y1={10.5} x2={16.5} y2={10.5} strokeWidth={1} />
-        <line x1={2.5} y1={13.5} x2={21.5} y2={13.5} strokeWidth={1} />
-        <line x1={4} y1={17.5} x2={10.5} y2={17.5} strokeWidth={1} />
+        <line x1={3.5} y1={10.5} x2={16.5} y2={10.5} />
+        <line x1={2.5} y1={13.5} x2={21.5} y2={13.5} />
+        <line x1={4} y1={17.5} x2={10.5} y2={17.5} />
         <rect x={15.5} y={15.5} width={6} height={4.5} rx={1} />
       </svg>
     ),
@@ -749,7 +817,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <rect x={8.5} y={3} width={7} height={4.5} rx={1} />
         <line x1={6} y1={11.5} x2={18} y2={11.5} />
-        <line x1={7.5} y1={14.5} x2={16.5} y2={14.5} strokeWidth={1} />
+        <line x1={7.5} y1={14.5} x2={16.5} y2={14.5} />
         <rect x={9} y={17} width={6} height={3} rx={1.2} />
       </svg>
     ),
@@ -760,7 +828,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'logo',
     svg: (
       <svg {...strokeProps}>
-        <line x1={6} y1={12} x2={18} y2={12} strokeWidth={3} />
+        <line x1={6} y1={12} x2={18} y2={12} strokeWidth={SW_ACCENT} />
       </svg>
     ),
   },
@@ -771,7 +839,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={8} y={6} width={8} height={6} rx={1.1} />
-        <line x1={7} y1={16} x2={17} y2={16} strokeWidth={1} />
+        <line x1={7} y1={16} x2={17} y2={16} />
       </svg>
     ),
   },
@@ -804,7 +872,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <path d="M2.5 8.5A6 6 0 0 1 8.5 2.5h7A6 6 0 0 1 21.5 8.5V21.5h-19z" />
         <rect x={8} y={8} width={8} height={5.5} rx={1} />
-        <line x1={7.5} y1={17} x2={16.5} y2={17} strokeWidth={1} />
+        <line x1={7.5} y1={17} x2={16.5} y2={17} />
       </svg>
     ),
   },
@@ -830,10 +898,10 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={2} y={2} width={20} height={20} rx={1.5} fill="currentColor" fillOpacity={0.08} />
-        <line x1={4.5} y1={12} x2={8} y2={12} strokeWidth={1} />
-        <line x1={9.5} y1={12} x2={12.5} y2={12} strokeWidth={1} />
-        <line x1={14} y1={12} x2={17} y2={12} strokeWidth={1} />
-        <line x1={18.5} y1={12} x2={19.5} y2={12} strokeWidth={1} />
+        <line x1={4.5} y1={12} x2={8} y2={12} />
+        <line x1={9.5} y1={12} x2={12.5} y2={12} />
+        <line x1={14} y1={12} x2={17} y2={12} />
+        <line x1={18.5} y1={12} x2={19.5} y2={12} />
       </svg>
     ),
   },
@@ -844,9 +912,9 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={2.5} y={9.5} width={7} height={5} rx={1} />
-        <line x1={13.5} y1={10.5} x2={16.5} y2={10.5} strokeWidth={1} />
-        <line x1={17.5} y1={10.5} x2={19.5} y2={10.5} strokeWidth={1} />
-        <line x1={20.5} y1={10.5} x2={21.5} y2={10.5} strokeWidth={1} />
+        <line x1={13.5} y1={10.5} x2={16.5} y2={10.5} />
+        <line x1={17.5} y1={10.5} x2={19.5} y2={10.5} />
+        <line x1={20.5} y1={10.5} x2={21.5} y2={10.5} />
       </svg>
     ),
   },
@@ -856,15 +924,15 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'nav',
     svg: (
       <svg {...strokeProps}>
-        <line x1={2.5} y1={3} x2={6.5} y2={3} strokeWidth={2.5} />
-        <line x1={2.5} y1={6.5} x2={7.5} y2={6.5} strokeWidth={1} />
-        <line x1={2.5} y1={9} x2={7} y2={9} strokeWidth={1} />
-        <line x1={9.2} y1={3} x2={13.2} y2={3} strokeWidth={2.5} />
-        <line x1={9.2} y1={6.5} x2={14.2} y2={6.5} strokeWidth={1} />
-        <line x1={9.2} y1={9} x2={13.7} y2={9} strokeWidth={1} />
-        <line x1={16} y1={3} x2={20} y2={3} strokeWidth={2.5} />
-        <line x1={16} y1={6.5} x2={21} y2={6.5} strokeWidth={1} />
-        <line x1={16} y1={9} x2={20.5} y2={9} strokeWidth={1} />
+        <line x1={2.5} y1={3} x2={6.5} y2={3} strokeWidth={SW_ACCENT} />
+        <line x1={2.5} y1={6.5} x2={7.5} y2={6.5} />
+        <line x1={2.5} y1={9} x2={7} y2={9} />
+        <line x1={9.2} y1={3} x2={13.2} y2={3} strokeWidth={SW_ACCENT} />
+        <line x1={9.2} y1={6.5} x2={14.2} y2={6.5} />
+        <line x1={9.2} y1={9} x2={13.7} y2={9} />
+        <line x1={16} y1={3} x2={20} y2={3} strokeWidth={SW_ACCENT} />
+        <line x1={16} y1={6.5} x2={21} y2={6.5} />
+        <line x1={16} y1={9} x2={20.5} y2={9} />
       </svg>
     ),
   },
@@ -876,16 +944,16 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'nav',
     svg: (
       <svg {...strokeProps}>
-        <line x1={2.5} y1={3} x2={6.5} y2={3} strokeWidth={2.5} />
-        <line x1={2.5} y1={6.5} x2={7.5} y2={6.5} strokeWidth={1} />
-        <line x1={2.5} y1={9} x2={7} y2={9} strokeWidth={1} />
-        <line x1={9.2} y1={3} x2={13.2} y2={3} strokeWidth={2.5} />
-        <line x1={9.2} y1={6.5} x2={14.2} y2={6.5} strokeWidth={1} />
-        <line x1={9.2} y1={9} x2={13.7} y2={9} strokeWidth={1} />
-        <line x1={16} y1={3} x2={20} y2={3} strokeWidth={2.5} />
-        <line x1={16} y1={6.5} x2={21} y2={6.5} strokeWidth={1} />
-        <line x1={16} y1={9} x2={20.5} y2={9} strokeWidth={1} />
-        <line x1={2.5} y1={13} x2={21.5} y2={13} strokeWidth={1} strokeDasharray="1.5 1.5" />
+        <line x1={2.5} y1={3} x2={6.5} y2={3} strokeWidth={SW_ACCENT} />
+        <line x1={2.5} y1={6.5} x2={7.5} y2={6.5} />
+        <line x1={2.5} y1={9} x2={7} y2={9} />
+        <line x1={9.2} y1={3} x2={13.2} y2={3} strokeWidth={SW_ACCENT} />
+        <line x1={9.2} y1={6.5} x2={14.2} y2={6.5} />
+        <line x1={9.2} y1={9} x2={13.7} y2={9} />
+        <line x1={16} y1={3} x2={20} y2={3} strokeWidth={SW_ACCENT} />
+        <line x1={16} y1={6.5} x2={21} y2={6.5} />
+        <line x1={16} y1={9} x2={20.5} y2={9} />
+        <line x1={2.5} y1={13} x2={21.5} y2={13} strokeDasharray="1.5 1.5" />
       </svg>
     ),
   },
@@ -897,10 +965,10 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <line x1={9} y1={2.2} x2={15} y2={2.2} />
         <rect x={2} y={5} width={9.3} height={16} rx={1.6} />
-        <rect x={12.7} y={5} width={9.3} height={16} rx={1.6} strokeWidth={2.6} />
-        <line x1={4.2} y1={8} x2={9.1} y2={8} strokeWidth={1} />
+        <rect x={12.7} y={5} width={9.3} height={16} rx={1.6} strokeWidth={SW_ACCENT} />
+        <line x1={4.2} y1={8} x2={9.1} y2={8} />
         <line x1={4.2} y1={10.5} x2={7.5} y2={10.5} />
-        <line x1={14.9} y1={8} x2={19.8} y2={8} strokeWidth={1} />
+        <line x1={14.9} y1={8} x2={19.8} y2={8} />
         <line x1={14.9} y1={10.5} x2={18.2} y2={10.5} />
         <rect x={4.2} y={17} width={4.9} height={2.4} rx={1} />
         <rect x={14.9} y={17} width={4.9} height={2.4} rx={1} />
@@ -915,11 +983,11 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <line x1={9} y1={2.2} x2={15} y2={2.2} />
         <rect x={2} y={5.5} width={6} height={15.5} rx={2.6} />
-        <rect x={9} y={5.5} width={6} height={15.5} rx={2.6} strokeWidth={2.6} />
+        <rect x={9} y={5.5} width={6} height={15.5} rx={2.6} strokeWidth={SW_ACCENT} />
         <rect x={16} y={5.5} width={6} height={15.5} rx={2.6} />
-        <line x1={3} y1={9} x2={6.5} y2={9} strokeWidth={1} />
-        <line x1={10} y1={9} x2={13.5} y2={9} strokeWidth={1} />
-        <line x1={17} y1={9} x2={20.5} y2={9} strokeWidth={1} />
+        <line x1={3} y1={9} x2={6.5} y2={9} />
+        <line x1={10} y1={9} x2={13.5} y2={9} />
+        <line x1={17} y1={9} x2={20.5} y2={9} />
         <rect x={3} y={17.5} width={4} height={2} rx={0.8} />
         <rect x={10} y={17.5} width={4} height={2} rx={0.8} />
         <rect x={17} y={17.5} width={4} height={2} rx={0.8} />
@@ -933,10 +1001,10 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={3} y={3} width={18} height={18} rx={1.8} />
-        <line x1={3} y1={4.5} x2={21} y2={4.5} strokeWidth={2.6} />
+        <line x1={3} y1={4.5} x2={21} y2={4.5} strokeWidth={SW_ACCENT} />
         <line x1={9} y1={7} x2={15} y2={7} />
-        <line x1={7} y1={11} x2={11.2} y2={11} strokeWidth={1} />
-        <line x1={12.8} y1={11} x2={17} y2={11} strokeWidth={1} />
+        <line x1={7} y1={11} x2={11.2} y2={11} />
+        <line x1={12.8} y1={11} x2={17} y2={11} />
         <rect x={9} y={15} width={6} height={2.6} rx={1} />
       </svg>
     ),
@@ -951,11 +1019,19 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <line x1={9} y1={2.2} x2={15} y2={2.2} />
         <rect x={2} y={5} width={9.3} height={16} rx={2.2} />
-        <rect x={12.7} y={7.2} width={9.3} height={13.8} rx={2.2} fill="currentColor" fillOpacity={0.08} />
+        <rect
+          x={12.7}
+          y={7.2}
+          width={9.3}
+          height={13.8}
+          rx={2.2}
+          fill="currentColor"
+          fillOpacity={0.08}
+        />
         <rect x={14.9} y={8.4} width={5} height={2} rx={1} />
-        <line x1={4.2} y1={9.5} x2={9.1} y2={9.5} strokeWidth={1} />
+        <line x1={4.2} y1={9.5} x2={9.1} y2={9.5} />
         <line x1={4.2} y1={12} x2={7.5} y2={12} />
-        <line x1={14.9} y1={12.5} x2={19.8} y2={12.5} strokeWidth={1} />
+        <line x1={14.9} y1={12.5} x2={19.8} y2={12.5} />
         <line x1={14.9} y1={15} x2={18.2} y2={15} />
         <rect x={4.2} y={17.8} width={4.9} height={2.2} rx={1} />
         <rect x={14.9} y={17.8} width={4.9} height={2.2} rx={1} />
@@ -968,10 +1044,10 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'pricing',
     svg: (
       <svg {...strokeProps}>
-        <line x1={10} y1={1.5} x2={14} y2={1.5} strokeWidth={1} />
+        <line x1={10} y1={1.5} x2={14} y2={1.5} />
         <line x1={7.5} y1={3.6} x2={16.5} y2={3.6} />
         <rect x={2} y={7} width={6} height={14.5} rx={1.6} />
-        <rect x={9} y={5.6} width={6} height={15.9} rx={1.6} strokeWidth={2.6} />
+        <rect x={9} y={5.6} width={6} height={15.9} rx={1.6} strokeWidth={SW_ACCENT} />
         <rect x={16} y={7} width={6} height={14.5} rx={1.6} />
         <rect x={9.8} y={6.6} width={4.4} height={1.6} rx={0.8} />
         <rect x={3} y={16.5} width={4} height={2} rx={0.8} />
@@ -990,10 +1066,10 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={2} y={2} width={20} height={20} rx={1.5} fill="currentColor" fillOpacity={0.08} />
-        <line x1={9.5} y1={5.5} x2={14.5} y2={5.5} strokeWidth={1} />
+        <line x1={9.5} y1={5.5} x2={14.5} y2={5.5} />
         <line x1={6.5} y1={8.5} x2={17.5} y2={8.5} />
         <circle cx={12} cy={14} r={2.4} />
-        <line x1={9} y1={18.5} x2={15} y2={18.5} strokeWidth={1} />
+        <line x1={9} y1={18.5} x2={15} y2={18.5} />
       </svg>
     ),
   },
@@ -1004,7 +1080,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={2.5} y={8.5} width={19} height={7} rx={3.5} />
-        <line x1={7} y1={11} x2={17} y2={11} strokeWidth={1} />
+        <line x1={7} y1={11} x2={17} y2={11} />
         <line x1={8.5} y1={13.7} x2={15.5} y2={13.7} />
       </svg>
     ),
@@ -1015,8 +1091,8 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'social_proof',
     svg: (
       <svg {...strokeProps}>
-        <line x1={9} y1={4} x2={15} y2={4} strokeWidth={2.6} />
-        <line x1={8} y1={7.5} x2={16} y2={7.5} strokeWidth={1} />
+        <line x1={9} y1={4} x2={15} y2={4} strokeWidth={SW_ACCENT} />
+        <line x1={8} y1={7.5} x2={16} y2={7.5} />
         <rect x={2.5} y={13} width={5.5} height={5} rx={1} />
         <rect x={9.2} y={13} width={5.5} height={5} rx={1} />
         <rect x={16} y={13} width={5.5} height={5} rx={1} />
@@ -1030,11 +1106,11 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <line x1={2.5} y1={5} x2={7} y2={5} />
-        <line x1={2.5} y1={8} x2={6} y2={8} strokeWidth={1} />
+        <line x1={2.5} y1={8} x2={6} y2={8} />
         <line x1={9.2} y1={5} x2={13.7} y2={5} />
-        <line x1={9.2} y1={8} x2={12.7} y2={8} strokeWidth={1} />
+        <line x1={9.2} y1={8} x2={12.7} y2={8} />
         <line x1={16} y1={5} x2={20.5} y2={5} />
-        <line x1={16} y1={8} x2={19.5} y2={8} strokeWidth={1} />
+        <line x1={16} y1={8} x2={19.5} y2={8} />
       </svg>
     ),
   },
@@ -1044,7 +1120,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'social_proof',
     svg: (
       <svg {...strokeProps}>
-        <line x1={9} y1={4} x2={15} y2={4} strokeWidth={1} />
+        <line x1={9} y1={4} x2={15} y2={4} />
         <rect x={2.5} y={9.5} width={5.5} height={5} rx={1} />
         <rect x={9.2} y={9.5} width={5.5} height={5} rx={1} />
         <rect x={16} y={9.5} width={5.5} height={5} rx={1} />
@@ -1058,15 +1134,15 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <circle cx={4.5} cy={5.5} r={1.6} />
-        <line x1={2.5} y1={10} x2={6.5} y2={10} strokeWidth={2.4} />
-        <line x1={2.5} y1={13.3} x2={6.5} y2={13.3} strokeWidth={1} />
+        <line x1={2.5} y1={10} x2={6.5} y2={10} strokeWidth={SW_ACCENT} />
+        <line x1={2.5} y1={13.3} x2={6.5} y2={13.3} />
         <circle cx={12} cy={5.5} r={1.6} />
-        <line x1={9.5} y1={10} x2={14.5} y2={10} strokeWidth={2.4} />
-        <line x1={9.5} y1={13.3} x2={14.5} y2={13.3} strokeWidth={1} />
+        <line x1={9.5} y1={10} x2={14.5} y2={10} strokeWidth={SW_ACCENT} />
+        <line x1={9.5} y1={13.3} x2={14.5} y2={13.3} />
         <circle cx={19.5} cy={5.5} r={1.6} />
-        <line x1={17.5} y1={10} x2={21.5} y2={10} strokeWidth={2.4} />
-        <line x1={17.5} y1={13.3} x2={21.5} y2={13.3} strokeWidth={1} />
-        <line x1={2.5} y1={18} x2={21.5} y2={18} strokeWidth={1} strokeDasharray="1.5 1.5" />
+        <line x1={17.5} y1={10} x2={21.5} y2={10} strokeWidth={SW_ACCENT} />
+        <line x1={17.5} y1={13.3} x2={21.5} y2={13.3} />
+        <line x1={2.5} y1={18} x2={21.5} y2={18} strokeDasharray="1.5 1.5" />
       </svg>
     ),
   },
@@ -1077,14 +1153,14 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <line x1={9} y1={2.2} x2={15} y2={2.2} />
-        <line x1={4} y1={7} x2={9} y2={7} strokeWidth={2.6} />
-        <line x1={4} y1={9.7} x2={8.5} y2={9.7} strokeWidth={1} />
-        <line x1={15} y1={7} x2={20} y2={7} strokeWidth={2.6} />
-        <line x1={15} y1={9.7} x2={19.5} y2={9.7} strokeWidth={1} />
-        <line x1={4} y1={15} x2={9} y2={15} strokeWidth={2.6} />
-        <line x1={4} y1={17.7} x2={8.5} y2={17.7} strokeWidth={1} />
-        <line x1={15} y1={15} x2={20} y2={15} strokeWidth={2.6} />
-        <line x1={15} y1={17.7} x2={19.5} y2={17.7} strokeWidth={1} />
+        <line x1={4} y1={7} x2={9} y2={7} strokeWidth={SW_ACCENT} />
+        <line x1={4} y1={9.7} x2={8.5} y2={9.7} />
+        <line x1={15} y1={7} x2={20} y2={7} strokeWidth={SW_ACCENT} />
+        <line x1={15} y1={9.7} x2={19.5} y2={9.7} />
+        <line x1={4} y1={15} x2={9} y2={15} strokeWidth={SW_ACCENT} />
+        <line x1={4} y1={17.7} x2={8.5} y2={17.7} />
+        <line x1={15} y1={15} x2={20} y2={15} strokeWidth={SW_ACCENT} />
+        <line x1={15} y1={17.7} x2={19.5} y2={17.7} />
       </svg>
     ),
   },
@@ -1094,9 +1170,9 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'stats',
     svg: (
       <svg {...strokeProps}>
-        <line x1={2.5} y1={11} x2={9} y2={11} strokeWidth={3.2} />
-        <line x1={12.5} y1={7.5} x2={21.5} y2={7.5} strokeWidth={1} />
-        <line x1={12.5} y1={10} x2={20} y2={10} strokeWidth={1} />
+        <line x1={2.5} y1={11} x2={9} y2={11} strokeWidth={SW_ACCENT} />
+        <line x1={12.5} y1={7.5} x2={21.5} y2={7.5} />
+        <line x1={12.5} y1={10} x2={20} y2={10} />
         <rect x={12.5} y={13} width={7} height={3} rx={1.2} />
       </svg>
     ),
@@ -1109,14 +1185,14 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <circle cx={4.5} cy={5.5} r={1.6} />
-        <line x1={2.5} y1={10} x2={6.5} y2={10} strokeWidth={2.4} />
-        <line x1={2.5} y1={13.3} x2={6.5} y2={13.3} strokeWidth={1} />
+        <line x1={2.5} y1={10} x2={6.5} y2={10} strokeWidth={SW_ACCENT} />
+        <line x1={2.5} y1={13.3} x2={6.5} y2={13.3} />
         <circle cx={12} cy={5.5} r={1.6} />
-        <line x1={9.5} y1={10} x2={14.5} y2={10} strokeWidth={2.4} />
-        <line x1={9.5} y1={13.3} x2={14.5} y2={13.3} strokeWidth={1} />
+        <line x1={9.5} y1={10} x2={14.5} y2={10} strokeWidth={SW_ACCENT} />
+        <line x1={9.5} y1={13.3} x2={14.5} y2={13.3} />
         <circle cx={19.5} cy={5.5} r={1.6} />
-        <line x1={17.5} y1={10} x2={21.5} y2={10} strokeWidth={2.4} />
-        <line x1={17.5} y1={13.3} x2={21.5} y2={13.3} strokeWidth={1} />
+        <line x1={17.5} y1={10} x2={21.5} y2={10} strokeWidth={SW_ACCENT} />
+        <line x1={17.5} y1={13.3} x2={21.5} y2={13.3} />
       </svg>
     ),
   },
@@ -1131,10 +1207,10 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <rect x={13} y={5.5} width={8} height={6.5} rx={2.2} />
         <rect x={3} y={13.5} width={8} height={6.5} rx={2.2} />
         <rect x={13} y={13.5} width={8} height={6.5} rx={2.2} />
-        <line x1={4.5} y1={8.3} x2={8} y2={8.3} strokeWidth={1.8} />
-        <line x1={14.5} y1={8.3} x2={18} y2={8.3} strokeWidth={1.8} />
-        <line x1={4.5} y1={16.3} x2={8} y2={16.3} strokeWidth={1.8} />
-        <line x1={14.5} y1={16.3} x2={18} y2={16.3} strokeWidth={1.8} />
+        <line x1={4.5} y1={8.3} x2={8} y2={8.3} />
+        <line x1={14.5} y1={8.3} x2={18} y2={8.3} />
+        <line x1={4.5} y1={16.3} x2={8} y2={16.3} />
+        <line x1={14.5} y1={16.3} x2={18} y2={16.3} />
       </svg>
     ),
   },
@@ -1149,12 +1225,12 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <circle cx={4} cy={4.5} r={1.8} />
         <line x1={7.5} y1={4.5} x2={16} y2={4.5} />
-        <line x1={7.5} y1={6.8} x2={13} y2={6.8} strokeWidth={1} />
-        <line x1={4} y1={9} x2={4} y2={11} strokeWidth={1} strokeDasharray="1.2 1.2" />
+        <line x1={7.5} y1={6.8} x2={13} y2={6.8} />
+        <line x1={4} y1={9} x2={4} y2={11} strokeDasharray="1.2 1.2" />
         <circle cx={4} cy={12} r={1.8} />
         <line x1={7.5} y1={12} x2={16} y2={12} />
-        <line x1={7.5} y1={14.3} x2={13} y2={14.3} strokeWidth={1} />
-        <line x1={4} y1={16.5} x2={4} y2={18.5} strokeWidth={1} strokeDasharray="1.2 1.2" />
+        <line x1={7.5} y1={14.3} x2={13} y2={14.3} />
+        <line x1={4} y1={16.5} x2={4} y2={18.5} strokeDasharray="1.2 1.2" />
         <circle cx={4} cy={19.5} r={1.8} />
         <line x1={7.5} y1={19.5} x2={16} y2={19.5} />
       </svg>
@@ -1168,11 +1244,11 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <line x1={9} y1={2.2} x2={15} y2={2.2} />
         <circle cx={4.5} cy={9} r={1.7} />
-        <line x1={2.5} y1={13.5} x2={6.5} y2={13.5} strokeWidth={1} />
+        <line x1={2.5} y1={13.5} x2={6.5} y2={13.5} />
         <circle cx={12} cy={9} r={1.7} />
-        <line x1={9.5} y1={13.5} x2={14.5} y2={13.5} strokeWidth={1} />
+        <line x1={9.5} y1={13.5} x2={14.5} y2={13.5} />
         <circle cx={19.5} cy={9} r={1.7} />
-        <line x1={17.5} y1={13.5} x2={21.5} y2={13.5} strokeWidth={1} />
+        <line x1={17.5} y1={13.5} x2={21.5} y2={13.5} />
       </svg>
     ),
   },
@@ -1186,9 +1262,9 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <rect x={2.5} y={5} width={5.5} height={3} rx={1.5} />
         <rect x={9.2} y={5} width={5.5} height={3} rx={1.5} />
         <rect x={16} y={5} width={5.5} height={3} rx={1.5} />
-        <rect x={2.5} y={10} width={5.5} height={10} rx={1} strokeWidth={2.4} />
-        <rect x={9.2} y={10} width={5.5} height={10} rx={1} strokeWidth={2.4} />
-        <rect x={16} y={10} width={5.5} height={10} rx={1} strokeWidth={2.4} />
+        <rect x={2.5} y={10} width={5.5} height={10} rx={1} strokeWidth={SW_ACCENT} />
+        <rect x={9.2} y={10} width={5.5} height={10} rx={1} strokeWidth={SW_ACCENT} />
+        <rect x={16} y={10} width={5.5} height={10} rx={1} strokeWidth={SW_ACCENT} />
       </svg>
     ),
   },
@@ -1199,7 +1275,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={2} y={2} width={20} height={7} rx={1.3} fill="currentColor" fillOpacity={0.08} />
-        <line x1={9} y1={4.2} x2={15} y2={4.2} strokeWidth={1} />
+        <line x1={9} y1={4.2} x2={15} y2={4.2} />
         <line x1={7} y1={6.5} x2={17} y2={6.5} />
         <rect x={2.5} y={12} width={5.5} height={9} rx={1} />
         <rect x={9.2} y={12} width={5.5} height={9} rx={1} />
@@ -1215,13 +1291,13 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <circle cx={4.5} cy={4} r={1.4} />
         <rect x={2} y={6.5} width={6} height={5} rx={1} />
-        <line x1={2.5} y1={13} x2={7.5} y2={13} strokeWidth={1} />
+        <line x1={2.5} y1={13} x2={7.5} y2={13} />
         <circle cx={12} cy={4} r={1.4} />
         <rect x={9} y={6.5} width={6} height={5} rx={1} />
-        <line x1={9.5} y1={13} x2={14.5} y2={13} strokeWidth={1} />
+        <line x1={9.5} y1={13} x2={14.5} y2={13} />
         <circle cx={19.5} cy={4} r={1.4} />
         <rect x={16} y={6.5} width={6} height={5} rx={1} />
-        <line x1={16.5} y1={13} x2={21.5} y2={13} strokeWidth={1} />
+        <line x1={16.5} y1={13} x2={21.5} y2={13} />
       </svg>
     ),
   },
@@ -1237,9 +1313,9 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <circle cx={5} cy={9} r={1.7} />
         <circle cx={12} cy={9} r={1.7} />
         <circle cx={19} cy={9} r={1.7} />
-        <line x1={3.2} y1={13.5} x2={6.8} y2={13.5} strokeWidth={1} />
-        <line x1={10.2} y1={13.5} x2={13.8} y2={13.5} strokeWidth={1} />
-        <line x1={17.2} y1={13.5} x2={20.8} y2={13.5} strokeWidth={1} />
+        <line x1={3.2} y1={13.5} x2={6.8} y2={13.5} />
+        <line x1={10.2} y1={13.5} x2={13.8} y2={13.5} />
+        <line x1={17.2} y1={13.5} x2={20.8} y2={13.5} />
         <rect x={3.5} y={16} width={3} height={1.8} rx={0.9} />
         <rect x={10.5} y={16} width={3} height={1.8} rx={0.9} />
         <rect x={17.5} y={16} width={3} height={1.8} rx={0.9} />
@@ -1253,14 +1329,14 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={2} y={2} width={20} height={7} rx={1.3} fill="currentColor" fillOpacity={0.08} />
-        <line x1={9} y1={4.2} x2={15} y2={4.2} strokeWidth={1} />
+        <line x1={9} y1={4.2} x2={15} y2={4.2} />
         <line x1={7} y1={6.5} x2={17} y2={6.5} />
         <circle cx={5.2} cy={13.2} r={1.7} />
         <circle cx={12} cy={13.2} r={1.7} />
         <circle cx={18.8} cy={13.2} r={1.7} />
-        <line x1={3.2} y1={17.5} x2={7.2} y2={17.5} strokeWidth={1} />
-        <line x1={10} y1={17.5} x2={14} y2={17.5} strokeWidth={1} />
-        <line x1={16.8} y1={17.5} x2={20.8} y2={17.5} strokeWidth={1} />
+        <line x1={3.2} y1={17.5} x2={7.2} y2={17.5} />
+        <line x1={10} y1={17.5} x2={14} y2={17.5} />
+        <line x1={16.8} y1={17.5} x2={20.8} y2={17.5} />
       </svg>
     ),
   },
@@ -1272,14 +1348,14 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <circle cx={4.5} cy={4} r={1.7} />
-        <line x1={2.5} y1={8.3} x2={6.5} y2={8.3} strokeWidth={1} />
-        <line x1={2.5} y1={10.6} x2={6.5} y2={10.6} strokeWidth={1} />
+        <line x1={2.5} y1={8.3} x2={6.5} y2={8.3} />
+        <line x1={2.5} y1={10.6} x2={6.5} y2={10.6} />
         <circle cx={12} cy={4} r={1.7} />
-        <line x1={9.5} y1={8.3} x2={14.5} y2={8.3} strokeWidth={1} />
-        <line x1={9.5} y1={10.6} x2={14.5} y2={10.6} strokeWidth={1} />
+        <line x1={9.5} y1={8.3} x2={14.5} y2={8.3} />
+        <line x1={9.5} y1={10.6} x2={14.5} y2={10.6} />
         <circle cx={19.5} cy={4} r={1.7} />
-        <line x1={17} y1={8.3} x2={21.5} y2={8.3} strokeWidth={1} />
-        <line x1={17} y1={10.6} x2={21.5} y2={10.6} strokeWidth={1} />
+        <line x1={17} y1={8.3} x2={21.5} y2={8.3} />
+        <line x1={17} y1={10.6} x2={21.5} y2={10.6} />
       </svg>
     ),
   },
@@ -1290,11 +1366,11 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <circle cx={7} cy={5} r={2.2} />
-        <line x1={3.5} y1={10.5} x2={10.5} y2={10.5} strokeWidth={1} />
-        <line x1={3.5} y1={13} x2={9.5} y2={13} strokeWidth={1} />
+        <line x1={3.5} y1={10.5} x2={10.5} y2={10.5} />
+        <line x1={3.5} y1={13} x2={9.5} y2={13} />
         <circle cx={17} cy={5} r={2.2} />
-        <line x1={13.5} y1={10.5} x2={20.5} y2={10.5} strokeWidth={1} />
-        <line x1={13.5} y1={13} x2={19.5} y2={13} strokeWidth={1} />
+        <line x1={13.5} y1={10.5} x2={20.5} y2={10.5} />
+        <line x1={13.5} y1={13} x2={19.5} y2={13} />
       </svg>
     ),
   },
@@ -1305,11 +1381,11 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <circle cx={4.5} cy={6} r={2} />
-        <line x1={2.5} y1={11.5} x2={6.5} y2={11.5} strokeWidth={1} />
+        <line x1={2.5} y1={11.5} x2={6.5} y2={11.5} />
         <circle cx={12} cy={6} r={2} />
-        <line x1={9.5} y1={11.5} x2={14.5} y2={11.5} strokeWidth={1} />
+        <line x1={9.5} y1={11.5} x2={14.5} y2={11.5} />
         <circle cx={19.5} cy={6} r={2} />
-        <line x1={17.5} y1={11.5} x2={21.5} y2={11.5} strokeWidth={1} />
+        <line x1={17.5} y1={11.5} x2={21.5} y2={11.5} />
       </svg>
     ),
   },
@@ -1324,8 +1400,8 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <circle cx={4.5} cy={12} r={3} />
         <line x1={10} y1={8.5} x2={20} y2={8.5} />
-        <line x1={10} y1={12} x2={17} y2={12} strokeWidth={1} />
-        <line x1={10} y1={15} x2={16.5} y2={15} strokeWidth={1} />
+        <line x1={10} y1={12} x2={17} y2={12} />
+        <line x1={10} y1={15} x2={16.5} y2={15} />
       </svg>
     ),
   },
@@ -1338,13 +1414,13 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <rect x={2} y={3} width={6.5} height={16.5} rx={2.6} />
         <rect x={9} y={3} width={6.5} height={16.5} rx={2.6} />
         <rect x={16} y={3} width={6.5} height={16.5} rx={2.6} />
-        <line x1={3.2} y1={6} x2={7.3} y2={6} strokeWidth={1} />
+        <line x1={3.2} y1={6} x2={7.3} y2={6} />
         <circle cx={5.25} cy={11} r={1.6} />
         <rect x={3.7} y={14.5} width={3.1} height={1.6} rx={0.8} />
-        <line x1={10.2} y1={6} x2={14.3} y2={6} strokeWidth={1} />
+        <line x1={10.2} y1={6} x2={14.3} y2={6} />
         <circle cx={12.25} cy={11} r={1.6} />
         <rect x={10.7} y={14.5} width={3.1} height={1.6} rx={0.8} />
-        <line x1={17.2} y1={6} x2={21.3} y2={6} strokeWidth={1} />
+        <line x1={17.2} y1={6} x2={21.3} y2={6} />
         <circle cx={19.25} cy={11} r={1.6} />
         <rect x={17.7} y={14.5} width={3.1} height={1.6} rx={0.8} />
       </svg>
@@ -1359,14 +1435,14 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <rect x={2} y={3} width={6.5} height={16.5} rx={1.4} />
         <rect x={9} y={3} width={6.5} height={16.5} rx={1.4} />
         <rect x={16} y={3} width={6.5} height={16.5} rx={1.4} />
-        <line x1={3.2} y1={6} x2={7.3} y2={6} strokeWidth={1} />
-        <line x1={3.2} y1={11} x2={7.3} y2={11} strokeWidth={1} strokeDasharray="1 1" />
+        <line x1={3.2} y1={6} x2={7.3} y2={6} />
+        <line x1={3.2} y1={11} x2={7.3} y2={11} strokeDasharray="1 1" />
         <circle cx={5.25} cy={14.5} r={1.4} />
-        <line x1={10.2} y1={6} x2={14.3} y2={6} strokeWidth={1} />
-        <line x1={10.2} y1={11} x2={14.3} y2={11} strokeWidth={1} strokeDasharray="1 1" />
+        <line x1={10.2} y1={6} x2={14.3} y2={6} />
+        <line x1={10.2} y1={11} x2={14.3} y2={11} strokeDasharray="1 1" />
         <circle cx={12.25} cy={14.5} r={1.4} />
-        <line x1={17.2} y1={6} x2={21.3} y2={6} strokeWidth={1} />
-        <line x1={17.2} y1={11} x2={21.3} y2={11} strokeWidth={1} strokeDasharray="1 1" />
+        <line x1={17.2} y1={6} x2={21.3} y2={6} />
+        <line x1={17.2} y1={11} x2={21.3} y2={11} strokeDasharray="1 1" />
         <circle cx={19.25} cy={14.5} r={1.4} />
       </svg>
     ),
@@ -1378,10 +1454,10 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={2} y={2} width={20} height={20} rx={1.5} fill="currentColor" fillOpacity={0.08} />
-        <line x1={9.5} y1={5.5} x2={14.5} y2={5.5} strokeWidth={1} />
+        <line x1={9.5} y1={5.5} x2={14.5} y2={5.5} />
         <line x1={6.5} y1={8.5} x2={17.5} y2={8.5} />
         <circle cx={12} cy={14} r={2.4} />
-        <line x1={9} y1={18.5} x2={15} y2={18.5} strokeWidth={1} />
+        <line x1={9} y1={18.5} x2={15} y2={18.5} />
       </svg>
     ),
   },
@@ -1395,14 +1471,14 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <rect x={2} y={3} width={6.5} height={16.5} rx={2.6} />
         <rect x={9} y={3} width={6.5} height={16.5} rx={2.6} />
         <rect x={16} y={3} width={6.5} height={16.5} rx={2.6} />
-        <line x1={3.2} y1={6} x2={7.3} y2={6} strokeWidth={1} />
-        <line x1={3.2} y1={9.5} x2={7.3} y2={9.5} strokeWidth={1} />
+        <line x1={3.2} y1={6} x2={7.3} y2={6} />
+        <line x1={3.2} y1={9.5} x2={7.3} y2={9.5} />
         <circle cx={5.25} cy={14.5} r={1.6} />
-        <line x1={10.2} y1={6} x2={14.3} y2={6} strokeWidth={1} />
-        <line x1={10.2} y1={9.5} x2={14.3} y2={9.5} strokeWidth={1} />
+        <line x1={10.2} y1={6} x2={14.3} y2={6} />
+        <line x1={10.2} y1={9.5} x2={14.3} y2={9.5} />
         <circle cx={12.25} cy={14.5} r={1.6} />
-        <line x1={17.2} y1={6} x2={21.3} y2={6} strokeWidth={1} />
-        <line x1={17.2} y1={9.5} x2={21.3} y2={9.5} strokeWidth={1} />
+        <line x1={17.2} y1={6} x2={21.3} y2={6} />
+        <line x1={17.2} y1={9.5} x2={21.3} y2={9.5} />
         <circle cx={19.25} cy={14.5} r={1.6} />
       </svg>
     ),
@@ -1451,7 +1527,15 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         <rect x={2} y={4} width={7} height={16} rx={1.8} strokeDasharray="2 1.4" />
         <rect x={10.2} y={4} width={7} height={16} rx={1.8} strokeDasharray="2 1.4" />
-        <rect x={17.4} y={4} width={4.6} height={16} rx={1.8} fill="currentColor" fillOpacity={0.08} />
+        <rect
+          x={17.4}
+          y={4}
+          width={4.6}
+          height={16}
+          rx={1.8}
+          fill="currentColor"
+          fillOpacity={0.08}
+        />
       </svg>
     ),
   },
@@ -1479,9 +1563,9 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         <rect x={2} y={4} width={6} height={16} rx={1.4} />
         <rect x={9} y={4} width={6} height={16} rx={1.4} />
         <rect x={16} y={4} width={6} height={16} rx={1.4} />
-        <line x1={2} y1={4.8} x2={8} y2={4.8} strokeWidth={3} />
-        <line x1={9} y1={4.8} x2={15} y2={4.8} strokeWidth={3} />
-        <line x1={16} y1={4.8} x2={22} y2={4.8} strokeWidth={3} />
+        <line x1={2} y1={4.8} x2={8} y2={4.8} strokeWidth={SW_ACCENT} />
+        <line x1={9} y1={4.8} x2={15} y2={4.8} strokeWidth={SW_ACCENT} />
+        <line x1={16} y1={4.8} x2={22} y2={4.8} strokeWidth={SW_ACCENT} />
       </svg>
     ),
   },
@@ -1492,10 +1576,10 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={2} y={4} width={6} height={16} rx={1.4} />
-        <line x1={2} y1={4.8} x2={8} y2={4.8} strokeWidth={3} />
+        <line x1={2} y1={4.8} x2={8} y2={4.8} strokeWidth={SW_ACCENT} />
         <rect x={9} y={2.5} width={6} height={19} rx={2} fill="currentColor" fillOpacity={0.14} />
         <rect x={16} y={4} width={6} height={16} rx={1.4} />
-        <line x1={16} y1={4.8} x2={22} y2={4.8} strokeWidth={3} />
+        <line x1={16} y1={4.8} x2={22} y2={4.8} strokeWidth={SW_ACCENT} />
       </svg>
     ),
   },
@@ -1533,8 +1617,17 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     svg: (
       <svg {...strokeProps}>
         <rect x={2} y={2} width={20} height={20} rx={2.2} />
-        <line x1={4} y1={20} x2={20} y2={4} strokeWidth={1} strokeDasharray="1.4 1.4" />
-        <rect x={6} y={7} width={12} height={10} rx={1.8} fill="currentColor" fillOpacity={0.12} strokeDasharray="0" />
+        <line x1={4} y1={20} x2={20} y2={4} strokeDasharray="1.4 1.4" />
+        <rect
+          x={6}
+          y={7}
+          width={12}
+          height={10}
+          rx={1.8}
+          fill="currentColor"
+          fillOpacity={0.12}
+          strokeDasharray="0"
+        />
       </svg>
     ),
   },
@@ -1544,7 +1637,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'layout',
     svg: (
       <svg {...strokeProps}>
-        <rect x={1.5} y={1.5} width={21} height={21} rx={1.6} strokeWidth={1} />
+        <rect x={1.5} y={1.5} width={21} height={21} rx={1.6} />
         <rect x={4} y={4} width={7.5} height={7} rx={1.4} />
         <rect x={12.5} y={4} width={7.5} height={7} rx={1.4} />
         <rect x={4} y={13} width={7.5} height={7} rx={1.4} />
@@ -1558,7 +1651,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'layout',
     svg: (
       <svg {...strokeProps}>
-        <rect x={1.5} y={1.5} width={21} height={21} rx={1.6} strokeWidth={1} />
+        <rect x={1.5} y={1.5} width={21} height={21} rx={1.6} />
         <rect x={4} y={3.5} width={16} height={4.5} rx={1.2} />
         <rect x={4} y={9.5} width={16} height={4.5} rx={1.2} />
         <rect x={4} y={15.5} width={16} height={4.5} rx={1.2} />
@@ -1572,7 +1665,15 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'layout',
     svg: (
       <svg {...strokeProps}>
-        <rect x={1.5} y={5} width={21} height={14} rx={2.2} fill="currentColor" fillOpacity={0.08} />
+        <rect
+          x={1.5}
+          y={5}
+          width={21}
+          height={14}
+          rx={2.2}
+          fill="currentColor"
+          fillOpacity={0.08}
+        />
         <rect x={3.5} y={7.2} width={11} height={9.6} rx={1.6} />
         <rect x={16} y={7.2} width={6.5} height={9.6} rx={1.6} />
       </svg>

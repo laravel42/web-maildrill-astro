@@ -1,5 +1,10 @@
 # Plan — Iconos 2D outline para componentes complejos (Email Builder)
 
+> **Estado actual (sesión 4): 98/146 iconos implementados (`sections`
+> 85/85 + `layouts` 13/13). El trabajo activo NO es diseñar tandas
+> nuevas, sino la mejora de legibilidad del set existente — ver §19,
+> que incluye la auditoría medida y las decisiones pendientes.**
+
 Estado: **Tanda 1 implementada en código y ajustada visualmente
 (sesión 2) — pendiente de aprobación final del usuario antes de
 Tanda 2**.
@@ -867,3 +872,382 @@ dirección del degradado.
 `EmailLayout`) — pendiente resolver antes la pregunta abierta de §6
 sobre si necesitan un lenguaje de icono distinto (documento completo
 vs. section individual).
+
+## 19. Sesión 4 — Auditoría de legibilidad y plan de mejora del set existente
+
+**Estado: plan, sin cambios de código todavía.** Pedido del usuario:
+mejorar los iconos de los componentes **no primitivos** de la
+Components Library; se autoriza **bajar el trazo hasta 1px** para que
+el detalle se lea mejor.
+
+### 19.1 Alcance exacto (verificado en código)
+
+| Categoría | Preview actual | Entra en esta mejora |
+|---|---|---|
+| `sections` (85) | icono de `SECTION_ICONS` | **sí** |
+| `layouts` (13) | icono de `SECTION_ICONS` | **sí** |
+| `templates` (20) | PNG en `.eb-template-card` (240px) | no todavía — sin icono diseñado (§6 P2 abierta) |
+| `primitives` (28) | `LibraryCardPrimitiveRender` (mini-iframe vivo) | no — no usa iconos |
+
+"No primitivos" = los **98 iconos ya implementados** (`sections` +
+`layouts`). Detalle encontrado al revisar: `LibraryCard` retorna antes
+por la rama `category === 'template'` (`.eb-template-card`), así que
+el `height={category === 'template' ? 240 : 28}` que se le pasa a
+`LibraryCardThumbnail` es **rama muerta** — la caja del icono es
+siempre 28px.
+
+### 19.2 Cómo se renderiza hoy (medido, no estimado)
+
+- `LibraryCardThumbnail`: `'& svg': { width: 28, height: 28 }` sobre
+  `viewBox="0 0 24 24"` → escala 28/24 = **1.1667 → 1 unidad = 1.17px**.
+- Grosores efectivos: base `strokeWidth: 2` → **2.33px**; detalle `1` →
+  1.17px; acentos 2.4-4 → 2.8-4.7px.
+- Card: `p: 10px 6px` + `gap: 8px` + border 1px + label ~18px + icono
+  28px ≈ **76px de alto** (homologado con `.pbx-palette__item`).
+- Ancho: drawer 312px, grid de 3 columnas, `gap: 0.5` (4px) → card
+  ≈93px, **contenido ≈79px**. Es decir: **sobra ancho; el único
+  presupuesto ajustado es la altura**.
+
+### 19.3 Evidencia de la auditoría
+
+Medición hecha con un script ad-hoc sobre `sectionIcons.tsx` (parsea
+las 98 entradas y calcula la separación mínima entre trazos paralelos
+en X e Y, contando bordes de `rect`, `line` horizontales/verticales y
+extremos de `circle`):
+
+| Separación mínima entre trazos | Iconos | Efecto real |
+|---|---|---|
+| < 1 u (< 1.17px) | **19** | los trazos se solapan incluso con trazo de 1px |
+| 1–2 u (1.17–2.33px) | **31** | con trazo 2 (2.33px) se fusionan; con ~1px se separan |
+| ≥ 2 u | 48 | se arreglan solo bajando el trazo |
+
+Complejidad: **27 iconos con ≥8 formas**, 12 con **≥10 formas** en
+24×24 → a 28px cada forma mide 2-4px. Y hay **11 valores distintos de
+`strokeWidth`** en el set (1, 1.2, 1.6, 1.8, 2, 2.4, 2.5, 2.6, 3, 3.2,
+4): jerarquía ad-hoc, no un sistema.
+
+Los 19 peores casos (`gap` en unidades de viewBox):
+
+| gap | Icono |
+|---|---|
+| 0.10 | features · 4-up grid · pricing · Mobile-stacked plans |
+| 0.20 | pricing · 3 tiers with highlight · layout · Magazine |
+| 0.35 | gallery · BG image lookbook hero |
+| 0.50 | banner · Sale banner · cta · Two-column mobile stack · header · Pill nav buttons · hero · Footer · hero · Logo + headline · steps · Mobile vertical timeline · steps · BG image hero + numbered cards · testimonial · Quote with author / Pill avatar cards / Mobile-stack 3 quotes / 3 testimonial cards |
+| 0.80 | layout · Feature trio · layout · Pricing trio · comparison · Top-accent matrix |
+
+⚠️ De esa lista, los tres de `gap 0.80` (Feature trio, Pricing trio,
+Top-accent matrix) son **solapamientos intencionales** (línea de acento
+dibujada encima del borde superior de la card) — se excluyen del
+rework, no son defectos.
+
+**Diagnóstico raíz**: el set está autorado como *diagrama de layout*
+(8-12 formas, 3 niveles de jerarquía de trazo) pero dimensionado como
+*glifo* (28px, trazo 2 — el tamaño/grosor de `.pbx-palette__icon` de
+Builder42, que dibuja glifos Lucide de 3-5 trazos). No es solo el
+grosor: es **grosor + densidad + tamaño de caja** a la vez. Bajar el
+trazo resuelve 48+31 iconos; los 16 restantes (19 CRIT − 3
+intencionales) necesitan además rework geométrico.
+
+Contexto que justifica simplificar en vez de detallar: el hover ya
+muestra el **render real** del componente en un popper de 640px
+(`LibraryHoverPreviewPortal`). El icono no tiene que ser un plano a
+escala; tiene que ser una **silueta reconocible**.
+
+### 19.4 Fase A — sistema de trazo (mecánico, los 98 iconos)
+
+Jerarquía reducida a **2 niveles** (hoy hay 11 valores):
+
+- `HAIRLINE` = **1px efectivo** — todo el dibujo.
+- `ACCENT` = **2px efectivo** — solo el acento real del componente
+  (borde superior grueso, número destacado), **máximo uno por icono**.
+- El énfasis que hoy hacen los grosores intermedios pasa a **geometría
+  + `fillOpacity`** (recurso ya usado en el set para "fondo con
+  imagen").
+
+Dos implementaciones posibles del "1px":
+
+- **A1** — `strokeWidth: 0.86` en unidades (0.86 × 1.1667 = 1.0px).
+  Correcto solo a 28px; se rompe si el icono se reusa a otro tamaño.
+- **A2 (recomendada)** — `strokeWidth: 1` + `vectorEffect="non-scaling-stroke"`:
+  el grosor pasa a ser **1px de pantalla exacto a cualquier tamaño de
+  caja**, y el acento a `2`. Desacopla grosor de escala, así que sirve
+  igual si mañana la caja crece (Fase B) o si el icono se usa en un
+  preview grande.
+
+### 19.5 Fase B — nitidez / rejilla de píxel (decisión abierta)
+
+A 28px con `viewBox 24`, **ninguna** coordenada cae en borde de píxel
+(0.5 u = 0.583px), así que todo trazo queda antialiaseado repartido
+entre dos filas de píxeles: se ve como *dos grises tenues* en vez de
+una línea limpia. Adelgazar a 1px hace esto **más** visible, no menos.
+Opciones:
+
+- **B1 (mínimo cambio)** — quedarse en 28px con A2. Se gana grosor real
+  de 1px y se separan 31 iconos; el AA de posición sigue ahí.
+- **B2 (recomendada para evaluar)** — caja del icono a **48px** (2× la
+  unidad): 1 u = 2px y 0.5 u = 1px, así que **toda la geometría
+  existente cae en borde de píxel entero** → nitidez real, y cada
+  detalle mide el doble en absoluto. Coste: la card sube de ~76px a
+  ~96px (el ancho ya sobra: 79px). Rompe la homologación de 76px con
+  Builder42 — pero ese 76px se fijó para **glifos de tipo de bloque**,
+  no para diagramas de composición; son contenidos distintos con
+  presupuestos distintos. Ojo: escalar **no** separa trazos, la
+  separación es relativa y solo la arregla adelgazar el trazo (Fase A) o
+  mover geometría (Fase C).
+- **B3 (descartable)** — reautorar todo a `viewBox 28` (×7/6 + redondeo
+  a rejilla 0.5). Nitidez a 28px sin tocar la card, pero implica
+  reescalar y revisar 98 iconos y los gaps siguen siendo diminutos.
+
+Propuesta: implementar A2 + B1 en la primera pasada y **medir B2 en el
+harness (§19.8) para decidir viéndolo**, no en abstracto.
+
+### 19.6 Fase C — rework geométrico (16 CRIT + 31 MED)
+
+Reglas de autoría a aplicar (y a documentar en `sectionIcons.tsx` como
+contrato del set):
+
+1. Separación mínima **2 u** entre trazos paralelos.
+2. Gutter mínimo **2 u** entre columnas (hoy los grids de 3 columnas
+   usan 1 u: `x = 2 / 9 / 16` con `width 6` → los bordes se tocan).
+3. Máximo **6-8 formas** por icono.
+4. Eliminar el tercer nivel de detalle (líneas de "texto secundario")
+   cuando el icono ya comunica con 3 columnas.
+5. Los pares estructuralmente idénticos se distinguen por **un** rasgo,
+   no por tres.
+
+Orden: primero los **16 CRIT** (excluyendo los 3 solapamientos
+intencionales), luego los **31 MED** — en tandas de ~10 con visto bueno
+visual, igual que el resto del plan. Si se aprueba **B2**, los 31 MED
+se revisan pero probablemente no necesiten cambio.
+
+### 19.7 Fase D — contraste (acoplada a la Fase A)
+
+El trazo actual es `#a5a39a` (light) / `#8a8371` (dark),
+`--pb-chrome-text-faint`. Sobre `#fff` eso da **≈2.5:1**, por debajo
+del mínimo de 3:1 que WCAG pide para gráficos no textuales — pasaba
+inadvertido con 2.33px de grosor, pero **a 1px una línea de ese tono
+casi desaparece**. Adelgazar sin subir contraste empeora la
+legibilidad neta, así que la Fase A debe ir con una decisión explícita
+de tono (p. ej. `--pb-chrome-text-muted` `#57554e`, o un punto
+intermedio) — se elige viéndolo en el harness, en light y dark.
+
+### 19.8 Fase E — harness de revisión visual
+
+Vista dev-only (mismo patrón que `devSeed*` / `devRecapture*`, montada
+bajo flag) que renderice **los 98 iconos en grid** con nombre + role, a
+28px y 48px, en light y dark, con toggle de grosor. Permite aprobar una
+tanda con **una captura** en vez de recorrer el drawer icono por icono
+— hoy la verificación visual es el paso más lento del flujo (§1: no hay
+MCP de Chrome en este entorno).
+
+### 19.9 Fase F — enforcement (test)
+
+Convertir el script de auditoría de §19.3 en un test de vitest que
+falle si: (a) aparece un `strokeWidth` fuera del set de tokens, (b) un
+icono supera el máximo de formas, o (c) dos trazos paralelos quedan a
+menos de 2 u (con una lista explícita de excepciones intencionales).
+Evita que las tandas 11-16 (`templates`, `primitives`) vuelvan a meter
+la misma deuda.
+
+### 19.10 Verificación
+
+`astro check` (0 errores) + `vitest run` (línea base actual: 43/43
+archivos, 303/303 tests) tras cada fase, más el visto bueno visual del
+usuario por tanda vía el harness.
+
+### 19.11 Decisiones que hay que tomar antes de codificar
+
+1. **B1 vs B2**: ¿se acepta subir la card de sections/layouts de ~76px
+   a ~96px (caja de icono 48px) a cambio de nitidez real y el doble de
+   espacio? Es la decisión de mayor impacto de todo el plan.
+2. **Fase D**: ¿se sube el contraste del trazo junto con el
+   adelgazamiento?
+3. **Fase C**: ¿rework solo de los 47 detectados, o pasada completa por
+   los 98 con las reglas nuevas?
+4. Sigue abierta §6 P2 (`templates`): sin icono, hoy en PNG a 240px,
+   donde este problema de legibilidad no aplica.
+
+**Orden de ejecución propuesto**: A2 (+D) primero — es mecánico y ya
+arregla 79 de los 98 iconos —, luego el harness (E), luego decidir B1/B2
+viéndolo, y solo después C por tandas y F como cierre.
+
+## 20. Sesión 4 (implementación) — 2 columnas + caja 48px + trazo de 2 pesos
+
+**Estado: implementado, pendiente visto bueno visual del usuario.**
+Decisión del usuario: **lista de secciones a 2 columnas** (resuelve la
+pregunta 1 de §19.11 a favor de B2, con más margen del previsto).
+
+Antes de empezar se verificó que `main` estaba incorporado:
+`origin/main` (`0867398`) es ancestro de `feat/ui-polish-p1` — `git
+rev-list --left-right --count origin/main...HEAD` → `0 133`. No había
+nada que traer.
+
+### 20.1 Hallazgo de alcance
+
+El drawer solo tiene **dos tabs** (`CATEGORIES` = blocks + templates,
+tras el "Point 7" de `EMAIL_BUILDER_TASKS.md`). La lista de secciones
+se renderiza al final del tab **Blocks** (`SectionsCategoryContent`), y
+**`layouts` / `primitives` no tienen componente de listado en esta UI**.
+Consecuencia práctica: de los 98 iconos diseñados, los **13 de
+`layouts` no son visibles hoy** en el editor; lo que el usuario ve son
+los **85 de `sections`**.
+
+### 20.2 Cambios aplicados
+
+- **`ComponentsLibraryDrawer.tsx`**
+  - `SectionsCategoryContent`: `columns={3}` → **`columns={2}`**. Con
+    `px: 1.5` en el contenedor (312 − 24 = 288px) y `gap: 0.5` (4px),
+    la card pasa de ~93px a **~142px** (contenido ~79px → **~128px**).
+    Queda alineado con el grid de bloques base, que ya era de 2
+    columnas (`BlocksCategoryContent.tsx`).
+  - `height` del preview: 28 → **48** para sections/layouts. Se
+    documentó que la rama `template ? 240` es **inalcanzable**
+    (`LibraryCard` retorna antes con `.eb-template-card`).
+  - `LibrarySkeletonGrid`: `thumbnailHeight` 120 → **48** para
+    no-templates; el 120 era herencia del PNG y provocaba salto de
+    layout skeleton → card.
+- **`thumbnail/LibraryCardThumbnail.tsx`** — `'& svg'` 28×28 →
+  **48×48**, con la justificación de la rejilla de píxel en el
+  comentario.
+- **`thumbnail/sectionIcons.tsx`** — sistema de trazo de **2 pesos**
+  exportado como tokens: `SW_HAIRLINE = 1` (2px reales a 48px) y
+  `SW_ACCENT = 2` (4px). Base del `strokeProps` 2 → 1. De los 227
+  overrides existentes: **193 eliminados** (1 / 1.2 / 1.6 / 1.8, ahora
+  iguales al hairline por defecto) y **34 mapeados a `SW_ACCENT`**
+  (2.4 / 2.5 / 2.6 / 3 / 3.2 / 4). No queda ningún `strokeWidth`
+  numérico suelto en el archivo.
+
+Efecto medible: el trazo base pasa de **2.33px a 2px** en absoluto pero
+de **8.3% a 4.2% del lado del icono** en relativo — es decir, la mitad
+de peso relativo, que es lo que separa los trazos —, y cada detalle
+mide el doble en píxeles (una franja de 4 u pasa de 4.7px a 8px).
+
+### 20.3 Lo que este cambio NO arregla
+
+La separación entre trazos es **relativa**, así que escalar no la
+mejora: los iconos con gap < 2 u siguen necesitando rework geométrico
+(Fase C, §19.6). Con el trazo a 1 u el umbral de colisión baja de 2 u a
+1 u, así que:
+
+- **31 iconos** con gap 1–2 u pasan de "fusionados" a **"trazos que se
+  tocan sin blanco entre medio"** — mejor, no resuelto.
+- **16 iconos** con gap < 1 u (los 19 CRIT menos los 3 solapamientos
+  intencionales) siguen solapando.
+
+### 20.4 Verificación
+
+- `npm run check` (astro check, 339 archivos) → **0 errores, 0
+  warnings, 3 hints** (los mismos preexistentes de
+  `AutomationBuilder.tsx`).
+- `npx vitest run` → **44/44 archivos, 314/314 tests** (la línea base
+  documentada de 43/303 creció por trabajo ajeno a este cambio).
+- `prettier --check` limpio en los 3 archivos tocados. `eslint` los
+  ignora por estar bajo `packages/` (vendored).
+- Sin verificación visual: no hay MCP de Chrome en este entorno (§1).
+  **Falta la captura del usuario.**
+
+### 20.5 Siguiente paso
+
+1. **Captura del usuario** del tab Blocks con las secciones a 2
+   columnas. Dos cosas a juzgar ahí: si el peso de trazo ya se lee, y
+   si el tono `--pb-chrome-text-faint` (#a5a39a, ≈2.5:1 sobre blanco)
+   aguanta con el trazo más fino o hay que subirlo (§19.7, Fase D — es
+   un cambio de una línea).
+2. Con eso aprobado, Fase C por tandas: primero los 16 CRIT.
+3. Fase E (harness) y F (test de constraints) siguen pendientes.
+
+## 21. Fase C · tanda `banner` (5 iconos) — rework geométrico
+
+**Estado: implementado, pendiente visto bueno visual del usuario.**
+Primera tanda de la Fase C (§19.6), ejecutada con subagentes
+(análisis → rediseño → auditoría). Ver §21.3: la auditoría automática
+descarriló y hubo que reconstruir trabajo ya aprobado.
+
+### 21.1 Datos reales del catálogo (verificados en `localPresets.data.json`)
+
+Lo que el árbol de bloques dice de estos 5 items, y que el set anterior
+no representaba:
+
+| Icono | Dato real relevante |
+|---|---|
+| Announcement mobile-tight | `Container > NotionText`, `backgroundColor: #111827` |
+| Announcement bar | idéntico al anterior; en el dato solo difiere `mobilePadding` |
+| Cornered sale card | `shape: {topLeft: 24, topRight: 0, bottomLeft: 0, bottomRight: 24}` + `Button.fullWidth: true` |
+| Promo CTA | `shape` uniforme (16 en las 4 esquinas) + `Button.fullWidth: false` |
+| Sale banner | único `banner` con `ColumnsContainer` (`fixedWidths: [60, 40]`) + `fullWidth: true` |
+
+**Los 5 tienen fondo oscuro `#111827`**, así que el relleno tenue
+(`fill="currentColor" fillOpacity={0.08}`) que antes solo se usaba para
+"fondo con imagen" aquí es fiel al dato, no decoración.
+
+### 21.2 Qué cambió en cada icono
+
+- **#1 / #2 (Announcement)** — estructuralmente idénticos en el dato, así
+  que el par se distingue por **un** rasgo: #1 franja a sangre sin radio
+  (1.5 → 22.5), #2 card con margen lateral y `rx` (4 → 20). Ambos con el
+  relleno del fondo oscuro. 2 formas cada uno.
+- **#3 Cornered sale card** — el icono anterior dibujaba un `rect` de
+  radio uniforme con un recorte en la esquina, que no era la forma real.
+  Ahora es un `path` con arcos **solo en top-left y bottom-right** (el
+  `shape` real), badge en esquina y botón a todo el ancho útil.
+- **#4 Promo CTA** — mismo footprint que #3 a propósito (21×21), radio
+  uniforme y pill centrado más angosto: las **únicas** diferencias con
+  #3 son las esquinas y el ancho del botón, que es exactamente lo que
+  los diferencia en el dato.
+- **#5 Sale banner** — pasa de "texto apilado + chip" a representar el
+  split de 2 columnas real: dos líneas de texto a la izquierda y el chip
+  de precio/CTA a la derecha, alineado con la primera línea.
+
+Se descartó una flecha/chevron que un subagente había añadido a #1/#2:
+esos bloques no tienen `Button` ni link en el árbol, y el rasgo
+diferenciador del par ya era el margen.
+
+Medición final (script propio, ejecutado y borrado):
+
+| Icono | formas | gap X | gap Y | fuera de rejilla 0.5 |
+|---|---|---|---|---|
+| Announcement mobile-tight | 2 | 21 | 2.5 | 0 |
+| Announcement bar | 2 | 16 | 3.5 | 0 |
+| Cornered sale card | 4 | 5 | 2.0 | 0 |
+| Promo CTA | 4 | 7 | 2.5 | 0 |
+| Sale banner | 4 | 2.0 | 3.5 | 0 |
+
+Todos cumplen el contrato: ≥2u de separación en ambos ejes, ≤8 formas,
+coordenadas en múltiplos de 0.5, geometría dentro de [1.5, 22.5] y cero
+`strokeWidth` numéricos en el archivo completo.
+
+Nota de contrato añadida al docstring de `SW_ACCENT`: **no usarlo en
+formas de menos de ~3u de grosor** — un trazo de 2u dentro de un rect de
+2u lo rellena por completo. Por eso los botones de #3/#4 van en hairline
+y se distinguen por ancho, no por peso.
+
+### 21.3 Incidente del pipeline de subagentes (para no repetirlo)
+
+El auditor automático no tenía el contexto de que §20 (caja 48px, grid
+de 2 columnas, normalización global del trazo) **ya estaba implementado
+y aprobado** en el working tree, lo interpretó como fuga de alcance de
+la tanda `banner`, y el implementador **revirtió** esos cambios:
+`ComponentsLibraryDrawer.tsx` y `LibraryCardThumbnail.tsx` volvieron a
+HEAD y `sectionIcons.tsx` quedó con `SW_HAIRLINE = 2` / `SW_ACCENT = 4`
+y los 93 iconos restantes con sus 11 pesos ad-hoc otra vez.
+
+Reconstruido a mano después: constantes a 1/2, renormalización (192
+overrides eliminados + 34 a `SW_ACCENT`), caja 48px, 2 columnas y
+skeleton a 48. El trabajo geométrico de los 5 banner sí se conservó.
+
+**Lección**: al delegar una tanda, el brief del auditor tiene que
+declarar explícitamente qué cambios NO commiteados del working tree son
+trabajo aprobado previo, o el auditor los leerá como fuga de alcance. Y
+ningún subagente debe revertir archivos que no creó sin confirmarlo.
+
+### 21.4 Verificación
+
+- Diagnósticos LSP de `sectionIcons.tsx`: **0**.
+- `prettier --check` limpio en los 3 archivos tocados.
+- Script propio de constraints: los 5 banner PASS (tabla de §21.2).
+- Sin `vitest` / `astro check` en esta tanda por pedido explícito del
+  usuario (tardan demasiado para el ciclo de revisión por tanda); la
+  corrida completa se hará al cerrar varias tandas.
+- Falta la **captura del usuario**: no hay MCP de Chrome en este entorno
+  (§1).

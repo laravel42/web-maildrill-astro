@@ -103,15 +103,19 @@ export default function LibraryCardThumbnail({
           // (tokens.css light, == `--muted`) / `#8a8371` oscuro
           // (dark.css: `--pb-chrome-text-faint`).
           color: theme.palette.mode === 'dark' ? '#8a8371' : '#a5a39a',
-          // 28px — mismo valor que `.pbx-palette__icon` de Builder42
-          // (sidebar.css: "Icono del tipo de componente — grande,
-          // protagonista de la card"), la única referencia real medida en
-          // su código fuente para este contexto (no hay un ícono de 27px
-          // en Builder42; se descartó esa cifra al no encontrar
-          // sustento en el código). Mismo valor unificado en
-          // BlockTile/CompactBlockTile (BlocksCategoryContent.tsx,
-          // CompactBlocksList.tsx).
-          '& svg': { width: 28, height: 28 },
+          // 48px — ver COMPONENT_ICONS_PLAN.md §20. Antes 28px,
+          // homologado con `.pbx-palette__icon` de Builder42, pero ese
+          // valor está pensado para GLIFOS Lucide de 3-5 trazos; estos
+          // iconos son diagramas de layout de hasta 12 formas sobre una
+          // rejilla de 24×24. A 28px la escala era 28/24 = 1.1667, así
+          // que ninguna coordenada de la rejilla 0.5 caía en borde de
+          // píxel y todo trazo quedaba antialiaseado entre dos filas de
+          // píxeles. A 48px la escala es exactamente 2 → 1 unidad = 2px,
+          // la rejilla 0.5 cae en píxel entero (trazo nítido) y el
+          // detalle mide el doble en absoluto. El ancho no es problema:
+          // con la lista de secciones a 2 columnas la card tiene ~128px
+          // de contenido (ComponentsLibraryDrawer.tsx).
+          '& svg': { width: 48, height: 48 },
         }}
         aria-label={alt}
         title={`${designedIcon.name} (${designedIcon.role}) — draft icon, Tanda 1`}
