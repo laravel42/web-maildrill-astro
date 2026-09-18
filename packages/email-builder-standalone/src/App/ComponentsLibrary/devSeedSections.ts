@@ -1653,17 +1653,6 @@ const SECTIONS: SectionDef[] = [
   },
   {
     role: 'banner',
-    name: 'Announcement bar',
-    node: container(
-      [para(`🎉 New: dark mode is here! ${link('Learn more →', WHITE)}`, { color: WHITE, pb: 0 })],
-      {
-        backgroundColor: DARK,
-        padding: pad(12, 16, 12, 16),
-      },
-    ),
-  },
-  {
-    role: 'banner',
     name: 'Sale banner',
     node: section(
       [
@@ -2982,7 +2971,12 @@ const SECTIONS: SectionDef[] = [
   },
   {
     role: 'banner',
-    name: 'Announcement mobile-tight',
+    // Antes existían dos gemelos aquí ("Announcement bar" y
+    // "Announcement mobile-tight"): el mismo bloque salvo
+    // `mobilePadding`/`fontSize`. Se consolidaron en esta única entrada
+    // —la que sí trae esas props— con el nombre claro. Ver §22 de
+    // COMPONENT_ICONS_PLAN.md.
+    name: 'Announcement bar',
     node: container(
       [
         para(`🎉 New: dark mode is here! ${link('Learn more →', WHITE)}`, {

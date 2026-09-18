@@ -5,7 +5,9 @@
  * `feat/ui-polish-p1`) for the full design plan, inventory, and
  * per-tanda workflow.
  *
- * Tanda 1 (10/146): `sections`, roles `banner` + `comparison`.
+ * Tanda 1 (9/145): `sections`, roles `banner` + `comparison` — eran 10
+ * hasta que los dos `Announcement` gemelos se consolidaron en uno
+ * (§22 de COMPONENT_ICONS_PLAN.md).
  * Tanda 2 (10/146): `sections`, roles `cta` + `faq`.
  * Tanda 3 (10/146): `sections`, roles `features` + `footer`.
  * Tanda 4 (10/146): `sections`, roles `gallery` + `header`.
@@ -97,36 +99,28 @@ const strokeProps = {
 };
 
 export const SECTION_ICONS: Record<string, SectionIconEntry> = {
-  // #1 — Announcement mobile-tight (banner)
+  // #1 — Announcement bar (banner)
   '0398040b-0b75-46f2-80cf-f3317d7cad8b': {
-    name: 'Announcement mobile-tight',
+    name: 'Announcement bar',
     role: 'banner',
     svg: (
       <svg {...strokeProps}>
-        {/* Franja a sangre completa, sin radio — el único rasgo que la
-            separa de #2 (misma estructura `Container > NotionText`,
-            mismo `backgroundColor: #111827`; en el dato solo difieren
-            en `mobilePadding`, invisible a este tamaño). El relleno
-            tenue representa ese fondo oscuro. */}
+        {/* Franja oscura a sangre completa (`Container > NotionText`,
+            `backgroundColor: #111827`, sin radio): el bloque ocupa todo
+            el ancho, así que el icono también. El relleno tenue
+            representa ese fondo oscuro.
+
+            Antes había DOS entradas para esto — "Announcement bar" y
+            "Announcement mobile-tight" —, el mismo bloque salvo
+            `mobilePadding`/`fontSize`, invisible a este tamaño. Se
+            consolidaron en este id (el que sí traía esas props) con el
+            nombre claro; ver §22 de COMPONENT_ICONS_PLAN.md. */}
         <rect x={1.5} y={9.5} width={21} height={5} fill="currentColor" fillOpacity={0.08} />
         <line x1={5} y1={12} x2={19} y2={12} />
       </svg>
     ),
   },
-  // #2 — Announcement bar (banner)
-  '82a88271-0ed0-46f9-93d6-26ca2e0448de': {
-    name: 'Announcement bar',
-    role: 'banner',
-    svg: (
-      <svg {...strokeProps}>
-        {/* Card con margen lateral y esquinas redondeadas — contraparte
-            de la franja a sangre de #1. */}
-        <rect x={4} y={8.5} width={16} height={7} rx={1.5} fill="currentColor" fillOpacity={0.08} />
-        <line x1={7} y1={12} x2={17} y2={12} />
-      </svg>
-    ),
-  },
-  // #3 — Cornered sale card (banner)
+  // #2 — Cornered sale card (banner)
   '4ce2d759-a608-4d6c-b3cc-d42fb2f3428f': {
     name: 'Cornered sale card',
     role: 'banner',
@@ -135,10 +129,10 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
         {/* Esquinas opuestas redondeadas (top-left + bottom-right), las
             otras dos en escuadra — es el `shape` real del bloque:
             `{topLeft: 24, topRight: 0, bottomLeft: 0, bottomRight: 24}`.
-            Mismo footprint que #4 (Promo CTA) a propósito: lo único que
+            Mismo footprint que #3 (Promo CTA) a propósito: lo único que
             los distingue son las esquinas y el botón fullWidth. */}
         <path d="M5.5 1.5H22.5V18.5a4 4 0 0 1-4 4H1.5V5.5a4 4 0 0 1 4-4z" />
-        {/* Badge en la esquina (no centrado como en #4). */}
+        {/* Badge en la esquina (no centrado como en #3). */}
         <rect x={4.5} y={5} width={5} height={2} rx={1} />
         <line x1={4.5} y1={12} x2={19.5} y2={12} />
         {/* Button `fullWidth: true` — abarca todo el ancho útil. */}
@@ -146,7 +140,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       </svg>
     ),
   },
-  // #4 — Promo CTA (banner)
+  // #3 — Promo CTA (banner)
   '769366f5-1d1a-413d-9603-887ca1750651': {
     name: 'Promo CTA',
     role: 'banner',
@@ -154,18 +148,18 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       <svg {...strokeProps}>
         {/* Card con radio uniforme en las 4 esquinas (`shape` real:
             16 en las cuatro) — contraste directo con las esquinas
-            asimétricas de #3. */}
+            asimétricas de #2. */}
         <rect x={1.5} y={1.5} width={21} height={21} rx={2.5} />
         {/* Badge centrado, alineado con el botón. */}
         <rect x={8.5} y={5} width={7} height={2.5} rx={1} />
         <line x1={5} y1={12} x2={19} y2={12} />
         {/* Button `fullWidth: false` — pill centrado, más angosto que la
-            card, frente al botón a todo el ancho de #3. */}
+            card, frente al botón a todo el ancho de #2. */}
         <rect x={8.5} y={16} width={7} height={3} rx={1.5} />
       </svg>
     ),
   },
-  // #5 — Sale banner (banner)
+  // #4 — Sale banner (banner)
   '639a5360-f271-4409-acc6-13cd8de70872': {
     name: 'Sale banner',
     role: 'banner',
@@ -182,7 +176,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       </svg>
     ),
   },
-  // #6 — Option A vs B (comparison)
+  // #5 — Option A vs B (comparison)
   '266e4e0f-d92e-4351-992e-6d7fff8f6823': {
     name: 'Option A vs B',
     role: 'comparison',
@@ -197,7 +191,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       </svg>
     ),
   },
-  // #7 — Mobile-reflow A vs B (comparison)
+  // #6 — Mobile-reflow A vs B (comparison)
   '6add8418-aa6c-4ddc-9e42-f98da7314299': {
     name: 'Mobile-reflow A vs B',
     role: 'comparison',
@@ -213,7 +207,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       </svg>
     ),
   },
-  // #8 — Before / After (comparison)
+  // #7 — Before / After (comparison)
   '4512a455-9b75-43d5-9db6-2d96e85b804d': {
     name: 'Before / After',
     role: 'comparison',
@@ -230,7 +224,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       </svg>
     ),
   },
-  // #9 — Feature matrix (comparison)
+  // #8 — Feature matrix (comparison)
   '782eba2d-959e-4f1e-9a16-3375531ef934': {
     name: 'Feature matrix',
     role: 'comparison',
@@ -246,7 +240,7 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
       </svg>
     ),
   },
-  // #10 — Top-accent matrix (comparison)
+  // #9 — Top-accent matrix (comparison)
   '8a9ec9f9-46d1-4d3d-a7b8-c9cb8c3b1b04': {
     name: 'Top-accent matrix',
     role: 'comparison',

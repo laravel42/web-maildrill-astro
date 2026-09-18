@@ -1251,3 +1251,64 @@ ningún subagente debe revertir archivos que no creó sin confirmarlo.
   corrida completa se hará al cerrar varias tandas.
 - Falta la **captura del usuario**: no hay MCP de Chrome en este entorno
   (§1).
+
+## 22. Consolidación de los dos `Announcement` gemelos (catálogo 85 → 84)
+
+**Estado: aplicado.** El usuario, al revisar la tanda `banner`, pidió
+eliminar uno de los dos `Announcement` ("el segundo es igual").
+
+### 22.1 Qué decía el dato
+
+Los dos items eran el mismo bloque (`Container > NotionText`, mismo
+`backgroundColor: #111827`, mismo padding 12/16, **el mismo HTML palabra
+por palabra**). Diferencias reales, ambas invisibles en una card de
+48px:
+
+| | `82a88271-…` "Announcement bar" | `0398040b-…` "Announcement mobile-tight" |
+|---|---|---|
+| `mobilePadding` | — | `10/14/10/14` |
+| `fontSize` del texto | — | `14` |
+
+### 22.2 Decisión
+
+Se **conservó el id `0398040b-…`** (el que sí trae `mobilePadding` y
+`fontSize`, es decir el bloque más completo) y se **renombró a
+"Announcement bar"** — el nombre claro del que se eliminó; "mobile-tight"
+era jerga interna que dejaba de tener sentido sin su gemelo. Se eliminó
+`82a88271-…`.
+
+### 22.3 Archivos tocados
+
+- **`localPresets.data.json`** — item `82a88271` eliminado y `0398040b`
+  renombrado. Edición textual quirúrgica (el archivo usa escapes
+  `\uXXXX`, así que un `JSON.parse` + `JSON.stringify` habría
+  reformateado 1.4 MB): diff de **1 inserción / 51 borrados**, validado
+  por script (84 secciones, el resto del array byte-idéntico, escapes y
+  fin de línea intactos).
+- **`thumbnail/sectionIcons.tsx`** — entrada del id eliminado borrada;
+  la Tanda 1 renumerada (#1-#9 en vez de #1-#10) con sus referencias
+  cruzadas internas.
+- **`devSeedSections.ts`** — mismo criterio: se borró el seed sin
+  `mobilePadding` y el otro quedó como "Announcement bar", para que el
+  seed de dev y el catálogo empaquetado no divergan.
+- **`seedLocalLibrary.ts`** — **nuevo `RETIRED_SECTION_IDS` + `pruneRetired()`**.
+  Era necesario: las secciones se siembran con `mergeById`, que es
+  **append-only**, y las secciones empaquetadas no llevan prefijo
+  `preset-` (a diferencia de los templates), así que no había forma de
+  distinguir "empaquetada" de "guardada por el usuario". Sin esta purga,
+  borrar el item del JSON no lo quitaba del `localStorage` de nadie que
+  ya tuviera el catálogo sembrado — el duplicado seguiría a la vista. La
+  purga corre **antes** del early-return por versión, así que también
+  limpia a quien ya esté sembrado en la versión nueva.
+
+Nota: la versión del catálogo es un hash de contenido
+(`localPresets.ts`), así que el cambio invalida solo el caché de
+thumbnails y fuerza el reseed automáticamente; no hay bump manual que
+olvidar.
+
+### 22.4 Efecto en los totales del plan
+
+`sections` 85 → **84**; total a diseñar 146 → **145**; diseñados 98 →
+**97**. Las tablas históricas de §2 y de cada tanda no se reescriben (son
+registro de lo que se hizo entonces); esta sección es la referencia
+válida para los conteos.
