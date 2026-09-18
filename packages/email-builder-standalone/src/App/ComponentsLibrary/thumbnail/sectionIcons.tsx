@@ -182,12 +182,16 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'comparison',
     svg: (
       <svg {...strokeProps}>
+        {/* `ColumnsContainer[2, fixedWidths:[50,50]]` sin
+            `stackColumnsOnMobile` — dos cards con `borderColor`
+            (sin fondo), título + bullets + `Button.fullWidth: true`.
+            Es el par de #6 sin el rasgo de reflow. */}
         <rect x={2.5} y={3.5} width={8.5} height={17} rx={1} />
         <rect x={13} y={3.5} width={8.5} height={17} rx={1} />
         <line x1={4.5} y1={7} x2={9} y2={7} />
         <line x1={15} y1={7} x2={19.5} y2={7} />
-        <rect x={4.5} y={16} width={4.5} height={2.5} rx={0.6} />
-        <rect x={15} y={16} width={4.5} height={2.5} rx={0.6} />
+        <rect x={4.5} y={16} width={4.5} height={2.5} rx={0.5} />
+        <rect x={15} y={16} width={4.5} height={2.5} rx={0.5} />
       </svg>
     ),
   },
@@ -197,13 +201,28 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'comparison',
     svg: (
       <svg {...strokeProps}>
-        <rect x={2.5} y={3.5} width={8.5} height={17} rx={1} />
-        <rect x={13} y={3.5} width={8.5} height={17} rx={1} />
+        {/* Mismo árbol que #5 (`ColumnsContainer[2, fixedWidths:[50,50]]`,
+            título + bullets + `Button.fullWidth`); el único rasgo real
+            que distingue este item en el dato es
+            `stackColumnsOnMobile: true` (sin análogo visual estático —
+            es un comportamiento en breakpoint, no una forma). Antes se
+            dibujaba una línea vertical punteada partiendo el medio, que
+            no representaba ese flag (era solo el gap ya implícito). Se
+            reemplaza por un chevron de colapso: el pictograma de "esto
+            se apila".
+
+            El chevron va DEBAJO de las cards, no en el hueco central:
+            ese hueco mide 2u (11 → 13) y cualquier glifo ahí cruzaría
+            el borde de ambas cards. Por eso las cards de este icono son
+            más bajas que las de #5 (13.5u en vez de 17u), para dejarle
+            sitio con la separación mínima de 2u. */}
+        <rect x={2.5} y={3.5} width={8.5} height={13.5} rx={1} />
+        <rect x={13} y={3.5} width={8.5} height={13.5} rx={1} />
         <line x1={4.5} y1={7} x2={9} y2={7} />
         <line x1={15} y1={7} x2={19.5} y2={7} />
-        <rect x={4.5} y={16} width={4.5} height={2.5} rx={0.6} />
-        <rect x={15} y={16} width={4.5} height={2.5} rx={0.6} />
-        <path d="M11 2v20" strokeDasharray="1.5 1.5" />
+        <rect x={4.5} y={12.5} width={4.5} height={2.5} rx={0.5} />
+        <rect x={15} y={12.5} width={4.5} height={2.5} rx={0.5} />
+        <path d="M9.5 19l2.5 2 2.5-2" />
       </svg>
     ),
   },
@@ -213,14 +232,27 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'comparison',
     svg: (
       <svg {...strokeProps}>
-        <rect x={2.5} y={3.5} width={8.5} height={17} rx={1} />
-        <rect x={13} y={3.5} width={8.5} height={17} rx={1} />
-        <rect x={4} y={5} width={5.5} height={6} rx={0.6} />
-        <path d="M4.8 9.2l1.5-2 1.2 1.5 1.4-1.8" />
-        <rect x={14.5} y={5} width={5.5} height={6} rx={0.6} />
-        <path d="M15.3 9.2l1.5-2 1.2 1.5 1.4-1.8" />
-        <line x1={4.5} y1={14.5} x2={9} y2={14.5} />
-        <line x1={15} y1={14.5} x2={19.5} y2={14.5} />
+        {/* `Image` + chip de texto (`NotionText`) por columna. El chip
+            izquierdo ("BEFORE") lleva fondo claro `#F5F5F7` y el
+            derecho ("AFTER") fondo oscuro `#111827` — vienen de un
+            `<span>` con estilo inline dentro del HTML del `NotionText`,
+            no de la prop `backgroundColor` de un `Container`. Ese
+            contraste claro/oscuro es el único rasgo real que distingue
+            los dos lados en el dato: antes ambos dibujaban el mismo
+            checkmark, así que se veían idénticos y no comunicaban
+            nada. */}
+        <rect x={2.5} y={3.5} width={8.5} height={9.5} rx={1} />
+        <rect x={13} y={3.5} width={8.5} height={9.5} rx={1} />
+        <rect x={4.5} y={16} width={4.5} height={3} rx={0.5} />
+        <rect
+          x={15}
+          y={16}
+          width={4.5}
+          height={3}
+          rx={0.5}
+          fill="currentColor"
+          fillOpacity={0.08}
+        />
       </svg>
     ),
   },
@@ -230,6 +262,10 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'comparison',
     svg: (
       <svg {...strokeProps}>
+        {/* `NotionText` título + `ColumnsContainer[3, fixedWidths:[33,34,33]]`
+            × 4 filas (header + 3 filas de datos) separadas por
+            `Divider`, sin `backgroundColor` en ninguna — la variante
+            "neutral" del par con #9: sin ningún relleno de color. */}
         <line x1={3} y1={4.5} x2={12} y2={4.5} />
         <rect x={2.5} y={7.5} width={19} height={13} rx={1} />
         <line x1={9.5} y1={7.5} x2={9.5} y2={20.5} />
@@ -246,15 +282,24 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'comparison',
     svg: (
       <svg {...strokeProps}>
+        {/* Mismo árbol de tabla que #8, pero el header vive dentro de
+            un `Container` con `backgroundColor: #111827` real (no
+            decorativo) — una banda de fondo, no una línea de acento.
+            El set anterior dibujaba una `SW_ACCENT` sobre el borde
+            superior simulando un acento de color; eso no es fiel al
+            dato, así que se reemplaza por un rect relleno
+            (`fillOpacity`), igual criterio que en `banner`. */}
         <rect x={2.5} y={7.5} width={19} height={13} rx={1} />
-        {/* Acento = 2× la hairline (SW_ACCENT) — es el borde superior
-            real del componente, no un nivel de detalle. */}
-        <line x1={2.5} y1={8.3} x2={21.5} y2={8.3} strokeWidth={SW_ACCENT} />
+        <rect x={2.5} y={7.5} width={19} height={3} fill="currentColor" fillOpacity={0.08} />
         <line x1={9.5} y1={10.5} x2={9.5} y2={20.5} />
         <line x1={15.5} y1={10.5} x2={15.5} y2={20.5} />
         <line x1={2.5} y1={13.5} x2={21.5} y2={13.5} />
         <line x1={2.5} y1={16.5} x2={21.5} y2={16.5} />
-        <line x1={2.5} y1={19} x2={21.5} y2={19} />
+        {/* Última fila a y=18.5 (no 19, como en el set anterior): con
+            la banda del header ocupando 3u arriba, dejar la fila en 19
+            deja solo 1.5u contra el borde inferior de la card (20.5) —
+            se corrige a 2u exactos para cumplir la separación mínima. */}
+        <line x1={2.5} y1={18.5} x2={21.5} y2={18.5} />
       </svg>
     ),
   },

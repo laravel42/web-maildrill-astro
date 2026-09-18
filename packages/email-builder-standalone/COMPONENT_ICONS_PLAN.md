@@ -1312,3 +1312,66 @@ olvidar.
 **97**. Las tablas históricas de §2 y de cada tanda no se reescriben (son
 registro de lo que se hizo entonces); esta sección es la referencia
 válida para los conteos.
+
+## 23. Fase C · tanda `comparison` (5 iconos) — rework geométrico
+
+**Estado: implementado, pendiente visto bueno visual del usuario.**
+Segunda tanda de la Fase C, otra vez con subagentes (análisis →
+rediseño → auditoría). Esta vez el pipeline no descarriló: el árbol
+estaba **limpio y pusheado** antes de lanzarlo, así que el auditor pudo
+medir alcance contra un HEAD real, y el brief declaraba explícitamente
+que la caja de 48px y el grid de 2 columnas son trabajo aprobado que no
+se toca.
+
+### 23.1 Qué cambió y por qué (citando el dato)
+
+| # | Icono | Cambio |
+|---|---|---|
+| 5 | Option A vs B | Solo `rx` 0.6 → 0.5 (rejilla). El dibujo ya era fiel: `ColumnsContainer[2, fixedWidths:[50,50]]`, cards con borde sin fondo. |
+| 6 | Mobile-reflow A vs B | La línea vertical punteada **no representaba nada**: el hueco entre columnas ya estaba implícito. Su único rasgo real en el dato es `stackColumnsOnMobile: true`, así que ahora lleva un chevron de colapso. |
+| 7 | Before / After | Los dos lados dibujaban **el mismo checkmark**, o sea se veían idénticos. Ahora es imagen + chip por columna, con el chip izquierdo en outline y el derecho relleno: el contraste claro `#F5F5F7` / oscuro `#111827` que traen los `<span>` inline del HTML del `NotionText`. De 8 formas a 4. |
+| 8 | Feature matrix | Sin cambios de geometría; solo se documentó la prop real (`fixedWidths: [33,34,33]`, 4 filas separadas por `Divider`, sin `backgroundColor`). |
+| 9 | Top-accent matrix | El acento `SW_ACCENT` sobre el borde superior simulaba un acento de color que el dato no tiene: el header vive dentro de un `Container` con `backgroundColor: #111827` real. Ahora es una **banda rellena** (`fillOpacity`), mismo criterio que en `banner`. Además la última fila baja de y=19 a y=18.5 para recuperar los 2u contra el borde inferior. |
+
+### 23.2 Fallo que la auditoría automática no vio
+
+El primer rediseño de #6 puso el chevron **en el hueco central**, de
+x=10.5 a 13.5. El hueco entre las dos cards mide 2u (11 → 13), así que
+los brazos del chevron **cruzaban el borde de ambas cards**. El script
+de auditoría no lo detectó porque medía los `path` solo para la rejilla
+de 0.5, no para colisiones: los gaps se calculaban sobre bordes de
+`rect` y `line` axis-aligned.
+
+Corregido moviendo el chevron **debajo** de las cards, que a su vez
+obligó a bajar su altura de 17u a 13.5u para conservar los 2u de
+separación. Consecuencia aceptada: el par #5/#6 ahora difiere en dos
+cosas (alto de card + chevron), pero ambas son consecuencia del mismo
+rasgo.
+
+**Mejora del control**: el verificador de tanda ahora incluye un
+recorrido de `path` (comandos `M/L/H/V` y sus formas relativas) para
+obtener su bbox y comprobar que no cae sobre la banda de trazo (±0.5u)
+de ningún `rect`. Confirmado que con ese check la versión anterior de #6
+falla y la corregida pasa. Esto debe entrar en el test de la Fase F
+(§19.9).
+
+### 23.3 Verificación
+
+| Icono | formas | gap X | gap Y | fuera de rejilla | extensión | colisión path/rect |
+|---|---|---|---|---|---|---|
+| Option A vs B | 6 | 2.0 | 2.0 | 0 | 2.5..21.5 | — |
+| Mobile-reflow A vs B | 7 | 2.0 | 2.0 | 0 | 2.5..21.5 | ninguna |
+| Before / After | 4 | 2.0 | 3.0 | 0 | 2.5..21.5 | — |
+| Feature matrix | 7 | 6.0 | 3.0 | 0 | 2.5..21.5 | — |
+| Top-accent matrix | 7 | 6.0 | 2.0 | 0 | 2.5..21.5 | — |
+
+Diagnósticos LSP: 0. `prettier --check`: limpio. Sin `vitest` /
+`astro check` por pedido del usuario (se corren al cerrar varias
+tandas). Falta la captura visual del usuario.
+
+### 23.4 Siguiente tanda
+
+`cta` + `faq` (los 10 de la Tanda 2 original). Del audit de §19.3, los
+que exigen rework son: `cta` Two-column mobile stack (0.50u), `cta` Card
+(1.00u), `faq` Pill question rows (1.80u) y `faq` Mobile reflow 2
+columns (1.00u en Y).
