@@ -11,7 +11,7 @@ import GalleryPreview, { FauxEmail, type GalleryPreviewData } from './shared/Gal
 import TemplatePreview from './shared/TemplatePreview';
 import libStyles from './AppTemplates.module.css';
 import { CHANNEL, CHANNEL_ORDER, channelLabel } from './shared/channels';
-import { formatDuration, smsSegments, voiceSeconds } from './shared/messaging';
+import { formatDuration, voiceSeconds } from './shared/messaging';
 import { useEscapeClose } from './shared/useEscapeClose';
 import {
   audiencesLabelOf,
@@ -692,6 +692,9 @@ export default function CampaignWizard({
   const domainsLoaded = verifiedDomainsProp !== undefined;
   const activeSender = channelSender(channel, resolvedSenders);
   const emailSenderOptions = verifiedDomains.map(emailSenderForDomain);
+
+  // Escape closes the modal.
+  useEscapeClose(onClose);
 
   useEffect(() => {
     window.posthog?.capture('campaign_wizard_opened', { channel, mode });
