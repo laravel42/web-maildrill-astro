@@ -3,13 +3,17 @@
  * library (left edge of the canvas). Mirrors InspectorHandle: a 24×80
  * flag that sticks out from the panel. Clicking collapses the full
  * library to the compact rail, or expands it back.
+ *
+ * Icon + vertical label ("Library"), homologado con Builder42's
+ * `PanelHandle` (`packages/builder42/src/app/layout/PanelHandle.tsx`,
+ * `.pbx-panel-handle__label`) — antes solo mostraba el icono.
  */
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ViewSidebarOutlined from '@mui/icons-material/ViewSidebarOutlined';
-import { Box, ButtonBase, Tooltip } from '@mui/material';
+import { Box, ButtonBase, Tooltip, Typography } from '@mui/material';
 
 import {
   setComponentsLibraryDrawerOpen,
@@ -34,6 +38,7 @@ export default function ComponentsLibraryHandle() {
 
   const isCompact = !open;
   const drawerWidth = open ? COMPONENTS_LIBRARY_DRAWER_WIDTH : COMPACT_LIBRARY_DRAWER_WIDTH;
+  const panelName = t('componentsLibrary.drawer.handle', 'Library');
 
   const toggle = () => {
     if (open) resetHoverPreview();
@@ -67,7 +72,7 @@ export default function ComponentsLibraryHandle() {
           }
           sx={(theme) => ({
             width: 24,
-            minHeight: 80,
+            minHeight: 88,
             borderTopRightRadius: 8,
             borderBottomRightRadius: 8,
             backgroundColor: isCompact
@@ -80,7 +85,7 @@ export default function ComponentsLibraryHandle() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 0.5,
+            gap: 0.75,
             py: 1,
             boxShadow: '2px 0 6px rgba(0,0,0,0.04)',
             '&:hover': {
@@ -92,7 +97,22 @@ export default function ComponentsLibraryHandle() {
             },
           })}
         >
-          <ViewSidebarOutlined sx={{ fontSize: 16 }} />
+          <ViewSidebarOutlined sx={{ fontSize: 15 }} />
+          <Typography
+            component="span"
+            sx={{
+              writingMode: 'vertical-rl',
+              transform: 'rotate(180deg)',
+              fontSize: '10px',
+              fontWeight: 700,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+              lineHeight: 1,
+            }}
+          >
+            {panelName}
+          </Typography>
         </ButtonBase>
       </Tooltip>
     </Box>

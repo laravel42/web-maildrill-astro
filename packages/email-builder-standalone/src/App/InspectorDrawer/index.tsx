@@ -88,42 +88,6 @@ export default function InspectorDrawer({
     );
   };
 
-  const ContentIcon = () => (
-    <svg
-      style={{ marginRight: '4px', color: 'inherit' }}
-      width="21"
-      height="20"
-      viewBox="0 0 21 20"
-      fill="none"
-    >
-      <path
-        d="M3.83398 5H17.1673M3.83398 10H17.1673M3.83398 15H9.66732"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-
-  const StyleIcon = () => (
-    <svg
-      style={{ marginRight: '4px', color: 'inherit' }}
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-    >
-      <path
-        d="M5.83333 17.5C3.99238 17.5 2.5 16.0076 2.5 14.1667V4.16667C2.5 3.24619 3.24619 2.5 4.16667 2.5H7.5C8.42047 2.5 9.16667 3.24619 9.16667 4.16667V14.1667C9.16667 16.0076 7.67428 17.5 5.83333 17.5ZM5.83333 17.5H15.8333C16.7538 17.5 17.5 16.7538 17.5 15.8333V12.5C17.5 11.5795 16.7538 10.8333 15.8333 10.8333H13.8807M9.16669 6.11927L10.5474 4.73858C11.1983 4.0877 12.2535 4.0877 12.9044 4.73858L15.2614 7.0956C15.9123 7.74647 15.9123 8.80175 15.2614 9.45262L8.19036 16.5237M5.83333 14.1667H5.84167"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-
   const onChangeSideBar = (_: any, v: any) => {
     setSidebarTab(v);
   };
@@ -197,8 +161,6 @@ export default function InspectorDrawer({
                     key="block-configuration"
                     value="block-configuration"
                     label={t('header.content')}
-                    icon={<ContentIcon />}
-                    iconPosition="start"
                   />,
                   <Tab
                     sx={{
@@ -212,8 +174,6 @@ export default function InspectorDrawer({
                     key="css"
                     value="css"
                     label={t('header.styles')}
-                    icon={<StyleIcon />}
-                    iconPosition="start"
                   />,
                 ]}
               {selectedBlockId != null &&
@@ -230,8 +190,6 @@ export default function InspectorDrawer({
                     key="styles"
                     value="styles"
                     label={t('header.styles')}
-                    icon={<StyleIcon />}
-                    iconPosition="start"
                   />,
                 ]}
               {selectedBlockId == null && (
@@ -245,8 +203,6 @@ export default function InspectorDrawer({
                   key="styles"
                   value="styles"
                   label={t('header.styles')}
-                  icon={<StyleIcon />}
-                  iconPosition="start"
                 />
               )}
             </Tabs>
