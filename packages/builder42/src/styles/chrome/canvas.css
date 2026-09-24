@@ -124,7 +124,7 @@
   color: var(--pb-chrome-text-muted, #64748b);
   background: var(--pb-chrome-surface, #fff);
   border: 1px solid var(--pb-chrome-border);
-  border-radius: var(--pb-chrome-radius-pill);
+  border-radius: var(--pb-chrome-radius-chip);
   padding: 4px 10px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;

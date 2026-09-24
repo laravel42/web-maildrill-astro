@@ -389,7 +389,7 @@
   flex-shrink: 0;
   padding: 3px 8px;
   border: 1px solid var(--pb-chrome-panel-hidden);
-  border-radius: var(--pb-chrome-radius-pill);
+  border-radius: var(--pb-chrome-radius-chip);
   background: transparent;
   color: var(--pb-chrome-panel-hidden);
   font-size: 11px;
@@ -621,7 +621,7 @@
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: var(--pb-chrome-radius-pill);
+  border-radius: var(--pb-chrome-radius-chip);
   font-size: 10px;
   font-weight: var(--pb-chrome-font-weight-bold);
   flex-shrink: 0;
@@ -1137,7 +1137,7 @@
 .pbx-chips-text__chip {
   padding: 4px 8px;
   border: 1px solid var(--pb-chrome-border);
-  border-radius: var(--pb-chrome-radius-pill);
+  border-radius: var(--pb-chrome-radius-chip);
   background: var(--pb-chrome-surface);
   color: var(--pb-chrome-text);
   font-size: 11px;

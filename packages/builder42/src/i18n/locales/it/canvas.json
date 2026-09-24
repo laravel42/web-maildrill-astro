@@ -75,11 +75,18 @@
     "italic": "Corsivo",
     "strike": "Barrato",
     "link": "Collegamento",
-    "linkPrompt": "URL del collegamento (vuoto per rimuoverlo)",
+    "linkFieldLabel": "URL del collegamento",
+    "linkFieldPlaceholder": "https://esempio.com",
+    "linkApply": "Applica",
+    "linkRemove": "Rimuovi collegamento",
+    "linkInvalid": "Inserisci un indirizzo web, un'email, un numero di telefono o un link relativo che inizi con / o #.",
     "heading1": "Titolo 1",
     "heading2": "Titolo 2",
     "heading3": "Titolo 3",
     "bulletList": "Elenco puntato",
-    "orderedList": "Elenco numerato"
+    "orderedList": "Elenco numerato",
+    "textColor": "Colore del testo",
+    "backgroundColor": "Colore di sfondo",
+    "clearColors": "Rimuovi colori"
   }
 }

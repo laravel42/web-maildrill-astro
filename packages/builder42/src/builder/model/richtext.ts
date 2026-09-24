@@ -26,6 +26,7 @@
 import { generateHTML, generateJSON } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
+import { BackgroundColor, Color, TextStyle } from "@tiptap/extension-text-style";
 import type { AnyExtension } from "@tiptap/core";
 
 // ---------------------------------------------------------------------------
@@ -65,10 +66,27 @@ export type RichTextContent = string | TiptapDoc;
  * configuración que usa el editor para que ambos consumidores de la
  * extensión queden inequívocamente sincronizados si en el futuro cambia
  * alguna opción que sí afecte el output (p. ej. `HTMLAttributes`).
+ *
+ * **Color de texto y de fondo** (`TextStyle` + `Color` + `BackgroundColor`,
+ * de `@tiptap/extension-text-style`): `TextStyle` es el mark que se
+ * serializa como `<span style="…">` y `Color`/`BackgroundColor` son las dos
+ * extensiones que le añaden el atributo y el comando
+ * (`setColor`/`unsetColor`, `setBackgroundColor`/`unsetBackgroundColor`).
+ * Van en ESTA lista y no solo en el editor por la razón que documenta el
+ * bloque de arriba: si el conversor no conoce el mark, un documento que lo
+ * usa lo pierde EN SILENCIO al convertirse a HTML — y esta es la lista que
+ * consume `generateHTML`, la conversión server-safe que corre en el export.
+ * Se usan las tres por separado en vez de `TextStyleKit` para no arrastrar
+ * `FontFamily`, `FontSize` y `LineHeight`, que ya son propiedades del
+ * sistema de estilos del nodo (`styleSchema.typography`) y tendrían dos
+ * fuentes de verdad.
  */
 export const RICHTEXT_EXTENSIONS: AnyExtension[] = [
   StarterKit.configure({ link: false }),
   Link.configure({ openOnClick: false }),
+  TextStyle,
+  Color,
+  BackgroundColor,
 ];
 
 // ---------------------------------------------------------------------------

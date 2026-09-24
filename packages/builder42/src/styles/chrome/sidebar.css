@@ -8,9 +8,29 @@
  * justificarse en línea (criterio docs/22 §4).
  */
 /* ---- Sidebar ------------------------------------------------------------ */
-.pbx-body--sidebar-compact .pbx-sidebar,
+/* El inspector SÍ colapsa a ancho 0 (`shell.css`
+ * `.pbx-body--inspector-collapsed`: `grid-template-columns: 312px 1fr 0`), y
+ * mientras está a 0 su contenido tiene que quedar recortado o se derramaría
+ * sobre el canvas. */
 .pbx-body--inspector-collapsed .pbx-inspector {
   overflow: hidden;
+}
+
+/* El sidebar en "compact" NO colapsa: desde la homologación fase B su modo
+ * mínimo es un riel de 168px con los 10 tiles de esenciales
+ * (`.pbx-compact-rail`, más abajo), no un panel vacío de ancho 0. Estaba
+ * incluido en el `overflow: hidden` de arriba por herencia de cuando sí
+ * colapsaba, y eso lo dejaba SIN scroll: medido a 1440×700, `scrollHeight`
+ * 661 contra `clientHeight` 640, con el último tile terminando 13px por
+ * debajo del borde del panel y ninguna forma de alcanzarlo (en "open" el
+ * mismo `<aside>` computaba `overflow-y: auto` y por eso el defecto no
+ * aparecía ahí). Vertical `auto` para recuperar el scroll; horizontal
+ * `hidden` a propósito, para que una etiqueta larga de tile no abra una
+ * barra horizontal en 168px ni se derrame durante la transición de ancho
+ * del overlay en viewport angosto (`narrow.css`). */
+.pbx-body--sidebar-compact .pbx-sidebar {
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .pbx-sidebar,
@@ -83,6 +103,7 @@
   background: var(--pb-chrome-surface);
   color: var(--pb-chrome-text-faint);
   cursor: pointer;
+  font-family: inherit; /* T8: <button> never inherits from .pbx-app on its own (UA default, Arial) — covers .pbx-panel-handle__label too, a plain descendant with no font rule of its own. */
   box-shadow: var(--pb-chrome-frame-shadow);
   transition: background var(--pb-chrome-transition), color var(--pb-chrome-transition);
 }
@@ -169,11 +190,25 @@
 
 /* Grid de 3 columnas cuadradas (Fase 11.g, feedback de usuario: la paleta
  * pasa de lista de filas a cards altas tipo grid, más visual/reconocible
- * por icono). `grid-template-columns: repeat(3, 1fr)` + `aspect-ratio: 1`
- * en el item mantienen las 3 celdas cuadradas a cualquier ancho de sidebar. */
+ * por icono).
+ *
+ * `minmax(0, 1fr)` y no `1fr`: `1fr` es `minmax(auto, 1fr)`, y ese `auto`
+ * toma el **max-content** del item como suelo, así que con un label
+ * `white-space: nowrap` la columna se dimensionaba al texto más largo de la
+ * categoría en vez de a un tercio del ancho. Medido antes del cambio, en la
+ * categoría "navegación" con el chrome en español: `91.14px 83.19px 119.81px`
+ * — tres columnas distintas donde este bloque promete tres iguales (en
+ * italiano el reparto llegaba a `70.17px 79.58px 118.94px`, 48.7px de
+ * diferencia entre la más ancha y la más estrecha). Cada label quedaba además
+ * con 0px de holgura contra su caja (la columna crecía justo hasta el texto),
+ * de modo que cualquier diferencia de render — otra fuente, otro zoom — saca
+ * la elipsis. `minmax(0, 1fr)` quita ese suelo y las tres columnas vuelven a
+ * ser iguales a cualquier ancho de sidebar; el label envuelve en dos líneas
+ * (ver `.pbx-palette__label`) en vez de recortarse. Mismo patrón que
+ * `image-source.css`, `inspector-controls.css` y `templates.css`. */
 .pbx-palette {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -201,6 +236,7 @@
   border-radius: var(--pb-chrome-radius-md);
   background: var(--pb-chrome-surface);
   cursor: grab;
+  font-family: inherit; /* T8: <button> never inherits from .pbx-app on its own (UA default, Arial) — covers .pbx-palette__label too, a plain descendant with no font rule of its own. */
   font-size: var(--pb-chrome-font-size-sm);
   text-align: center;
   color: var(--pb-chrome-text);
@@ -252,13 +288,25 @@
   color: var(--pb-chrome-accent-on-surface);
 }
 
+/* Label del tipo de componente. Envuelve en DOS líneas en vez de recortarse en
+ * una: con `white-space: nowrap` los nombres largos de es/it ("Menú de
+ * navegación", "Barra de navegación", "Redes sociales", "Menu di navigazione")
+ * forzaban el ancho de su columna del grid (ver `.pbx-palette`) y quedaban a
+ * 0px de su caja, al borde de la elipsis. Dos líneas caben en la card: el
+ * `min-height: 76px` del item es un mínimo, así que la fila crece lo que haga
+ * falta. El clamp a 2 líneas acota esa altura para que el grid siga siendo
+ * regular; un label que no quepa en dos sigue teniendo su texto completo en el
+ * `title` del botón, que ya existía. `overflow-wrap: break-word` evita que una
+ * palabra sola más ancha que la columna se desborde. */
 .pbx-palette__label {
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   font-weight: 500;
   font-size: 11px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
   width: 100%;
   min-width: 0;
 }

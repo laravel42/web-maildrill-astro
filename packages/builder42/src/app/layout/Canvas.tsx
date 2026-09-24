@@ -10,7 +10,7 @@
  * `ViewMode` pero fue eliminada de este host — ver el guard más abajo.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { NodeRenderer } from "@/builder/canvas/NodeRenderer";
@@ -35,6 +35,12 @@ import { ExportWarningsBanner } from "@/components/ExportWarningsBanner";
 import type { ExportWarning } from "@/builder/export/warnings";
 import { CanvasEmptyStart } from "./CanvasEmptyStart";
 import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
+import {
+  simpleIconsCatalog,
+  subscribeSimpleIcons,
+  getSimpleIconsVersion,
+} from "@/builder/registry/catalogs/simpleIcons.catalog";
+import { usedSocialIconSlugs } from "@/builder/export/usage";
 
 export function Canvas() {
   const view = useDocumentStore((s) => s.view);
@@ -43,9 +49,53 @@ export function Canvas() {
   const activeBreakpoint = useDocumentStore((s) => s.activeBreakpoint);
   const activeThemeId = useDocumentStore((s) => s.activeThemeId);
   const select = useDocumentStore((s) => s.select);
+  // Disparador angosto (docs/34 §F11a3): antes bastaba con que el documento
+  // tuviera ALGÚN nodo `social-links`, sin mirar sus props — y los 17
+  // templates publicados traen ese nodo con `props: {}` (sin `links`), así
+  // que abrir cualquier template descargaba el catálogo de marcas (~5 MB /
+  // 1.78 MB brotli) para pintar CERO iconos. La condición ahora es un OR de
+  // dos casos, los únicos en los que el catálogo hace falta de verdad:
+  //  a) algún nodo `social-links` tiene al menos un link con `label` no
+  //     vacío tras trim() — ese es el único caso en que el canvas tiene un
+  //     glifo de marca real que pintar (el slug es el label en minúsculas,
+  //     ver `resolveIcon` en SocialLinks.tsx); o
+  //  b) el nodo seleccionado es un `social-links` — seleccionarlo es
+  //     condición necesaria para abrir el picker de redes del Inspector, que
+  //     necesita el catálogo cargado para sus previews aunque el nodo no
+  //     tenga labels todavía.
+  const needsBrandCatalog = useDocumentStore((s) => {
+    const selected = s.selectedId ? s.document.nodes[s.selectedId] : undefined;
+    if (selected?.type === "social-links") return true;
+    return Object.values(s.document.nodes).some((n) => {
+      if (n.type !== "social-links") return false;
+      const links = Array.isArray(n.props.links) ? n.props.links : [];
+      return links.some(
+        (l) => typeof (l as { label?: unknown })?.label === "string" && (l as { label: string }).label.trim() !== "",
+      );
+    });
+  });
   const canvasRef = useRef<HTMLElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   useAutoScroll(canvasRef);
+
+  // Suscripción al catálogo lazy de simple-icons (docs/34 §F11a): fuerza un
+  // re-render cuando el barrel termina de cargar, para que el canvas y la
+  // preview del picker (que leen `simpleIconsCatalog.get()` de forma
+  // síncrona) dejen de mostrar el icono genérico en cuanto llegan los datos.
+  // Solo importa que el valor cambie, no su contenido.
+  useSyncExternalStore(subscribeSimpleIcons, getSimpleIconsVersion, getSimpleIconsVersion);
+
+  // Precalentamiento (docs/34 §F11a, condición angosta en §F11a3): dispara
+  // `ensure()` solo cuando `needsBrandCatalog` es true — ver el comentario
+  // del selector arriba para las dos ramas del OR. Este efecto vive en
+  // `Canvas`, montado solo en el editor interactivo real del browser —
+  // nunca corre en export/SSR (`exportToHtml`/`zipSite` no montan React; esos
+  // caminos siguen llamando `ensure()` sin condición, ver `downloadZip` en
+  // `CodeView` más abajo).
+  useEffect(() => {
+    if (!needsBrandCatalog) return;
+    void simpleIconsCatalog.ensure([]);
+  }, [needsBrandCatalog]);
 
   // La vista JSON queda eliminada en este host (Maildrill no expone el
   // documento crudo a sus usuarios, ver
@@ -131,6 +181,11 @@ function CodeView() {
   const [prefix] = useLocalConfig("outputZipPrefix");
   const [useTimestamp] = useLocalConfig("outputZipTimestamp");
 
+  // Misma suscripción que en `Canvas`: la vista Código lee `simpleIconsCatalog`
+  // de forma síncrona dentro del `useMemo` de abajo, así que necesita
+  // re-renderizar cuando el catálogo llega (docs/34 §F11a).
+  useSyncExternalStore(subscribeSimpleIcons, getSimpleIconsVersion, getSimpleIconsVersion);
+
   const { html, css, site } = useMemo(() => {
     const flushed = writeDocIntoSite(site0, activePageId, activeDoc);
     const page = flushed.pages[activePageId]!;
@@ -138,9 +193,26 @@ function CodeView() {
     return { html: out.html, css: out.css, site: flushed };
   }, [site0, activePageId, activeDoc]);
 
-  const downloadZip = () => {
+  const downloadZip = async () => {
     setExporting(true);
     setExportWarnings([]);
+    // `ensure()` antes de exportar (decisión 5d): sin esto, un .zip generado
+    // antes de que el barrel termine de cargar saldría con los iconos de
+    // marca vacíos (el fallback genérico) aunque el canvas ya los mostrara
+    // bien — precisamente el escenario a evitar. Si la carga falla, no
+    // bloqueamos la descarga: los glifos de marca caen al icono genérico
+    // (el mismo fallback que ya usa cualquier marca no reconocida).
+    try {
+      await simpleIconsCatalog.ensure(usedSocialIconSlugs(site));
+    } catch (err) {
+      console.warn("simple-icons: no se pudo cargar el catálogo de marcas, se usa el icono genérico", err);
+    }
+    // El bloque de export es síncrono y pesado (exportSite + zipSite). Lo
+    // diferimos a una MACROtask con setTimeout(…, 0) para que el navegador
+    // pinte antes el botón deshabilitado y el label "Exporting…": el
+    // `.then`/`await` de arriba corre como MICROtask, que se ejecuta ANTES
+    // del siguiente paint, así que sin este setTimeout el hilo principal se
+    // bloquearía sin que el usuario llegue a ver el estado "exporting".
     setTimeout(() => {
       const built = exportSite(site, { minify: true });
       setFiles(built.files);
