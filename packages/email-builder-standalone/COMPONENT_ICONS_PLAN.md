@@ -1429,3 +1429,57 @@ Falta la captura visual del usuario.
 `features` + `footer` (Tanda 3 original, §11) — pendiente de aplicar el
 mismo criterio de auditoría (fiel al dato real, sin esqueleto
 compartido) si el usuario reporta el mismo problema ahí.
+
+## 25. Fixes puntuales — `footer` #9 y `gallery` #1/#3 (post-revisión visual)
+
+**Estado: implementado, aprobado por el usuario.** No es una tanda
+nueva de Fase C completa — son 3 correcciones puntuales tras revisar
+`footer` y `gallery` (Tandas 3 y 4 originales) en el editor real.
+
+### 25.1 `footer` #9 — Social + links
+
+El icono dibujaba 3 líneas cortas arriba simulando 3 columnas falsas —
+ese esqueleto pertenece realmente a #7 (Pill social row, que sí tiene
+3 `Button` en columnas separadas). El dato real de #9
+(`6fc20489-3492-49aa-9b58-322f70bc442e`) es **texto social plano en una
+sola línea** (`&nbsp;&nbsp;`-separated, sin columnas ni botones),
+seguido de las 2 columnas de links reales (Features/Pricing,
+About/Contact). Corregido a una sola línea ancha + las 2 columnas de
+links — ahora el contraste con #7 es exactamente "línea de texto" vs.
+"fila de pills".
+
+### 25.2 `gallery` #1 (3 product cards) y #3 (Cornered product cards)
+
+Feedback del usuario: *"están muy apretados"*. Iteración en 2 pasos:
+
+1. Primer intento: reducir a 2 cards (mismo criterio que el grid de la
+   library 3→2 columnas) para dar más ancho por card. Resultado
+   rechazado por el usuario — **"son dos cards cuando en el componente
+   son tres"**: el dato real (`ColumnsContainer[3]`) tiene 3 columnas,
+   así que reducir a 2 deja de ser fiel al bloque.
+2. Diagnóstico correcto: el apretujamiento no era por tener 3 columnas
+   sino porque cada una se dibujaba como un **rect completo
+   independiente** (4 lados) — en el gap entre cards, el borde derecho
+   de una card y el borde izquierdo de la siguiente quedan a poca
+   distancia, leyéndose como una línea doble/gruesa en vez de un
+   espaciado limpio. Fix: **un solo rect exterior** + 2 líneas
+   verticales internas como divisores entre columnas — mismo peso de
+   trazo (hairline) que el resto del icono, en vez de 2 bordes
+   adyacentes. Las 3 columnas se mantienen (imagen + título + botón de
+   precio en cada una, ahora con ~6.5u de ancho cada una en vez de 4u).
+
+`#3` recibe el mismo fix de divisores, conservando su diferenciador
+real frente a `#1`: esquinas más redondeadas (aproximación de la
+asimetría real del dato, que SVG `rect` no puede expresar por esquina
+individual) y botón **pill** (`rx` = mitad de la altura) en vez de
+rectangular.
+
+### 25.3 Verificación
+
+Rejilla de 0.5u verificada con script ad-hoc para los 3 iconos
+corregidos (varios ajustes intermedios — `2.2`/`16.8`/`16.75`, etc. —
+se normalizaron a valores en rejilla antes de la versión final).
+`prettier --check`: limpio. `astro check`: 0 errores, 0 warnings
+nuevos (3 hints preexistentes). `npm run build`: completo sin errores.
+
+Aprobado visualmente por el usuario tras la corrección de divisores.

@@ -621,9 +621,14 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'footer',
     svg: (
       <svg {...strokeProps}>
-        <line x1={5} y1={4.5} x2={9} y2={4.5} />
-        <line x1={10.5} y1={4.5} x2={14} y2={4.5} />
-        <line x1={15.5} y1={4.5} x2={19} y2={4.5} />
+        {/* Plain inline text for social links (no Button/pill, no columns —
+            just `&nbsp;&nbsp;`-separated text), so it reads as ONE line, not
+            3 fake columns like the previous version drew (that skeleton
+            actually belonged to #7's pill row, which HAS 3 separate Button
+            columns). Only below that does the real `ColumnsContainer[2]`
+            (Features/Pricing, About/Contact) start — the contrast with #7's
+            pill row is exactly "line of text" vs. "row of pill buttons". */}
+        <line x1={6} y1={4.5} x2={18} y2={4.5} />
         <line x1={5.5} y1={10} x2={9.5} y2={10} />
         <line x1={14.5} y1={10} x2={18.5} y2={10} />
         <line x1={2.5} y1={15} x2={21.5} y2={15} />
@@ -651,18 +656,26 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'gallery',
     svg: (
       <svg {...strokeProps}>
-        <rect x={2} y={4} width={6} height={16} rx={1.4} />
-        <rect x={9} y={4} width={6} height={16} rx={1.4} />
-        <rect x={16} y={4} width={6} height={16} rx={1.4} />
-        <rect x={3} y={5.5} width={4} height={4} rx={0.6} />
-        <rect x={10} y={5.5} width={4} height={4} rx={0.6} />
-        <rect x={17} y={5.5} width={4} height={4} rx={0.6} />
+        {/* `ColumnsContainer[3]`, real 3 columns kept (not reduced to 2) —
+            but drawn as ONE outer rect with 2 internal divider lines
+            between columns, instead of 3 separate full rects side by side.
+            Adjacent full rects each draw their own left/right edge 1u
+            apart, so the gap reads as a double-thick line; a single shared
+            divider is one hairline, same visual weight as every other
+            stroke in the icon. Column content (image, title line, price
+            button) is centered within its own ~6.67u-wide column. */}
+        <rect x={1.5} y={3} width={21} height={17} rx={1.4} />
+        <line x1={8.5} y1={4} x2={8.5} y2={19} />
+        <line x1={15.5} y1={4} x2={15.5} y2={19} />
+        <rect x={3} y={4.5} width={4} height={4} rx={0.6} />
+        <rect x={10} y={4.5} width={4} height={4} rx={0.6} />
+        <rect x={17} y={4.5} width={4} height={4} rx={0.6} />
         <line x1={3} y1={14.5} x2={6.5} y2={14.5} />
         <line x1={10} y1={14.5} x2={13.5} y2={14.5} />
         <line x1={17} y1={14.5} x2={20.5} y2={14.5} />
-        <rect x={3} y={16.8} width={4} height={2} rx={0.6} />
-        <rect x={10} y={16.8} width={4} height={2} rx={0.6} />
-        <rect x={17} y={16.8} width={4} height={2} rx={0.6} />
+        <rect x={3} y={17} width={4} height={2} rx={0.6} />
+        <rect x={10} y={17} width={4} height={2} rx={0.6} />
+        <rect x={17} y={17} width={4} height={2} rx={0.6} />
       </svg>
     ),
   },
@@ -685,22 +698,25 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'gallery',
     svg: (
       <svg {...strokeProps}>
-        {/* Asymmetric corners (topLeft+bottomRight rounded, others square) —
-            approximated with a single rounded rect per card since SVG rect
-            doesn't support per-corner radius; the pill button (vs. #1's
-            rectangle) is the clearer visual differentiator here. */}
-        <rect x={2} y={4} width={6} height={16} rx={2.2} />
-        <rect x={9} y={4} width={6} height={16} rx={2.2} />
-        <rect x={16} y={4} width={6} height={16} rx={2.2} />
-        <rect x={3} y={5.5} width={4} height={4} rx={0.6} />
-        <rect x={10} y={5.5} width={4} height={4} rx={0.6} />
-        <rect x={17} y={5.5} width={4} height={4} rx={0.6} />
+        {/* Same divider fix as #1 (one outer rect + shared internal
+            dividers, real 3 columns, no double-thick edges) — rounder
+            corners on the outer rect plus a pill price button (vs. #1's
+            rectangle button) are what actually differentiate this from #1
+            in the real data (asymmetric per-corner radius isn't
+            representable with a single SVG rect, so the uniform rounder
+            radius stands in for it). */}
+        <rect x={1.5} y={3} width={21} height={17} rx={2.4} />
+        <line x1={8.5} y1={4} x2={8.5} y2={19} />
+        <line x1={15.5} y1={4} x2={15.5} y2={19} />
+        <rect x={3} y={4.5} width={4} height={4} rx={0.8} />
+        <rect x={10} y={4.5} width={4} height={4} rx={0.8} />
+        <rect x={17} y={4.5} width={4} height={4} rx={0.8} />
         <line x1={3} y1={14.5} x2={6.5} y2={14.5} />
         <line x1={10} y1={14.5} x2={13.5} y2={14.5} />
         <line x1={17} y1={14.5} x2={20.5} y2={14.5} />
-        <rect x={3} y={16.6} width={4} height={2.4} rx={1.2} />
-        <rect x={10} y={16.6} width={4} height={2.4} rx={1.2} />
-        <rect x={17} y={16.6} width={4} height={2.4} rx={1.2} />
+        <rect x={3} y={17} width={4} height={2} rx={1} />
+        <rect x={10} y={17} width={4} height={2} rx={1} />
+        <rect x={17} y={17} width={4} height={2} rx={1} />
       </svg>
     ),
   },
