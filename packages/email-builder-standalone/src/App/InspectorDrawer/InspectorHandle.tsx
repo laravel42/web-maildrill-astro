@@ -3,16 +3,20 @@
  * (left edge of the inspector sidebar). Clicking toggles between compact
  * and full inspector modes. Always visible when the inspector is open.
  *
- * Icon + vertical label ("Inspector"), homologado con Builder42's
+ * Chevron + vertical label ("Inspector"), homologado con Builder42's
  * `PanelHandle` (`packages/builder42/src/app/layout/PanelHandle.tsx`,
- * `.pbx-panel-handle__label`) — antes solo mostraba el icono, igual que
- * ComponentsLibraryHandle.
+ * `.pbx-panel-handle`/`.pbx-panel-handle__label`): always neutral theme
+ * colors (`background.paper` + `text.secondary`, never `primary.main`/
+ * `primary.contrastText` when compact — see ComponentsLibraryHandle for
+ * why that broke contrast with custom brand colors) plus a chevron for
+ * the expand/collapse affordance, same as ComponentsLibraryHandle.
  */
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import TuneOutlined from '@mui/icons-material/TuneOutlined';
+import ChevronLeft from '@mui/icons-material/ChevronLeft';
+import ChevronRight from '@mui/icons-material/ChevronRight';
 import { Box, ButtonBase, Tooltip, Typography } from '@mui/material';
 
 import {
@@ -31,6 +35,10 @@ export default function InspectorHandle() {
   const toggle = () => setInspectorDrawerMode(mode === 'full' ? 'compact' : 'full');
   const isCompact = mode === 'compact';
   const panelName = t('inspector.handle.title', 'Inspector');
+  // Right-edge handle: compact (collapsed) points left toward the canvas
+  // ("click to expand"); expanded points right toward its own edge
+  // ("click to collapse") — mirrors Builder42's right-slot semantics.
+  const ChevronIcon = isCompact ? ChevronLeft : ChevronRight;
 
   return (
     <Box
@@ -57,30 +65,26 @@ export default function InspectorHandle() {
             minHeight: 88,
             borderTopLeftRadius: 8,
             borderBottomLeftRadius: 8,
-            backgroundColor: isCompact
-              ? theme.palette.primary.main
-              : theme.palette.background.paper,
-            color: isCompact ? theme.palette.primary.contrastText : theme.palette.text.secondary,
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.secondary,
             border: `1px solid ${theme.palette.divider}`,
             borderRight: 'none',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 0.75,
+            gap: 0.5,
             py: 1,
             boxShadow: '-2px 0 6px rgba(0,0,0,0.04)',
             transition: 'background-color 120ms ease, color 120ms ease',
             '&:hover': {
-              backgroundColor: isCompact
-                ? theme.palette.primary.dark
-                : theme.palette.mode === 'dark'
-                  ? theme.palette.grey[800]
-                  : theme.palette.grey[200],
+              backgroundColor:
+                theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[200],
+              color: theme.palette.text.primary,
             },
           })}
         >
-          <TuneOutlined sx={{ fontSize: 15 }} />
+          <ChevronIcon sx={{ fontSize: 15 }} aria-hidden="true" />
           <Typography
             component="span"
             sx={{
