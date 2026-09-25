@@ -1,0 +1,82 @@
+{
+  "labels": {
+    "nextBtnText": "Avanti",
+    "prevBtnText": "Indietro",
+    "doneBtnText": "Fine",
+    "progressText": "{{current}} di {{total}}"
+  },
+  "steps": {
+    "headerIdentity": {
+      "title": "Nome e salvataggio automatico",
+      "description": "Imposta qui il nome della pagina. Le modifiche si salvano da sole mentre lavori."
+    },
+    "toolbarViews": {
+      "title": "Modifica o anteprima",
+      "description": "Passa dall'editor a un'anteprima dal vivo della pagina."
+    },
+    "toolbarViewport": {
+      "title": "Prova ogni dimensione di schermo",
+      "description": "Controlla e affina come appare la pagina su mobile, tablet e desktop."
+    },
+    "toolbarHistory": {
+      "title": "Annulla senza pensieri",
+      "description": "Ogni modifica può essere annullata o ripetuta, quindi puoi sperimentare liberamente."
+    },
+    "sidebarTabs": {
+      "title": "Componenti e template",
+      "description": "Parti da un singolo elemento o da una sezione già pronta."
+    },
+    "sidebarPalette": {
+      "title": "Trascina sulla tela",
+      "description": "Trascina un qualsiasi elemento o sezione da qui direttamente sulla pagina."
+    },
+    "sidebarTemplates": {
+      "title": "Template di pagina",
+      "description": "Questa tab contiene pagine intere pronte da usare come punto di partenza. Applicarne una sostituisce la pagina attuale, perciò ti chiede prima una conferma."
+    },
+    "canvasFrame": {
+      "title": "La tela",
+      "description": "Clicca un elemento per selezionarlo, oppure trascinane uno dal pannello per aggiungerlo."
+    },
+    "canvasNodeActions": {
+      "title": "Duplica o elimina",
+      "description": "Quando un elemento è selezionato, duplicalo o eliminalo da questa barra laterale."
+    },
+    "inspectorTabs": {
+      "title": "Contenuto, stile, interattività",
+      "description": "Il contenuto, lo stile e il comportamento interattivo dell'elemento selezionato vivono in queste tab."
+    },
+    "inspectorBreakpoints": {
+      "title": "Stile per dimensione di schermo",
+      "description": "Regola come appare l'elemento selezionato a ogni breakpoint, da mobile a desktop."
+    },
+    "settingsTabs": {
+      "title": "Le impostazioni della pagina",
+      "description": "Qui si configura tutta la pagina: livelli, pagine, temi, SEO, lingue, pubblicazione e impostazioni. Ogni tab apre una sezione diversa."
+    },
+    "settingsLayers": {
+      "title": "Livelli",
+      "description": "Questa è la struttura completa della pagina, in forma di albero. Usala per selezionare un elemento annidato dentro un altro."
+    },
+    "settingsPages": {
+      "title": "Pagine",
+      "description": "Qui una pagina diventa un sito con più pagine. Aggiungi una nuova pagina, rinominala o passa a un'altra quando vuoi."
+    },
+    "settingsLanguages": {
+      "title": "Lingue",
+      "description": "Qui vivono le lingue del contenuto del sito. Aggiungi una lingua e poi traduci il contenuto della pagina in quella lingua."
+    },
+    "pagesBreadcrumb": {
+      "title": "Una pagina è una tra tante",
+      "description": "Uno stesso progetto può avere più pagine — usa questo percorso per passare dall'una all'altra."
+    },
+    "publish": {
+      "title": "Pubblica",
+      "description": "Pubblica il sito e scegli il suo sottodominio da qui."
+    },
+    "profileMenu": {
+      "title": "Preferenze dell'editor",
+      "description": "Cambia la lingua dell'editor, il tema colore, il livello di esperienza e i controlli di riordino."
+    }
+  }
+}

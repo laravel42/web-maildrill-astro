@@ -28,6 +28,12 @@
     "hint": "Applica un modello di pagina o tocca una sezione per posizionarla sul canvas.",
     "sectionTooltip": "Tocca per prendere e posizionare sul canvas",
     "descInfoLabel": "Visualizza descrizione",
+    "preview": {
+      "desktop": "Vista desktop",
+      "mobile": "Vista mobile",
+      "zoom": "Zoom avanti",
+      "fit": "Adatta"
+    },
     "categories": {
       "page": "Modelli di pagina",
       "section": "Modelli di sezione"

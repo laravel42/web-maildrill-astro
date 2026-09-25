@@ -13,9 +13,11 @@ import {
   undo,
   redo,
 } from "@/builder/store/useTemporalStore";
-import { UndoIcon, RedoIcon } from "@/components";
+import { UndoIcon, RedoIcon, HelpCircle } from "@/components";
 import { HOST_VIEWS_ID, HOST_HISTORY_ID } from "@/app/EmbeddedChrome";
 import { ViewportDropdown } from "./ViewportDropdown";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
+import { requestBuilder42TourRestart } from "@/app/tour/useBuilder42Tour";
 
 function HostViews() {
   const { t } = useTranslation("header");
@@ -23,7 +25,12 @@ function HostViews() {
   const setView = useDocumentStore((s) => s.setView);
 
   return (
-    <div className="pbx-host-toolbar__views" role="group" aria-label={t("viewMode.label")}>
+    <div
+      className="pbx-host-toolbar__views"
+      role="group"
+      aria-label={t("viewMode.label")}
+      {...dataTourAttr(BUILDER42_TOUR_ANCHORS.toolbarViews)}
+    >
       <button
         type="button"
         className={
@@ -79,6 +86,24 @@ function HostHistory() {
   );
 }
 
+function HostTourRestart() {
+  const { t } = useTranslation("header");
+
+  return (
+    <div className="pbx-history">
+      <button
+        type="button"
+        className="pbx-history__btn"
+        title={t("restartTour.label")}
+        aria-label={t("restartTour.label")}
+        onClick={() => requestBuilder42TourRestart()}
+      >
+        <HelpCircle size={16} aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
 export function HostCanvasToolbar() {
   const { t } = useTranslation("header");
 
@@ -89,7 +114,10 @@ export function HostCanvasToolbar() {
         <ViewportDropdown />
       </div>
       <div id={HOST_HISTORY_ID} className="pbx-canvas-toolbar__right">
-        <HostHistory />
+        <div {...dataTourAttr(BUILDER42_TOUR_ANCHORS.toolbarHistory)}>
+          <HostHistory />
+        </div>
+        <HostTourRestart />
       </div>
     </div>
   );

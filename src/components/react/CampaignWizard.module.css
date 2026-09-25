@@ -1,4 +1,14 @@
 /* Horizontal step index — read-only; navigation is via footer Back/Next only. */
+/* Panel sizing for the wizard's shared amodal shell — matches the runtime
+   `wz()` scale (960×600 design × WZ 1.3) previously computed inline. WZ is a
+   fixed constant, not user-configurable, so hardcoding its product here is
+   exact, not an approximation. */
+.dialog {
+  width: 1248px;
+  height: 780px;
+  border-radius: 26px;
+}
+
 .stepNav {
   padding: 14px 25px;
   border-bottom: 1px solid var(--divider);

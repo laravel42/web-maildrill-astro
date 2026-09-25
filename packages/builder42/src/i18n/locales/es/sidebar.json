@@ -28,6 +28,12 @@
     "hint": "Aplica una plantilla de página o toca una sección para colocarla en el canvas.",
     "sectionTooltip": "Toca para tomar y colocar en el canvas",
     "descInfoLabel": "Ver descripción",
+    "preview": {
+      "desktop": "Vista escritorio",
+      "mobile": "Vista móvil",
+      "zoom": "Acercar",
+      "fit": "Ajustar"
+    },
     "categories": {
       "page": "Plantillas de página",
       "section": "Plantillas de sección"

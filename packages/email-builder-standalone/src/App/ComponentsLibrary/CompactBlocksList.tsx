@@ -77,26 +77,39 @@ function CompactBlockTile({ index }: { index: number }) {
       onClick={handleClick}
       sx={{
         ...dragTileShellSx(theme, { dragging: isDragging }),
-        p: 1,
+        // Homologado con Builder42 (`.pbx-compact-rail__tile`,
+        // sidebar.css: `padding: 8px 4px; gap: 4px`) — ícono SIN
+        // fondo/caja propia, igual que en BlockTile
+        // (BlocksCategoryContent.tsx): ahí `.pbx-compact-rail__tile-icon`
+        // solo centra, no tiene `background`. Border sólido (no dashed)
+        // + color exacto de `--pb-chrome-border`
+        // (`theme.palette.grey[200]`) — `dragTileShellSx` traía un
+        // border punteado (`divider`). Color `text.secondary`
+        // (`--pb-chrome-text`), NO `text.disabled`: en Builder42 el rail
+        // compacto (`.pbx-compact-rail__tile`) usa un color más intenso
+        // que el panel expandido (`.pbx-palette__icon`, `--text-faint`)
+        // — no son el mismo tono, confirmado en sidebar.css.
+        p: '8px 4px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         gap: 0.5,
+        border: '1px solid',
+        borderColor: theme.palette.grey[200],
+        color: 'text.secondary',
       }}
     >
-      <Box
-        sx={{
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'center',
-          p: 0.75,
-          borderRadius: 0.5,
-          bgcolor: theme.palette.action.hover,
-          color: 'text.secondary',
-        }}
-      >
-        {entry.icon}
-      </Box>
+      {
+        // Rail compacto (164px de ancho) — equivalente real en
+        // Builder42 es `.pbx-compact-rail__tile-icon-svg` (18px), NO
+        // `.pbx-palette__icon` (28px, panel EXPANDIDO — ver BlockTile en
+        // BlocksCategoryContent.tsx). `style` inline (no `sx`) — ver
+        // nota detallada ahí: `sx` vía cloneElement no ganó de forma
+        // determinista contra `.MuiSvgIcon-root` (mui/material-ui#34056).
+        React.cloneElement(entry.icon, {
+          style: { fontSize: 18, width: 18, height: 18 },
+        })
+      }
       <Typography
         variant="body2"
         sx={{

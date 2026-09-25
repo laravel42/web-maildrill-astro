@@ -40,6 +40,7 @@ import { ThemesEditor } from "./ThemesEditor";
 import { SiteFileActions } from "./SiteFileActions";
 import { PublishPanel } from "./PublishPanel";
 import { PublishedSitesList } from "./PublishedSitesList";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 export type { SiteTab };
 
@@ -156,6 +157,7 @@ export function SiteSettingsPanel({ element }: { element?: ReactNode }) {
           className="pbx-inspector-tabs pbx-inspector-tabs--wrap"
           role="tablist"
           aria-label={t("siteSettings.tabsAriaLabel")}
+          {...dataTourAttr(BUILDER42_TOUR_ANCHORS.settingsTabs)}
         >
           {visibleTabs.map(({ id, icon: Icon }) => (
             <button
@@ -211,7 +213,10 @@ export function SiteSettingsPanel({ element }: { element?: ReactNode }) {
               transition={{ duration: 0.15, ease: "easeOut" }}
             >
               {tab === "layers" && (
-                <section className="pbx-site-settings__section">
+                <section
+                  className="pbx-site-settings__section"
+                  {...dataTourAttr(BUILDER42_TOUR_ANCHORS.settingsLayers)}
+                >
                   <LayersTree />
                 </section>
               )}

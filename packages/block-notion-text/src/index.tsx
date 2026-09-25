@@ -20,8 +20,10 @@ import {
   updateBlockPropsSync,
   useNotionTextInlineEditingBlockId,
   useRoot,
+  useSelectedBlockId,
   useSelectedScreenSize,
 } from '../../email-builder-standalone/src/documents/editor/EditorContext';
+import { dataTourAttr, EMAIL_BUILDER_TOUR_ANCHORS } from '../../email-builder-standalone/src/tour/tourAnchors';
 
 import BubbleMenuToolbar from './BubbleMenuToolbar';
 import { getFormattedHtmlCached, normalizeNotionTextHtml } from './helper-notion-text';
@@ -80,6 +82,7 @@ export function NotionText({ blockId, style, props, isNotClient = false }: Notio
   const placeholderText = t('editor.notionTextPlaceholder');
   const notionTextInlineEditingBlockId = useNotionTextInlineEditingBlockId();
   const selectedScreenSize = useSelectedScreenSize();
+  const selectedBlockId = useSelectedBlockId();
   const root = useRoot() as any;
   const isEditing = !isNotClient && notionTextInlineEditingBlockId === blockId;
   const [slashMenuOpen, setSlashMenuOpen] = useState(false);
@@ -460,6 +463,12 @@ export function NotionText({ blockId, style, props, isNotClient = false }: Notio
 
   const isEmpty = isHtmlEmpty(displayHtml);
 
+  // eb.canvas.textBlock (T6): solo el bloque de texto seleccionado lleva la ancla del tour,
+  // así que a lo sumo UN nodo en el DOM la lleva nunca. Nunca se estampa en la rama
+  // `isNotClient` (arriba): ese HTML es el que se exporta al correo real.
+  const isSelected = !isNotClient && selectedBlockId === blockId;
+  const tourAttrs = isSelected ? dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.canvasTextBlock) : {};
+
   if (!isEditing) {
     return (
       <div ref={containerRef} style={containerStyle as React.CSSProperties}>
@@ -473,6 +482,7 @@ export function NotionText({ blockId, style, props, isNotClient = false }: Notio
         >
           {isEmpty ? (
             <div
+              {...tourAttrs}
               className={`eb-notion-content ${shortCssId(blockId as any)}`}
               tabIndex={-1}
               role="textbox"
@@ -490,6 +500,7 @@ export function NotionText({ blockId, style, props, isNotClient = false }: Notio
             </div>
           ) : (
             <div
+              {...tourAttrs}
               className={`eb-notion-content ${shortCssId(blockId as any)}`}
               tabIndex={-1}
               role="textbox"

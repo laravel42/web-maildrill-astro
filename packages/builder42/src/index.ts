@@ -25,3 +25,12 @@ export type {
   FetchHealthFn,
 } from "./services/apiAdapters";
 export type { BuilderSite } from "./builder/model/types";
+
+// ---------------------------------------------------------------------------
+// Product tour (F4, docs/product-tour-driverjs-plan.md §4) — re-exported so
+// the host (`src/components/react/LandingPageBuilder.tsx`) can type its
+// `onTourEvent` callback without taking a direct dependency on
+// `@md/product-tour` (which isn't declared at the repo root — only the
+// editor packages depend on it).
+// ---------------------------------------------------------------------------
+export type { TourAnalyticsEvent, TourAnalyticsEventName } from "@md/product-tour";

@@ -10,6 +10,7 @@ import {
   useSelectedMainTab,
   useSelectedScreenSize,
 } from '../../documents/editor/EditorContext';
+import { dataTourAttr, EMAIL_BUILDER_TOUR_ANCHORS } from '../../tour/tourAnchors';
 
 type MainTab = 'editor' | 'preview' | 'html' | 'json';
 
@@ -69,7 +70,11 @@ export default function MainTabsGroup({
   }
 
   return (
-    <div className="eb-view-tabs" role="group">
+    <div
+      className="eb-view-tabs"
+      role="group"
+      {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.toolbarViews)}
+    >
       {items.map((item) => (
         <button
           key={item.value}

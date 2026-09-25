@@ -13,6 +13,38 @@ import { useTranslation } from 'react-i18next';
 
 import { Box, Chip, Popover, Stack, Typography } from '@mui/material';
 
+import { RADIUS_INPUT } from '../../constants';
+
+// Homologado con Builder42 (`.pbx-breadcrumb__btn` / `.pbx-badge--override`,
+// packages/builder42/src/styles/chrome/{inspector.css,inspector-controls.css}):
+// un chip activo ahí nunca es un relleno sólido con texto blanco tipo
+// "pill" — es un fondo tenue con texto del MISMO tono pero intenso, y un
+// radio sobrio (--pb-chrome-radius-xs, 8px) en vez de MUI's default
+// pill-shaped Chip. Mismos valores que --accent / --accent-tint del host
+// (ver theme.ts, APP_ACCENT / APP_ACCENT_TINT).
+const ACTIVE_CHIP_BG = '#eef0ff'; // --accent-tint
+const ACTIVE_CHIP_TEXT = '#4f46e5'; // --accent
+const CHIP_RADIUS = RADIUS_INPUT + 2; // 8px — análogo a --pb-chrome-radius-xs
+
+const activeChipSx = {
+  fontSize: '0.7rem',
+  height: 22,
+  cursor: 'pointer',
+  borderRadius: `${CHIP_RADIUS}px`,
+  backgroundColor: ACTIVE_CHIP_BG,
+  color: ACTIVE_CHIP_TEXT,
+  border: '1px solid transparent',
+  '& .MuiChip-label': { color: ACTIVE_CHIP_TEXT, fontWeight: 500 },
+  '&:hover': { backgroundColor: ACTIVE_CHIP_BG },
+};
+
+const inactiveChipSx = {
+  fontSize: '0.7rem',
+  height: 22,
+  cursor: 'pointer',
+  borderRadius: `${CHIP_RADIUS}px`,
+};
+
 export default function ChipsFilterRow({
   items,
   selected,
@@ -65,10 +97,9 @@ export default function ChipsFilterRow({
             key={value}
             size="small"
             label={label(value)}
-            color={isActive ? 'secondary' : 'default'}
-            variant={isActive ? 'filled' : 'outlined'}
+            variant="outlined"
             onClick={() => toggle(value)}
-            sx={{ fontSize: '0.7rem', height: 22, cursor: 'pointer' }}
+            sx={isActive ? activeChipSx : inactiveChipSx}
           />
         );
       })}
@@ -80,7 +111,7 @@ export default function ChipsFilterRow({
             label={`+${overflow.length}`}
             variant="outlined"
             onClick={(e) => setAnchorEl(e.currentTarget)}
-            sx={{ fontSize: '0.7rem', height: 22, cursor: 'pointer' }}
+            sx={inactiveChipSx}
           />
           <Popover
             open={Boolean(anchorEl)}
@@ -107,10 +138,9 @@ export default function ChipsFilterRow({
                       key={value}
                       size="small"
                       label={label(value)}
-                      color={isActive ? 'secondary' : 'default'}
-                      variant={isActive ? 'filled' : 'outlined'}
+                      variant="outlined"
                       onClick={() => toggle(value)}
-                      sx={{ fontSize: '0.7rem', height: 22, cursor: 'pointer' }}
+                      sx={isActive ? activeChipSx : inactiveChipSx}
                     />
                   );
                 })}

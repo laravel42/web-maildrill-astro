@@ -7,7 +7,7 @@ import {
 } from 'react';
 import { api } from '@/lib/app/api';
 import Icon from '../Icon';
-import { useEscapeClose } from './useEscapeClose';
+import Modal from './Modal';
 import styles from './SendTestModal.module.css';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -35,7 +35,6 @@ export default function SendTestModal({ onClose, onSend }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   /** Once the user edits the field, the prefill must never overwrite it. */
   const touched = useRef(false);
-  useEscapeClose(onClose);
 
   useEffect(() => {
     let alive = true;
@@ -108,84 +107,75 @@ export default function SendTestModal({ onClose, onSend }: Props) {
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div
-        className={styles.modal}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Send test email"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className={styles.head}>
-          <span className={styles.title}>Send test email</span>
-          <button type="button" className={styles.x} onClick={onClose} aria-label="Close">
-            <Icon name="x" size={16} />
-          </button>
-        </div>
-        <div className={styles.body}>
-          <label className={styles.label} htmlFor="send-test-to">
-            Send to
-          </label>
-          <div className={styles.field} onClick={() => inputRef.current?.focus()}>
-            {tags.map((t) => (
-              <span key={t} className={styles.tag}>
-                {t}
-                <button
-                  type="button"
-                  className={styles.tagX}
-                  aria-label={`Remove ${t}`}
-                  onClick={() => {
-                    touched.current = true;
-                    setTags((prev) => prev.filter((x) => x !== t));
-                  }}
-                >
-                  <Icon name="x" size={12} />
-                </button>
-              </span>
-            ))}
-            <input
-              ref={inputRef}
-              id="send-test-to"
-              className={styles.input}
-              autoFocus
-              placeholder={tags.length ? '' : 'name@company.com'}
-              value={draft}
-              disabled={busy}
-              onChange={(e) => {
-                touched.current = true;
-                setDraft(e.target.value);
-                if (error) setError(null);
-              }}
-              onKeyDown={onKeyDown}
-              onPaste={onPaste}
-            />
-          </div>
-          {error ? (
-            <p className={styles.error} role="alert">
-              {error}
-            </p>
-          ) : (
-            <p className={styles.help}>One or more addresses — press Enter after each.</p>
-          )}
-        </div>
-        <div className={styles.foot}>
-          <button type="button" className={styles.cancel} onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={styles.send}
-            disabled={busy || (tags.length === 0 && !draft.trim())}
-            onClick={() => void submit()}
-          >
-            {busy
-              ? 'Sending…'
-              : tags.length > 1
-                ? `Send to ${tags.length} recipients`
-                : 'Send test'}
-          </button>
-        </div>
+    <Modal open onClose={onClose} title="Send test email" panelClassName={styles.modal} zIndex={1400}>
+      <div className={styles.head}>
+        <span className={styles.title}>Send test email</span>
+        <button type="button" className={styles.x} onClick={onClose} aria-label="Close">
+          <Icon name="x" size={16} />
+        </button>
       </div>
-    </div>
+      <div className={styles.body}>
+        <label className={styles.label} htmlFor="send-test-to">
+          Send to
+        </label>
+        <div className={styles.field} onClick={() => inputRef.current?.focus()}>
+          {tags.map((t) => (
+            <span key={t} className={styles.tag}>
+              {t}
+              <button
+                type="button"
+                className={styles.tagX}
+                aria-label={`Remove ${t}`}
+                onClick={() => {
+                  touched.current = true;
+                  setTags((prev) => prev.filter((x) => x !== t));
+                }}
+              >
+                <Icon name="x" size={12} />
+              </button>
+            </span>
+          ))}
+          <input
+            ref={inputRef}
+            id="send-test-to"
+            className={styles.input}
+            placeholder={tags.length ? '' : 'name@company.com'}
+            value={draft}
+            disabled={busy}
+            onChange={(e) => {
+              touched.current = true;
+              setDraft(e.target.value);
+              if (error) setError(null);
+            }}
+            onKeyDown={onKeyDown}
+            onPaste={onPaste}
+          />
+        </div>
+        {error ? (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        ) : (
+          <p className={styles.help}>One or more addresses — press Enter after each.</p>
+        )}
+      </div>
+      <div className={styles.foot}>
+        <button type="button" className={styles.cancel} onClick={onClose}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          className={styles.send}
+          disabled={busy || (tags.length === 0 && !draft.trim())}
+          onClick={() => void submit()}
+        >
+          {busy
+            ? 'Sending…'
+            : tags.length > 1
+              ? `Send to ${tags.length} recipients`
+              : 'Send test'}
+        </button>
+      </div>
+    </Modal>
   );
 }

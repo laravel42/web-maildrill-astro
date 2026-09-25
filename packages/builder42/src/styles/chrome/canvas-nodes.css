@@ -766,6 +766,87 @@
 
 /* @keyframes extraído a chrome/motion.css (docs/28) — ver módulo */
 
+/* Barra lateral de acciones del nodo SELECCIONADO (duplicar/eliminar,
+ * `NodeActionsRail.tsx`, homologación UI/UX fase C). Mismo lenguaje visual
+ * que `.pbx-drag-handle` (fondo de acento sólido, texto claro, radio,
+ * sombra), pero columna VERTICAL anclada al lado derecho del nodo en vez de
+ * una fila horizontal arriba — mismo patrón que el `TuneMenu` lateral de
+ * email-builder. `top`/`left` se fijan inline en coordenadas del frame
+ * (centro vertical del nodo + su ancho + un margen), igual que
+ * `SelectionHandle`/`HoverHandle`. Chrome de edición: solo se monta en modo
+ * `edit`, nunca sale al HTML exportado (P8). */
+.pbx-node-actions-rail {
+  position: absolute;
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Más aire entre botones y respecto al borde (petición del usuario, este
+     commit — antes gap:2px/padding:4px se sentía apretado): la pestaña
+     ahora es más ancha y alta sin cambiar el tamaño de los iconos. */
+  gap: 6px;
+  padding: 8px 6px;
+  background: var(--pb-chrome-accent);
+  /*
+   * Solo esquinas del lado DERECHO (petición del usuario, este commit —
+   * antes radio uniforme + 8px de separación del nodo, `NodeActionsRail.tsx`):
+   * pegada al borde del elemento sin espacio, el radio en el lado
+   * IZQUIERDO (el que toca al nodo) se vería como un hueco/sombra colgando
+   * dentro del propio elemento — se retira para que el rail se lea como una
+   * pestaña que sale de él, no como un chip flotante aparte.
+   */
+  border-radius: 0 var(--pb-chrome-radius-sm) var(--pb-chrome-radius-sm) 0;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--pb-chrome-accent) 40%, transparent);
+  animation: pbx-drag-handle-enter 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* `IconButton` dentro de la barra: mismo criterio de contraste que
+ * `.pbx-reorder-arrows__btn` — blanco translúcido sobre el fondo SÓLIDO del
+ * acento (no un par texto/fondo con rol semántico propio, docs/52 F5). El
+ * intent "danger" del botón eliminar se deja con su color propio (rojo)
+ * para no perder la semántica de "acción destructiva" incluso dentro de la
+ * pastilla de acento. */
+.pbx-node-actions-rail .pbx-icon-btn--ghost {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/*
+ * Fix (bug real reportado por el usuario): `.pbx-icon-btn--danger` NUNCA
+ * declara color en reposo (`inspector-controls.css` solo le da color en
+ * `:hover`, ver esa regla) — fuera de este rail eso está bien porque el
+ * `.pbx-icon-btn` base ya pinta `--pb-chrome-text-muted` (gris) sobre una
+ * superficie clara. Pero AQUÍ el fondo es el acento SÓLIDO (arriba), y ese
+ * mismo gris quedaba casi invisible sobre él — el botón de eliminar se veía
+ * "apagado" en vez de destructivo. Un rojo claro (no el `--pb-chrome-danger`
+ * oscuro de superficies claras, que no tendría contraste aquí) mantiene la
+ * semántica de "eliminar" visible en reposo, sin esperar al hover.
+ */
+.pbx-node-actions-rail .pbx-icon-btn--danger {
+  color: #ffd7d1;
+}
+
+.pbx-node-actions-rail .pbx-icon-btn--danger:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+/*
+ * Sin el `scale(1.12)` de hover del `IconButton` genérico (petición del
+ * usuario, este commit): ese crecimiento tiene sentido cuando el botón vive
+ * suelto sobre una superficie neutra, pero aquí, dentro de una pestaña
+ * angosta pegada al nodo, el icono agrandándose se ve como un salto/tirón en
+ * vez de una respuesta de hover sutil. Se anula solo dentro de este rail —
+ * `.pbx-icon-btn` global no cambia.
+ */
+.pbx-node-actions-rail .pbx-icon-btn:hover:not(:disabled),
+.pbx-node-actions-rail .pbx-icon-btn:active:not(:disabled) {
+  transform: none;
+}
+.pbx-node-actions-rail .pbx-icon-btn--ghost:hover:not(:disabled) {
+  color: var(--pb-chrome-text-on-accent);
+  background: rgba(255, 255, 255, 0.18);
+}
+
 /* Animación de SALIDA (bug real, feedback de usuario: sin `motion.div`/
  * `AnimatePresence`, deseleccionar desmontaba la pestaña de golpe — sin
  * ninguna transición, un salto abrupto). `SelectionHandle.tsx` mantiene el

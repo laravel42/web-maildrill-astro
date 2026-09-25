@@ -21,8 +21,10 @@ import type { ChannelBreakdown } from './AppAnalytics.logic';
 import { CHANNEL } from './shared/channels';
 import { TONE, type Tone } from './shared/tones';
 import { useEscapeClose } from './shared/useEscapeClose';
+import SharedModal from './shared/Modal';
 import WorkspaceConnections from './settings/WorkspaceConnections';
 import { useToast } from './shared/useToast';
+import ToastHost from './shared/ToastHost';
 import type {
   ApiDomain,
   ApiMember,
@@ -1289,19 +1291,7 @@ export default function AppSettings({
         />
       )}
 
-      {/* toast */}
-      {toast && (
-        <div
-          className={`${styles.toast}${toastTone === 'alert' ? ` ${styles.toastAlert}` : ''}`}
-          role="status"
-          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-        >
-          <span className={styles.toastIc}>
-            <Icon name={toastTone === 'alert' ? 'minus' : 'check'} size={13} stroke={3} />
-          </span>
-          {toast}
-        </div>
-      )}
+      <ToastHost toast={toast} tone={toastTone} />
     </div>
   );
 }
@@ -1621,8 +1611,8 @@ function DomainDrawer({
 }
 
 /* ------------------------------ modal shell ------------------------------ */
-/** Shared dialog chrome: overlay, head with close, body, foot with Cancel +
- *  the caller's primary action. Escape and overlay-click both close. */
+/** Shared dialog chrome: head with close, body, foot with Cancel + the
+ *  caller's primary action, on top of the shared accessible Modal shell. */
 function Modal({
   title,
   onClose,
@@ -1634,37 +1624,22 @@ function Modal({
   children: ReactNode;
   foot: ReactNode;
 }) {
-  useEscapeClose(onClose);
-
   return (
-    <div
-      className={styles.modalOverlay}
-      onClick={onClose}
-      style={{ animation: 'ovfade .18s var(--ease-out)' }}
-    >
-      <div
-        className={styles.modal}
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        style={{ animation: 'pop .18s ease' }}
-      >
-        <div className={styles.modalHead}>
-          <span className={styles.modalTitle}>{title}</span>
-          <button type="button" className={styles.modalX} onClick={onClose} aria-label="Close">
-            <Icon name="x" size={16} />
-          </button>
-        </div>
-        <div className={styles.modalBody}>{children}</div>
-        <div className={styles.modalFoot}>
-          <button type="button" className={styles.modalCancel} onClick={onClose}>
-            Cancel
-          </button>
-          {foot}
-        </div>
+    <SharedModal open onClose={onClose} title={title}>
+      <div className="amodal__head">
+        <span className="amodal__title">{title}</span>
+        <button type="button" className="iconbtn" onClick={onClose} aria-label="Close">
+          <Icon name="x" size={16} />
+        </button>
       </div>
-    </div>
+      <div className="amodal__body">{children}</div>
+      <div className="amodal__foot">
+        <button type="button" className={styles.modalCancel} onClick={onClose}>
+          Cancel
+        </button>
+        {foot}
+      </div>
+    </SharedModal>
   );
 }
 

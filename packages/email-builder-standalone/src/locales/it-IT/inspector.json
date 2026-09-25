@@ -3,6 +3,7 @@
     "undo": "Annulla (CTRL + Z)",
     "redo": "Ripeti (CTRL + Y)",
     "history": "Cronologia",
+    "helpTour": "Guarda il tour guidato",
     "copy_html": "Copia HTML",
     "copy_json": "Copia JSON",
     "edit": "Modifica",
@@ -531,6 +532,10 @@
         "layouts": "Layouts",
         "sections": "Sections",
         "templates": "Templates"
+      },
+      "group": {
+        "basics": "Base",
+        "layout": "Struttura"
       },
       "themes": {
         "loading": "Caricamento temi…",

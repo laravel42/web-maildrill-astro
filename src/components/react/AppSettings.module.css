@@ -465,35 +465,6 @@
   cursor: pointer;
 }
 
-/* toast — the `toastin` entry animation is a global keyframe, so it lives
-   inline on the toast element rather than here. */
-.toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: var(--z-toast);
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  background: var(--text);
-  color: #fff;
-  padding: 12px 16px 12px 13px;
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(28, 25, 23, 0.3);
-  font-size: 13px;
-  font-weight: 500;
-}
-.toastIc {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #22c55e;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
 @media (max-width: 820px) {
   .panel {
@@ -645,57 +616,9 @@
 }
 
 /* ------------------------------ role editor ----------------------------- */
-/* The `.modalOverlay` (`ovfade`) and `.modal` (`pop`) entry animations are
-   global keyframes, so they live inline on their elements rather than here. */
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal);
-  background: rgba(28, 25, 23, 0.4);
-  backdrop-filter: blur(3px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
-}
-.modal {
-  width: 440px;
-  max-width: 100%;
-  background: var(--surface);
-  border-radius: 20px;
-  box-shadow: 0 24px 60px rgba(28, 25, 23, 0.28);
-  overflow: hidden;
-}
-.modalHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 22px;
-  border-bottom: 1px solid var(--divider);
-}
-.modalTitle {
-  font-weight: 600;
-  font-size: 15px;
-}
-.modalX {
-  width: 30px;
-  height: 30px;
-  border: none;
-  background: var(--surface2);
-  border-radius: 9px;
-  cursor: pointer;
-  color: var(--text4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.modalX:hover {
-  color: var(--text2);
-  background: var(--border2);
-}
-.modalBody {
-  padding: 20px 22px;
-}
+/* Overlay/panel/head/body/foot chrome now comes from the shared amodal shell
+   (src/styles/app.css) via shared/Modal.tsx; only bespoke content styling
+   (options, sub text, save/cancel buttons) stays local. */
 .modalSub {
   margin: 0 0 14px;
   font-size: 13px;
@@ -767,14 +690,6 @@
   font-size: 12px;
   color: var(--text4);
   margin-top: 3px;
-}
-.modalFoot {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 22px;
-  border-top: 1px solid var(--divider);
-  background: var(--surface2);
 }
 .modalCancel,
 .modalSave {
@@ -1050,15 +965,6 @@
   font-weight: 500;
   color: var(--muted);
   vertical-align: 2px;
-}
-
-/* Alert-tone toast: failures and "not done yet" states must not read as a
-   green checkmark (e.g. a domain whose DNS has not propagated). */
-.toastAlert .toastIc {
-  background: var(--warning);
-}
-.toastAlert {
-  box-shadow: 0 12px 32px rgba(217, 119, 6, 0.32);
 }
 
 .loadingRow {

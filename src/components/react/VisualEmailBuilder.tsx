@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   EmailBuilderProps,
   EmailBuilderRef,
   MergeTagGroup,
   TEditorConfiguration,
+  TourAnalyticsEvent,
 } from 'email-builder-standalone';
 import { api, ApiError } from '@/lib/app/api';
 import { buildMergeTagMenu, type CustomField } from '@/lib/app/custom-fields';
@@ -15,7 +16,7 @@ import {
   TEMPLATE_LANGUAGE_OPTIONS,
   templateLanguageFlagSrc,
 } from '@/lib/app/template-language';
-import Icon from './Icon';
+import ToastHost from './shared/ToastHost';
 import MediaPickerModal, { type MediaPickerImage } from './shared/MediaPickerModal';
 import SendTestModal from './shared/SendTestModal';
 import { useToast } from './shared/useToast';
@@ -23,6 +24,7 @@ import ChannelEditorShell, { shellStyles } from './shared/ChannelEditorShell';
 import { CHANNEL } from './shared/channels';
 import { retryDynamicImport } from '@/lib/app/retry-dynamic-import';
 import { useAutosave } from './shared/useAutosave';
+import { useHostTheme } from './hooks/useHostTheme';
 
 /**
  * Full-screen wrapper around EmailBuilder.js (vendored email-builder-standalone) — the visual
@@ -57,6 +59,21 @@ type Props = {
   onSave: (value: VisualEmailBuilderSave) => void | Promise<void>;
   /** Sends the saved template to the given recipients; host owns the API call. */
   onSendTest?: (to: string[]) => Promise<{ to: string[] }>;
+  /**
+   * Forces or silences the guided product tour (F4,
+   * docs/product-tour-driverjs-plan.md §4). Optional — omitting it keeps the
+   * current behavior (tour enabled, auto-starts once per browser). Pass
+   * `false` to suppress it entirely for a given mount (e.g. an embed context
+   * that shouldn't offer it).
+   */
+  tourEnabled?: boolean;
+  /**
+   * Receives the tour's analytics events. The mapping to
+   * `window.posthog?.capture(...)` lives HERE, in the host — never inside
+   * `email-builder-standalone` (§0.2/§0.7 of the plan). Optional: omitting it
+   * means tour events aren't tracked, matching current behavior.
+   */
+  onTourEvent?: (event: TourAnalyticsEvent) => void;
 };
 
 export default function VisualEmailBuilder({
@@ -68,6 +85,8 @@ export default function VisualEmailBuilder({
   onClose,
   onSave,
   onSendTest,
+  tourEnabled,
+  onTourEvent,
 }: Props) {
   const builderRef = useRef<EmailBuilderRef>(null);
   const [Builder, setBuilder] = useState<BuilderComponent | null>(null);
@@ -85,6 +104,9 @@ export default function VisualEmailBuilder({
   const [mediaOpen, setMediaOpen] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
   const { toast, show } = useToast();
+  // D30: the host decides the theme, the package receives it as a prop — the
+  // editor itself never reads data-theme/prefers-color-scheme.
+  const hostTheme = useHostTheme();
 
   // The builder's image/background inputs dispatch `toggle-media-library` when
   // the user clicks "Browse gallery" (shown because we pass `galleryImages`).
@@ -134,6 +156,25 @@ export default function VisualEmailBuilder({
     window.dispatchEvent(new CustomEvent('email-builder-set-image', { detail: { url: img.url } }));
     setMediaOpen(false);
   };
+
+  // F4 (docs/product-tour-driverjs-plan.md §4/§0.2/§0.7): the ONLY place in this
+  // codebase that maps `@md/product-tour`'s domain-agnostic analytics events to
+  // PostHog. `email-builder-standalone` never imports PostHog itself — it only
+  // calls this callback. The optional `onTourEvent` host prop is forwarded on
+  // top of that mapping, so a caller can observe the same events without
+  // losing the standard telemetry.
+  const handleTourEvent = useCallback(
+    (event: TourAnalyticsEvent) => {
+      window.posthog?.capture(event.event, {
+        tour_id: event.tourId,
+        step_index: event.stepIndex,
+        total_steps: event.totalSteps,
+        editor: 'email',
+      });
+      onTourEvent?.(event);
+    },
+    [onTourEvent]
+  );
 
   // Refetched on focus, not just on mount: custom fields are defined elsewhere
   // (list drawer, subscriber import), so an editor left open would otherwise
@@ -205,17 +246,18 @@ export default function VisualEmailBuilder({
     return () => timers.forEach(clearTimeout);
   }, [Builder, loadError]);
 
-  // Esc closes the media picker or test dialog when open, else the editor.
+  // Esc closes the editor. The media picker and send-test dialog are now
+  // Modal instances that own their own Escape handling (stopping propagation
+  // before it reaches this window listener), so this only fires when neither
+  // is open.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      if (mediaOpen) setMediaOpen(false);
-      else if (testOpen) setTestOpen(false);
-      else onClose();
+      onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose, mediaOpen, testOpen]);
+  }, [onClose]);
 
   // Persist current content (throws on failure so autosave/flush can react).
   const persist = async () => {
@@ -288,20 +330,7 @@ export default function VisualEmailBuilder({
       onBack={onClose}
       onSendTest={onSendTest ? () => setTestOpen(true) : undefined}
       onSaveDraft={() => void handleSaveDraft()}
-      toast={
-        toast ? (
-          <div
-            className={shellStyles.toast}
-            role="status"
-            style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-          >
-            <span className={shellStyles.toastIcon}>
-              <Icon name="check" size={13} stroke={3} />
-            </span>
-            {toast}
-          </div>
-        ) : null
-      }
+      toast={<ToastHost toast={toast} />}
     >
       {loadError ? (
         <div className={shellStyles.state}>
@@ -321,6 +350,7 @@ export default function VisualEmailBuilder({
           mergeTags={mergeTags}
           primaryColor={CHANNEL.email.hex}
           secondaryColor={CHANNEL.email.hex}
+          darkMode={hostTheme === 'dark'}
           height="100%"
           sticky
           /* Source-code and JSON views stay off: templates are edited
@@ -346,6 +376,13 @@ export default function VisualEmailBuilder({
           onAIGenerateTemplate={builderGenerateTemplate}
           onAIRequest={builderTextAction}
           onAutoSave={() => markDirty()}
+          /* F4 (docs/product-tour-driverjs-plan.md §4): `tourEnabled` is an
+             optional host prop — omitting it keeps the tour's own default
+             (enabled) so existing behavior is unchanged. `handleTourEvent`
+             is the ONLY place in this codebase that maps tour analytics to
+             PostHog — the package itself never imports it (§0.2/§0.7). */
+          tour={tourEnabled ?? true}
+          onTourEvent={handleTourEvent}
         />
       ) : (
         <div className={shellStyles.state}>

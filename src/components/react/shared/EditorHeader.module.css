@@ -4,9 +4,17 @@
   --editor-control-h: 38px;
   height: 57px;
   flex: none;
-  display: flex;
+  display: grid;
+  /* Real 3-column track instead of flex + an absolutely-centered `.center`
+     with a hardcoded `calc(100% - 320px)` guess at the side columns' width:
+     that guess didn't account for the category picker's actual width (3-4
+     text pills, not a fixed icon button), so on narrower editors or with a
+     "Coming soon" pill in the mix `.left` grew past what `.center` reserved
+     and the name field overlapped the category pills. `auto 1fr auto` sizes
+     the side columns to their real content and gives 100% of the remainder
+     to the center column, which can never overlap a sibling in grid. */
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   padding: 0 16px;
   background: var(--surface);
@@ -18,7 +26,6 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
-  flex-shrink: 0;
   z-index: 1;
 }
 
@@ -89,14 +96,16 @@
 }
 
 .center {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  /* Grid column 2 (`1fr`) already centers this between `.left` and `.right`
+     and can never overlap either — no more `position:absolute` + a guessed
+     `calc(100% - 320px)` reservation for the side columns' width. `min-width:
+     0` lets the column shrink below its content's natural width so `.nameRow`
+     (which caps at 480px) can still shrink further on narrow viewports
+     instead of forcing the grid wider than the header. */
+  display: flex;
+  justify-content: center;
+  min-width: 0;
   z-index: 1;
-  /* nameRow is 480px; reserve space for back + category pills + right actions. */
-  max-width: min(560px, calc(100% - 320px));
-  pointer-events: none;
   overflow: visible;
 }
 
@@ -105,8 +114,8 @@
   align-items: center;
   gap: 8px;
   width: min(480px, 100%);
+  min-width: 0;
   height: var(--editor-control-h);
-  pointer-events: auto;
 }
 
 .name {
@@ -266,7 +275,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  flex: none;
+  min-width: 0;
   z-index: 1;
 }
 

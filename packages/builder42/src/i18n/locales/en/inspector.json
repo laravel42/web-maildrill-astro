@@ -636,6 +636,7 @@
     },
     "visibility": {
       "fieldLabel": "Visibility",
+      "help": "The eye hides the element at the active breakpoint and every wider one, unless you override it at one of them. To make it visible again from a certain size up, switch to that breakpoint with the buttons below and press \"Override here\" (or the eye, if it's already visible).",
       "overrideHere": "Override here",
       "toggleShow": "Show at {{bp}}",
       "toggleHide": "Hide at {{bp}}",

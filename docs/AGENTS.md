@@ -140,6 +140,90 @@ The visual editor is **vendored and compiled from source**, wrapped by
   - To force a manual refresh in dev: `localStorage.removeItem('eb:lib:thumbnails'); location.reload()`.
     (The `window.__recapture*` helpers are **backend-mode only** — they hit `/dev/*` endpoints.)
 
+## Guided product tours (`packages/product-tour`)
+
+`@md/product-tour` (`packages/product-tour`) is the driver.js-based tour engine — host- and
+domain-agnostic, knows nothing about Maildrill, PostHog, or which editor mounted it.
+`createTour()` defers `import('driver.js')` and the popover CSS to `start()`, never to module
+top-level, so neither enters an editor's initial chunk. Full design record:
+[`product-tour-driverjs-plan.md`](product-tour-driverjs-plan.md).
+
+- **Anchors are a per-editor registry, not inline strings.** Each editor owns one
+  `tourAnchors.ts` (`packages/email-builder-standalone/src/tour/tourAnchors.ts`,
+  `packages/builder42/src/app/tour/tourAnchors.ts`) mapping a step key to a `data-tour="…"`
+  value, stamped via that file's `dataTourAttr(...)`. No `.tsx` may hardcode a `data-tour`
+  string. Renaming or removing a key without updating the registry (and the step + its i18n
+  copy that reference it) breaks the tour silently at runtime — nothing type-checks that
+  connection.
+- **builder42 additionally enforces the registry stays 1:1 with the tour steps**, including
+  copy parity per locale (`packages/builder42/tests/tourSteps.flags.test.ts`,
+  `tourSteps.i18n-parity.test.ts`). Consequence: a control that no step highlights must **not**
+  get a `data-tour` key — find it by accessible name instead (see the landings relaunch button
+  below, `HostToolbar.tsx`, which has no anchor on purpose).
+- **Single instance:** the engine keeps at most one live driver.js instance per `tourId`,
+  process-wide, last-start-wins — a second `start()` destroys the first even if it arrives while
+  the first is still awaiting its lazy `import('driver.js')`.
+- **Escape** closes the tour and never reaches the host editor, except when a visible modal is
+  open on top of the page (`[aria-modal="true"], dialog[open], [role="dialog"]`, excluding
+  driver.js's own `.driver-popover`, and only if actually visible — hidden/zero-size/`display:
+  none` dialogs don't count) — then Escape is left to the modal and the tour stays open.
+- **Relaunch entry points**, per editor: email editor → the header help button in
+  `App/TemplatePanel/index.tsx` and the command palette (`App/CommandPalette/index.tsx`), both
+  via `requestTourRestart()` (`documents/editor/EditorContext.tsx`). Landings → `HostToolbar.tsx`
+  in the embed and `ProfileMenu.tsx` in the standalone, both via
+  `requestBuilder42TourRestart()`. The Astro host's `src/components/react/shared/EditorHeader.tsx`
+  wires **no** tour button for either channel — it only stamps `data-tour` anchors.
+- **Persistence:** email under the `eb:` prefix via the engine's own
+  `createLocalStoragePersistence('eb:')`; builder42 through `useLocalConfig`'s
+  `tourSeen`/`tourVersion` keys (`pb:` prefix) via a custom `TourPersistence` adapter. Bump each
+  editor's own `TOUR_VERSION` constant to re-offer the tour to everyone who already saw a prior
+  version.
+- **Telemetry:** the engine emits four domain-agnostic events through `onEvent` —
+  `tour_started`, `tour_step_viewed`, `tour_completed`, `tour_dismissed` — and never imports
+  PostHog. The mapping to `window.posthog?.capture(event.event, { tour_id, step_index,
+  total_steps, editor })` lives only in the two host wrappers,
+  `src/components/react/VisualEmailBuilder.tsx` and `src/components/react/LandingPageBuilder.tsx`.
+- **Editor theme comes from the host, never from the package (D30/D31).** The host observes
+  `<html data-theme>` with `useHostTheme` (`src/components/react/hooks/useHostTheme.ts`, a
+  `MutationObserver` on `attributeFilter: ['data-theme']`) and passes the result down as
+  `darkMode` on `VisualEmailBuilder.tsx`; the vendored editor still never reads the host DOM
+  itself. The tour popover follows the theme for free, because its CSS vars are derived from
+  the active MUI theme, not from a second theme channel. Host React islands have no DOM test
+  infrastructure in this repo — the root Vitest environment is `node`, with no jsdom/happy-dom/
+  `@testing-library` — which is why a host-side hook like this one has to expose a DOM-free,
+  injectable core (`normalizeHostTheme`, `readHostTheme`, `observeHostTheme` taking an
+  observer factory) instead of only a React hook.
+- **Any tour step that changes UI state snapshots it and restores it, idempotently (D26).**
+  Two live examples in the email editor: the four consecutive library steps
+  (`eb.library.tabs` through `eb.library.templates`) share one deferred-restore guard so the
+  drawer's open state and active tab don't flicker open/closed between steps (D33); and the
+  command palette step opens the palette by dispatching its own **toggle** hotkey behind a
+  `data-state="open"` guard (so it never closes a palette the user already had open), then
+  blurs the palette's input so the tour keeps its arrow-key and `Tab` navigation (D27).
+- **A tour step never writes to the user's document (D25).** Steps that need a particular block
+  to exist (e.g. a text block for the inspector-tabs step) use `when()` to skip themselves when
+  it's absent, instead of inserting demo content — inserting content would pollute the undo
+  stack and trigger an autosave the user never asked for.
+- **Never persist a user preference from a tour hook.** `setInspectorDrawerMode` flags
+  `inspectorModeUserOverride` and writes the choice to `localStorage`; a tour step that needs
+  the inspector open in a particular mode writes the transient state straight to the store
+  (`editorStateStore.setState(...)`) instead, so a step never leaves behind a preference the
+  user didn't choose.
+- **Highlight precision (D29, continuing D16).** An anchor must wrap only the controls its copy
+  talks about, never a container that also includes controls it doesn't mention — hence
+  `eb.inspector.tabs` is its own anchor around just the Content/Styles tab strip rather than
+  reusing `eb.inspector.panel`, and the Blocks tab's *Basics* and *Structure* groups each get
+  their own anchor instead of sharing one over the whole grid.
+- **email-builder-standalone does not enforce the registry↔1:1-with-steps invariant that
+  builder42 does.** Its tests check flag filtering, locale parity, and explicit anchor lists
+  (`tourSteps.flags.test.ts`, `tourSteps.i18n-parity.test.ts`, `tourAnchors.render.test.tsx`), so
+  an anchor can exist there without a step referencing it. Copy still has to land in all three
+  locales for every step that does exist — and the i18n-parity test only asserts that a key
+  exists and is a non-empty string, never that it was actually translated, so a new step can
+  ship the same English title into `es-419`/`it-IT` and pass the gate; catching that needs a
+  human read of the diff (this happened once in this same chain of work and needed a follow-up
+  commit).
+
 ## Local development caveats
 
 - **Auth is real (passwordless login code, allowlisted during the private rollout — see
@@ -152,6 +236,14 @@ The visual editor is **vendored and compiled from source**, wrapped by
 - `about:srcdoc` console messages ("Blocked script execution" / "can escape its sandboxing") come
   from the thumbnail-capture and hover-preview iframes' sandboxes — benign warnings about our own
   content.
+
+## Orchestrator mode
+
+If you are told you are acting as the **orchestrator** (coordinating subagents/workers over
+this repo, delegating tasks, running a multi-agent pipeline), read
+[`../SKILLS/orquestation.md`](../SKILLS/orquestation.md) **before** delegating anything.
+It defines the serial handoff/verification protocol (one subagent at a time, one commit per
+task, scope discipline, the verification gate) that governs how you split work and hand it off.
 
 ## Conventions
 

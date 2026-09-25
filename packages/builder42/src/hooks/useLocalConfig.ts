@@ -59,8 +59,16 @@ export interface ConfigMap {
    * mostrar/ocultar siempre, independiente del dispositivo.
    */
   reorderControls: "auto" | "on" | "off";
-  /** Panel lateral izquierdo colapsado (Fase 11.10). */
-  sidebarCollapsed: boolean;
+  /**
+   * Modo del panel lateral izquierdo (Fase 11.10, homologación UI/UX fase B):
+   * "open" muestra la paleta completa (categorías/acordeones); "compact" la
+   * reduce a un riel angosto con solo los bloques esenciales/utilidades en
+   * tiles verticales icon+label — mismo concepto que el rail compacto de
+   * email-builder (`CompactBlocksList.tsx`, `COMPACT_LIBRARY_DRAWER_WIDTH`).
+   * A propósito NO hay un tercer estado "colapsado a 0": el sidebar siempre
+   * ocupa como mínimo el ancho compacto, nunca desaparece del todo.
+   */
+  sidebarMode: "compact" | "open";
   /** Panel inspector derecho colapsado (Fase 11.10). */
   inspectorCollapsed: boolean;
   /**
@@ -84,6 +92,44 @@ export interface ConfigMap {
    * confundirse con una elección explícita de "simple".
    */
   experienceLevelChosen: boolean;
+  /**
+   * Product tour (F4, docs/product-tour-driverjs-plan.md §4). Cableadas a la
+   * persistencia por defecto de `@md/product-tour`
+   * (`createLocalStoragePersistence`) a través del prefijo `pb:` que YA
+   * inyecta este hook — el paquete `@md/product-tour` en sí no sabe nada de
+   * `useLocalConfig` ni de este prefijo (§0.4): estas dos claves son solo el
+   * espejo local que le permite a `app/tour/useBuilder42Tour.ts` decidir
+   * cuándo auto-arrancar sin depender de un import cruzado.
+   *
+   * `tourSeen`: si el tour ya se ofreció (arrancó) al menos una vez, a la
+   * versión persistida en `tourVersion`. `tourVersion`: versión bajo la que
+   * se marcó `tourSeen` — un bump de la versión real del tour (constante en
+   * `useBuilder42Tour.ts`) hace que `tourSeen` se trate como no visto de
+   * nuevo (mismo criterio que `TourPersistenceState.version` del paquete).
+   */
+  tourSeen: boolean;
+  tourVersion: number;
+  /**
+   * Si el usuario llegó al último paso y cerró con "Listo" (no con Escape/click fuera/×) —
+   * espejo local de `TourPersistenceState.completed` (`@md/product-tour`'s `persistence.ts`).
+   * Independiente de `tourSeen`: `tourSeen` se marca en CADA `start()` (incluida la primera
+   * llamada, mucho antes de que el usuario llegue al final), así que derivar `completed` de
+   * `seen` (como hacía antes este puente) reportaba el tour como completado desde el primer
+   * paso — rompiendo la reanudación (`createTour.ts`'s `start()` solo reanuda desde
+   * `lastStepIndex` cuando `seen && !completed`) y el auto-arranque tras un cierre a medias
+   * (`shouldAutoStartTour` exige lo mismo). Bug real reportado: "el tour no persiste cuando
+   * se queda a mitad del recorrido".
+   */
+  tourCompleted: boolean;
+  /**
+   * Índice (0-based) del último paso del tour que el usuario llegó a ver antes de un cierre
+   * sin completar (Escape, click en el overlay, ×, cierre de pestaña) — espejo local de
+   * `TourPersistenceState.lastStepIndex` (`@md/product-tour`'s `persistence.ts`), mismo
+   * motivo que `tourSeen`/`tourVersion` arriba: permite reanudar desde ahí en vez de reiniciar
+   * siempre en el paso 0. `-1` = sin progreso guardado (equivalente a `undefined` en el tipo
+   * del paquete — `useLocalConfig` no admite `undefined` como valor persistido).
+   */
+  tourLastStepIndex: number;
 }
 
 const DEFAULTS: ConfigMap = {
@@ -95,10 +141,14 @@ const DEFAULTS: ConfigMap = {
   outputZipTimestamp: true,
   invisibleBubblePos: { x: -1, y: -1 },
   reorderControls: "auto",
-  sidebarCollapsed: false,
+  sidebarMode: "open",
   inspectorCollapsed: false,
   experienceLevel: "advanced",
   experienceLevelChosen: false,
+  tourSeen: false,
+  tourVersion: 0,
+  tourCompleted: false,
+  tourLastStepIndex: -1,
 };
 
 // ---------------------------------------------------------------------------
@@ -118,6 +168,14 @@ export function readConfig<K extends keyof ConfigMap>(key: K): ConfigMap[K] {
   // Valores booleanos: se persisten como "true"/"false" (via String()).
   if (typeof fallback === "boolean") {
     return (raw === "true") as ConfigMap[K];
+  }
+  // Valores numéricos (p. ej. `tourVersion`): `writeConfig` los persiste con
+  // `String()` como cualquier escalar no-objeto — sin este branch se leerían
+  // de vuelta como string, rompiendo comparaciones `=== number` en quien
+  // consume la clave (ver `createConfigBackedTourPersistence`, F4).
+  if (typeof fallback === "number") {
+    const parsed = Number(raw);
+    return (Number.isNaN(parsed) ? fallback : parsed) as ConfigMap[K];
   }
   // Valores objeto: se persisten como JSON; se parsean con fallback seguro.
   if (typeof fallback === "object" && fallback !== null) {
@@ -176,6 +234,19 @@ function getListeners(key: keyof ConfigMap): Set<() => void> {
 
 function notify(key: keyof ConfigMap): void {
   for (const l of getListeners(key)) l();
+}
+
+/**
+ * Suscribe `listener` a las notificaciones de una clave sin pasar por React —
+ * mismo `Set` de listeners que consume el hook (`getListeners`), expuesto para
+ * callers que corren fuera del árbol de componentes (p. ej. el `before()` de un
+ * paso del tour guiado, o un test que quiere comprobar que `writeConfig` notificó
+ * de verdad y no solo persistió el valor). Devuelve la función de "unsubscribe".
+ */
+export function subscribeConfig<K extends keyof ConfigMap>(key: K, listener: () => void): () => void {
+  const listeners = getListeners(key);
+  listeners.add(listener);
+  return () => listeners.delete(listener);
 }
 
 // Cache de snapshot por clave (bug real, feedback de usuario: "Maximum update

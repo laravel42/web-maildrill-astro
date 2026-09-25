@@ -2,7 +2,10 @@ import { SxProps, Theme } from '@mui/material';
 
 import { RADIUS_INPUT } from '../../../../../../../constants';
 
-export const INPUT_HEIGHT = 36;
+// Homologado con Builder42: mismo valor que --pb-chrome-panel-row-height
+// (packages/builder42/src/styles/chrome/tokens.css), ver
+// packages/email-builder-standalone/INSPECTOR_INPUT_HEIGHT_AUDIT.md
+export const INPUT_HEIGHT = 32;
 export const BORDER_RADIUS = RADIUS_INPUT;
 // Common styles for single-line MUI TextField inputs
 export const INPUT_TEXTFIELD_SX: SxProps<Theme> = {

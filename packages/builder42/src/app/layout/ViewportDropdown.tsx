@@ -1,9 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { Dropdown, Smartphone, Tablet, Monitor } from "@/components";
 import { useDocumentStore } from "@/builder/store/documentStore";
+import { viewportIcon } from "@/builder/model/breakpointIcons";
 import type { Breakpoint } from "@/builder/model/types";
 import type { ComponentType } from "react";
 import type { LucideProps } from "lucide-react";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 const VIEWPORT_ITEMS: { value: Breakpoint; Icon: ComponentType<LucideProps> }[] = [
   { value: "base", Icon: Smartphone },
@@ -12,12 +14,6 @@ const VIEWPORT_ITEMS: { value: Breakpoint; Icon: ComponentType<LucideProps> }[] 
   { value: "lg", Icon: Monitor },
   { value: "xl", Icon: Monitor },
 ];
-
-function viewportIcon(value: Breakpoint): ComponentType<LucideProps> {
-  if (value === "base" || value === "sm") return Smartphone;
-  if (value === "md") return Tablet;
-  return Monitor;
-}
 
 export function ViewportDropdown() {
   const { t } = useTranslation("header");
@@ -30,6 +26,7 @@ export function ViewportDropdown() {
     <Dropdown
       placement="bottom-start"
       className="pbx-header__viewport-dropdown pbx-host-toolbar__views"
+      {...dataTourAttr(BUILDER42_TOUR_ANCHORS.toolbarViewport)}
     >
       <button
         type="button"

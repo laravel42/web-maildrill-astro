@@ -1,0 +1,82 @@
+{
+  "labels": {
+    "nextBtnText": "Next",
+    "prevBtnText": "Back",
+    "doneBtnText": "Done",
+    "progressText": "{{current}} of {{total}}"
+  },
+  "steps": {
+    "headerIdentity": {
+      "title": "Name your template",
+      "description": "Set the template name and category here — this is how you will find it again in the gallery."
+    },
+    "headerSave": {
+      "title": "Save template",
+      "description": "Names and saves the template explicitly. Use it whenever you want a checkpoint you control, not just the autosave."
+    },
+    "headerStatus": {
+      "title": "Autosave status",
+      "description": "Your work saves automatically as you go. This shows the state: Draft, Saving…, Autosaved, or Unsaved changes if something has not synced yet."
+    },
+    "toolbarViews": {
+      "title": "Edit or preview",
+      "description": "Switch between the editor and a preview of the finished email."
+    },
+    "viewportScreenSize": {
+      "title": "Desktop or mobile",
+      "description": "Preview how the email renders on desktop or mobile. Some blocks let you set different values for each, so check both before you send."
+    },
+    "toolbarHistory": {
+      "title": "Undo anytime",
+      "description": "Every change can be undone or redone, so feel free to experiment."
+    },
+    "libraryRail": {
+      "title": "Blocks, one click away",
+      "description": "The most common blocks live here — drag any of them onto the canvas."
+    },
+    "libraryTabs": {
+      "title": "Blocks and templates",
+      "description": "This panel groups blocks and full templates so you can start from scratch or from a layout."
+    },
+    "blocksBasics": {
+      "title": "Basics",
+      "description": "Single-purpose blocks — text, image, button, divider, spacer, and social. Drag one onto the canvas, or click it to append it."
+    },
+    "blocksLayout": {
+      "title": "Structure",
+      "description": "Columns and containers arrange the other blocks inside them. This is how you build an email that survives every client."
+    },
+    "libraryTemplates": {
+      "title": "Templates",
+      "description": "A gallery of complete templates — start from one instead of a blank canvas. Applying one replaces what is on the canvas."
+    },
+    "canvasRoot": {
+      "title": "The canvas",
+      "description": "Click a block to select it, or drag one in from the library to add it."
+    },
+    "canvasTextBlock": {
+      "title": "Edit text right on the canvas",
+      "description": "Click the text to start typing — a formatting toolbar appears while you edit."
+    },
+    "inspectorPanel": {
+      "title": "Edit the selected block",
+      "description": "Once a block is selected, its content and style options appear here."
+    },
+    "inspectorTabs": {
+      "title": "Content and Styles",
+      "description": "This panel has two tabs for the selected block: Content (what it says) and Styles (how it looks)."
+    },
+    "imageSources": {
+      "title": "Add images",
+      "description": "Pick an image from your workspace library, search Unsplash, or upload your own."
+    },
+    "commandPalette": {
+      "title": "Everything from the keyboard",
+      "description": "Press ⌘K (or Ctrl+K) to search and run any editor action without the mouse."
+    },
+    "headerActions": {
+      "title": "Test and save",
+      "description": "Send yourself a test email before saving, so you know exactly what subscribers will get."
+    }
+  }
+}

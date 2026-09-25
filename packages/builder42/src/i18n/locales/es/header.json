@@ -60,6 +60,9 @@
     "simple": "Simple",
     "advanced": "Avanzado"
   },
+  "restartTour": {
+    "label": "Ver el recorrido guiado"
+  },
   "onboarding": {
     "title": "¿Cómo querés empezar?",
     "subtitle": "Elegí el nivel de experiencia del editor. Podés cambiarlo cuando quieras desde Preferencias.",

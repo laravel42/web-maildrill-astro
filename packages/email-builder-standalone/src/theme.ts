@@ -74,6 +74,22 @@ const getDarkModeColor = (color: string, darkMode: boolean) => {
 const CANVAS_BG_LIGHT = '#F5F5F5';
 const CANVAS_BG_DARK = '#434955';
 
+/**
+ * Picks whichever of pure white/black gives the higher real contrast ratio
+ * against `color`, falling back to the better of the two even when neither
+ * clears WCAG AA (4.5:1) — a custom brand color (Theme Panel) can be a
+ * mid-tone where both black and white clear 4.5:1 against it, or neither
+ * does; the old logic picked a fixed color per theme mode (`'#111'` in light
+ * mode) regardless of `color`, which read as near-black text on a
+ * still-fairly-dark blue handle/tab for some brand colors (reported: Library
+ * panel handle when compact/focused).
+ */
+const pickContrastText = (color: string): string => {
+  const whiteRatio = getContrastRatio(color, '#fff');
+  const blackRatio = getContrastRatio(color, '#000');
+  return whiteRatio >= blackRatio ? '#fff' : '#000';
+};
+
 const BASE_THEME = createTheme({
   palette: {
     background: {
@@ -108,20 +124,11 @@ const getTheme = (
   // Helper with robust error handling
   const createColorPalette = (color: string) => {
     try {
-      const contrastText =
-        getContrastRatio(color, darkMode ? '#000' : '#fff') > 4.5
-          ? darkMode
-            ? '#000'
-            : '#fff'
-          : darkMode
-            ? '#fff'
-            : '#111';
-
       return {
         main: color,
         light: lighten(color, 0.2),
         dark: darken(color, 0.2),
-        contrastText,
+        contrastText: pickContrastText(color),
       };
     } catch (_error) {
       return BASE_THEME.palette.primary; // Fallback to MUI default
@@ -172,27 +179,13 @@ const getTheme = (
         main: adjustedMainColor,
         light: alpha(adjustedMainColor, darkMode ? 0.7 : 0.5),
         dark: alpha(adjustedMainColor, darkMode ? 1 : 0.9),
-        contrastText:
-          getContrastRatio(adjustedMainColor, darkMode ? '#000' : '#fff') > 4.5
-            ? darkMode
-              ? '#000'
-              : '#fff'
-            : darkMode
-              ? '#fff'
-              : '#111',
+        contrastText: pickContrastText(adjustedMainColor),
       },
       secondaryColor: {
         main: adjustedSecondaryColor,
         light: alpha(adjustedSecondaryColor, darkMode ? 0.7 : 0.5),
         dark: alpha(adjustedSecondaryColor, darkMode ? 1 : 0.9),
-        contrastText:
-          getContrastRatio(adjustedSecondaryColor, darkMode ? '#000' : '#fff') > 4.5
-            ? darkMode
-              ? '#000'
-              : '#fff'
-            : darkMode
-              ? '#fff'
-              : '#111',
+        contrastText: pickContrastText(adjustedSecondaryColor),
       },
       brand: {
         navy: getDarkModeColor(BRAND_NAVY, darkMode),
@@ -207,55 +200,25 @@ const getTheme = (
         main: getDarkModeColor(BRAND_GREEN, darkMode),
         light: lighten(getDarkModeColor(BRAND_GREEN, darkMode), 0.15),
         dark: darken(getDarkModeColor(BRAND_GREEN, darkMode), 0.15),
-        contrastText:
-          getContrastRatio(getDarkModeColor(BRAND_GREEN, darkMode), darkMode ? '#000' : '#fff') >
-          4.5
-            ? darkMode
-              ? '#000'
-              : '#fff'
-            : darkMode
-              ? '#fff'
-              : '#111',
+        contrastText: pickContrastText(getDarkModeColor(BRAND_GREEN, darkMode)),
       },
       error: {
         main: getDarkModeColor(BRAND_RED, darkMode),
         light: lighten(getDarkModeColor(BRAND_RED, darkMode), 0.15),
         dark: darken(getDarkModeColor(BRAND_RED, darkMode), 0.15),
-        contrastText:
-          getContrastRatio(getDarkModeColor(BRAND_RED, darkMode), darkMode ? '#000' : '#fff') > 4.5
-            ? darkMode
-              ? '#000'
-              : '#fff'
-            : darkMode
-              ? '#fff'
-              : '#111',
+        contrastText: pickContrastText(getDarkModeColor(BRAND_RED, darkMode)),
       },
       warning: {
         main: getDarkModeColor(BRAND_YELLOW, darkMode),
         light: lighten(getDarkModeColor(BRAND_YELLOW, darkMode), 0.15),
         dark: darken(getDarkModeColor(BRAND_YELLOW, darkMode), 0.15),
-        contrastText:
-          getContrastRatio(getDarkModeColor(BRAND_YELLOW, darkMode), darkMode ? '#000' : '#fff') >
-          4.5
-            ? darkMode
-              ? '#000'
-              : '#fff'
-            : darkMode
-              ? '#fff'
-              : '#111',
+        contrastText: pickContrastText(getDarkModeColor(BRAND_YELLOW, darkMode)),
       },
       info: {
         main: adjustedMainColor,
         light: lighten(adjustedMainColor, 0.15),
         dark: darken(adjustedMainColor, 0.15),
-        contrastText:
-          getContrastRatio(adjustedMainColor, darkMode ? '#000' : '#fff') > 4.5
-            ? darkMode
-              ? '#000'
-              : '#fff'
-            : darkMode
-              ? '#fff'
-              : '#111',
+        contrastText: pickContrastText(adjustedMainColor),
       },
       cadet: {
         100: greyColors[100],
@@ -601,8 +564,18 @@ const getTheme = (
               border: 0,
               borderRadius: 0,
               margin: 0,
-              paddingTop: theme.spacing(1),
-              paddingBottom: theme.spacing(1),
+              // Fixed height (not just vertical padding) so this segmented
+              // control matches the app's other inputs and Builder42's
+              // --pb-chrome-panel-row-height (32px) regardless of the
+              // label's line-height. See
+              // packages/email-builder-standalone/INSPECTOR_INPUT_HEIGHT_AUDIT.md
+              height: '32px',
+              boxSizing: 'border-box',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingTop: 0,
+              paddingBottom: 0,
               paddingLeft: theme.spacing(1.25),
               paddingRight: theme.spacing(1.25),
               textTransform: 'none',
@@ -1399,6 +1372,29 @@ const getTheme = (
             // Override both to keep accordion rows flush with the panel bg.
             backgroundColor: backgroundColors.paper,
             backgroundImage: 'none',
+          },
+        },
+      },
+      // Homologado con Builder42 (`.pbx-palette__accordion-*`,
+      // sidebar.css): el body/header del acordeón NO tiene background
+      // propio, ni siquiera en estado expandido — comparte el mismo
+      // fondo que el resto del sidebar. MUI aplica por defecto un fondo
+      // sutil (`rgba(0,0,0,.03)`/`.06`) a `AccordionSummary` cuando
+      // `expanded`, que no existe en Builder42.
+      MuiAccordionSummary: {
+        styleOverrides: {
+          root: {
+            backgroundColor: 'transparent',
+            '&.Mui-expanded': {
+              backgroundColor: 'transparent',
+            },
+          },
+        },
+      },
+      MuiAccordionDetails: {
+        styleOverrides: {
+          root: {
+            backgroundColor: 'transparent',
           },
         },
       },

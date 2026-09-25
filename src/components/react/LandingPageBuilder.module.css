@@ -35,8 +35,4 @@
   z-index: 1400;
 }
 
-.leaveGuard {
-  position: fixed;
-  inset: 0;
-  z-index: 1500;
-}
+

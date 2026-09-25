@@ -563,6 +563,7 @@ function StylePanelRow({
         tokenGroupPrefix={tokenGroupPrefix}
         tokens={tokens}
         controlId={controlId}
+        showTokenAsValue={isSimple}
       >
         {({ freeValue, commit }) => {
           // Commit espejo: además de `width` (que lo escribe el propio
@@ -624,6 +625,7 @@ function StylePanelRow({
         tokenGroupPrefix={tokenGroupPrefix}
         tokens={tokens}
         controlId={controlId}
+        showTokenAsValue={isSimple}
       >
         {({ freeValue, commit }) =>
           isSimple ? (
@@ -672,6 +674,7 @@ function StylePanelRow({
         tokenGroupPrefix={tokenGroupPrefix}
         tokens={tokens}
         controlId={controlId}
+        showTokenAsValue={isSimple}
       >
         {({ freeValue, commit }) =>
           isSimple ? (
@@ -731,6 +734,7 @@ function StylePanelRow({
         tokenGroupPrefix={tokenGroupPrefix}
         tokens={tokens}
         controlId={controlId}
+        showTokenAsValue={isSimple}
       >
         {({ freeValue, commit }) =>
           isSimple ? (
@@ -791,6 +795,7 @@ function StylePanelRow({
                   tokenGroupPrefix={fieldA ? tokenGroupForField(fieldA) : null}
                   tokens={tokens}
                   bare
+                  showTokenAsValue={isSimple}
                 >
                   {(args) => renderLeafControl(fieldA, args)}
                 </PropertyField>
@@ -810,6 +815,7 @@ function StylePanelRow({
                   tokenGroupPrefix={fieldB ? tokenGroupForField(fieldB) : null}
                   tokens={tokens}
                   bare
+                  showTokenAsValue={isSimple}
                 >
                   {(args) => renderLeafControl(fieldB, args)}
                 </PropertyField>
@@ -852,6 +858,7 @@ function StylePanelRow({
         tokens={tokens}
         tall
         inlineTokenAction
+        showTokenAsValue={isSimple}
       >
         {({ freeValue, commit, tokenAction }) =>
           isSimple ? (
@@ -884,6 +891,7 @@ function StylePanelRow({
       tokenGroupPrefix={tokenGroupPrefix}
       tokens={tokens}
       controlId={controlId}
+      showTokenAsValue={isSimple}
     >
       {(args) => renderRowControl(row, field, args, t, controlId, isSimple, tokens)}
     </PropertyField>

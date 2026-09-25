@@ -23,6 +23,8 @@ import React from 'react';
 import ImageNotSupportedOutlinedIcon from '@mui/icons-material/ImageNotSupportedOutlined';
 import { Box, Skeleton, Typography, useTheme } from '@mui/material';
 
+import { getSectionIcon } from './sectionIcons';
+
 export type LibraryCardThumbnailProps = {
   /** Source URL when a thumbnail exists; null shows the placeholder. */
   src: string | null;
@@ -38,6 +40,16 @@ export type LibraryCardThumbnailProps = {
   loading?: boolean;
   /** Optional placeholder caption — defaults to a localised fallback. */
   placeholderText?: string;
+  /**
+   * Item id — looked up against the hand-designed icon set
+   * (`sectionIcons.tsx`, COMPONENT_ICONS_PLAN.md). **Draft / in
+   * review**: only the items designed so far (Tanda 1: 10/146) render
+   * an icon; everything else falls back to the existing PNG/placeholder
+   * behaviour unchanged. Takes priority over `src` so the designed
+   * icon is visible for review even for items that already have a
+   * captured PNG.
+   */
+  iconId?: string;
 };
 
 export default function LibraryCardThumbnail({
@@ -46,6 +58,7 @@ export default function LibraryCardThumbnail({
   height = 120,
   loading = false,
   placeholderText,
+  iconId,
 }: LibraryCardThumbnailProps) {
   const theme = useTheme();
 
@@ -56,6 +69,61 @@ export default function LibraryCardThumbnail({
     backgroundColor: theme.palette.background.default,
     display: 'block',
   };
+
+  const designedIcon = iconId ? getSectionIcon(iconId) : null;
+
+  // Hand-designed icon (COMPONENT_ICONS_PLAN.md) — draft, pending visual
+  // approval. Takes priority over the captured PNG so the user can review
+  // it in place without needing the full "replace the thumbnail pipeline"
+  // migration to land first.
+  if (designedIcon) {
+    return (
+      <Box
+        sx={{
+          width: '100%',
+          height,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          // Homologado con Builder42 (`.pbx-palette__icon`): SIN
+          // border/background propios — el ícono va directo, transparente,
+          // sobre el fondo/borde que ya aporta la card exterior
+          // (`LibraryCard`, ComponentsLibraryDrawer.tsx). El
+          // `border: dashed` + `backgroundColor` que tenía antes eran un
+          // contenedor interno redundante con doble caja (card exterior +
+          // caja del ícono), justo lo que Builder42 no hace.
+          //
+          // Color explícito (no heredado de `text.secondary` vía sx) —
+          // corregido a `--pb-chrome-text-faint` (`--muted` del host),
+          // el token real que usa `.pbx-palette__icon` en Builder42
+          // (sidebar.css) — NO `--pb-chrome-text-muted`/`--text3`, que es
+          // un tono distinto y más oscuro (error de la iteración
+          // anterior, antes de que ambos tamaños coincidieran y la
+          // diferencia de tono se hiciera evidente). `#a5a39a` claro
+          // (tokens.css light, == `--muted`) / `#8a8371` oscuro
+          // (dark.css: `--pb-chrome-text-faint`).
+          color: theme.palette.mode === 'dark' ? '#8a8371' : '#a5a39a',
+          // 48px — ver COMPONENT_ICONS_PLAN.md §20. Antes 28px,
+          // homologado con `.pbx-palette__icon` de Builder42, pero ese
+          // valor está pensado para GLIFOS Lucide de 3-5 trazos; estos
+          // iconos son diagramas de layout de hasta 12 formas sobre una
+          // rejilla de 24×24. A 28px la escala era 28/24 = 1.1667, así
+          // que ninguna coordenada de la rejilla 0.5 caía en borde de
+          // píxel y todo trazo quedaba antialiaseado entre dos filas de
+          // píxeles. A 48px la escala es exactamente 2 → 1 unidad = 2px,
+          // la rejilla 0.5 cae en píxel entero (trazo nítido) y el
+          // detalle mide el doble en absoluto. El ancho no es problema:
+          // con la lista de secciones a 2 columnas la card tiene ~128px
+          // de contenido (ComponentsLibraryDrawer.tsx).
+          '& svg': { width: 48, height: 48 },
+        }}
+        aria-label={alt}
+        title={`${designedIcon.name} (${designedIcon.role}) — draft icon, Tanda 1`}
+      >
+        {designedIcon.svg}
+      </Box>
+    );
+  }
 
   // Pending generation (local mode): show an animated skeleton rather than
   // the "No preview" placeholder, so a queued card reads as "loading" not

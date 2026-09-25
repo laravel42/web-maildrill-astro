@@ -38,6 +38,7 @@ import { ChannelPill, ListPill } from './shared/CampaignPills';
 import StatusBadge from './shared/StatusBadge';
 import TimeAgo from './shared/TimeAgo';
 import { useToast } from './shared/useToast';
+import ToastHost from './shared/ToastHost';
 import {
   CHANNEL_TABS,
   PAGE_SIZE,
@@ -1347,18 +1348,7 @@ useEffect(() => {
         />
       )}
 
-      {toast && (
-        <div
-          className={styles.toast}
-          role="status"
-          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-        >
-          <span className={styles.toastIc}>
-            <Icon name="check" size={13} stroke={3} />
-          </span>
-          {toast}
-        </div>
-      )}
+      <ToastHost toast={toast} />
     </div>
   );
 }

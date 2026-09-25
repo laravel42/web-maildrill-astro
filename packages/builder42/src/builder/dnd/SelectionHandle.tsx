@@ -37,6 +37,14 @@
  * grupo (flechas + arrastre + el propio botón "mover") queda deshabilitado —
  * evita acciones concurrentes sobre el árbol mientras se coloca algo.
  *
+ * Duplicar/eliminar YA NO viven aquí (homologación UI/UX, fase C): se
+ * movieron a `NodeActionsRail.tsx`, una barra lateral vertical junto al
+ * nodo seleccionado — mismo patrón que el `TuneMenu` de email-builder
+ * (acciones de bloque en una franja lateral, no en la pestaña de arrastre
+ * ni al fondo de un panel). Esta pestaña vuelve a su rol mínimo original:
+ * SOLO agarre (grip) + identificación (label) + reorder en touch.
+ *
+
  * Fusión visual con el grupo de flechas cuando `reorderControlsVisible`
  * (feedback de usuario, iterado tres veces: 1. no debían coexistir como dos
  * piezas separadas; 2. el resultado debe ser UNA SOLA fila horizontal sobre
@@ -71,7 +79,7 @@ import {
   type RefObject,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowUp, ArrowDown, OutdentIcon, IndentIcon, Move, Copy, GripVertical } from "@/components";
+import { ArrowUp, ArrowDown, OutdentIcon, IndentIcon, Move, GripVertical } from "@/components";
 import { useDocumentStore } from "../store/documentStore";
 import { getDefinition } from "../registry/componentRegistry";
 import { useDraggable } from "./useDraggable";
@@ -112,7 +120,6 @@ export function SelectionHandle({ frameRef }: SelectionHandleProps) {
   const canReorderNode = useDocumentStore((s) => s.canReorderNode);
   const canOutdentSelected = useDocumentStore((s) => s.canOutdentSelected);
   const canIndentNode = useDocumentStore((s) => s.canIndentNode);
-  const duplicateNode = useDocumentStore((s) => s.duplicateNode);
   const pickInsert = useDocumentStore((s) => s.pickInsert);
   const startPickInsertExisting = useDocumentStore((s) => s.startPickInsertExisting);
   const reorderControlsVisible = useReorderControlsVisible();
@@ -164,9 +171,6 @@ export function SelectionHandle({ frameRef }: SelectionHandleProps) {
   const handleMove = useCallback(() => {
     if (selectedId) startPickInsertExisting(selectedId);
   }, [selectedId, startPickInsertExisting]);
-  const handleDuplicate = useCallback(() => {
-    if (selectedId) duplicateNode(selectedId);
-  }, [selectedId, duplicateNode]);
 
   const handleRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<Box | null>(null);
@@ -365,18 +369,6 @@ export function SelectionHandle({ frameRef }: SelectionHandleProps) {
             <Move size={14} aria-hidden="true" />
           </button>
         </span>
-      ) : null}
-      {!locked ? (
-        <button
-          type="button"
-          className="pbx-reorder-arrows__btn"
-          disabled={!enabled}
-          aria-label={t("dnd.duplicate")}
-          title={t("dnd.duplicate")}
-          onClick={handleDuplicate}
-        >
-          <Copy size={14} aria-hidden="true" />
-        </button>
       ) : null}
     </div>
   );

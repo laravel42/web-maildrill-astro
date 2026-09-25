@@ -22,6 +22,7 @@ import { writeDocIntoSite } from "@/builder/model/site";
 import { useLocalConfig } from "@/hooks/useLocalConfig";
 import { useAutoScroll } from "@/builder/dnd/useAutoScroll";
 import { SelectionHandle } from "@/builder/dnd/SelectionHandle";
+import { NodeActionsRail } from "@/builder/dnd/NodeActionsRail";
 import { HoverHandle } from "@/builder/dnd/HoverHandle";
 import { TextToolbar } from "@/builder/canvas/TextToolbar";
 import { ModalEditorOverlay } from "@/builder/canvas/ModalEditorOverlay";
@@ -33,6 +34,7 @@ import { ErrorBoundary } from "@/components";
 import { ExportWarningsBanner } from "@/components/ExportWarningsBanner";
 import type { ExportWarning } from "@/builder/export/warnings";
 import { CanvasEmptyStart } from "./CanvasEmptyStart";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 export function Canvas() {
   const view = useDocumentStore((s) => s.view);
@@ -93,12 +95,14 @@ export function Canvas() {
         style={{ width: viewportWidth(activeBreakpoint) }}
         data-breakpoint={activeBreakpoint}
         data-theme={activeThemeId ?? undefined}
+        {...dataTourAttr(BUILDER42_TOUR_ANCHORS.canvasFrame)}
       >
         <ErrorBoundary key={view} nodeId={rootId}>
           <NodeRenderer id={rootId} interactive={interactive} />
         </ErrorBoundary>
         {interactive ? <CanvasEmptyStart /> : null}
         {interactive ? <SelectionHandle frameRef={frameRef} /> : null}
+        {interactive ? <NodeActionsRail frameRef={frameRef} /> : null}
         {interactive ? <HoverHandle frameRef={frameRef} /> : null}
         {interactive ? <TextToolbar frameRef={frameRef} /> : null}
         {interactive ? <ModalEditorOverlay /> : null}

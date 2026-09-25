@@ -1,0 +1,39 @@
+/**
+ * chrome/tour.css — Fase F5 (docs/product-tour-driverjs-plan.md §2, §4).
+ *
+ * Mapeo de `--md-tour-*` (consumidas por `@md/product-tour`'s `theme.css`, cargado por
+ * `useBuilder42Tour.ts` vía `popoverClass: 'md-tour'`) a los `--pb-chrome-*` ya existentes de
+ * este chrome. No define ningún color propio: cada variable de aquí SOLO redirige a un token
+ * `--pb-chrome-*` de `tokens.css`, igual que el resto de este barrel (D2: puente por valor).
+ *
+ * Reglas de marca (`docs/AGENTS.md`): `--pb-chrome-accent` (índigo) para el botón primario
+ * "Siguiente" y el anillo de foco — `--pb-chrome-header-brand` (naranja) NUNCA se usa aquí como
+ * fondo de botón, solo es acento de identidad en el resto del chrome (`header.css`).
+ *
+ * **D51 — el color del overlay NO vive aquí.** driver.js pinta el `fill`/`fill-opacity` de su
+ * `<path>` de overlay vía JS (atributo inline sobre el SVG), nunca lee CSS — un `<path>` no
+ * tiene `background`. Una variable `--md-tour-overlay` mapeada aquí (como existía antes de
+ * D51) sería INERTE: nunca pintaría nada, y el overlay se vería siempre con el default de
+ * driver.js (`#000` al 50%), sin importar el valor. El color real se calcula en runtime por
+ * `useBuilder42Tour.ts`'s `resolveTourOverlayColor()` (lee `--pb-chrome-text` vía
+ * `getComputedStyle`, nunca `--pb-chrome-bg`/`--ink-band` — ese es el token de banda oscura
+ * SÓLIDA, no de scrim) y se reenvía a `createTour()`'s `overlayColor`/`overlayOpacity`, que sí
+ * llegan a driver.js.
+ *
+ * Override oscuro en `chrome/dark.css` (mismo criterio: solo reasigna los `--pb-chrome-*` que
+ * cambian entre temas; las variables `--md-tour-*` de aquí siguen leyendo esos mismos tokens sin
+ * necesidad de un bloque `:root[data-theme="dark"]` propio en este archivo — y
+ * `resolveTourOverlayColor()` recalcula el overlay leyendo el DOM en cada `start()`/`restart()`,
+ * así que también recoge el `--pb-chrome-text` oscuro sin lógica adicional).
+ */
+:root {
+  --md-tour-surface: var(--pb-chrome-surface-raised);
+  --md-tour-text: var(--pb-chrome-text);
+  --md-tour-text-muted: var(--pb-chrome-text-muted);
+  --md-tour-border: var(--pb-chrome-border);
+  --md-tour-radius: var(--pb-chrome-radius-lg);
+  --md-tour-shadow: var(--pb-chrome-frame-shadow);
+  --md-tour-accent: var(--pb-chrome-accent);
+  --md-tour-accent-text: var(--pb-chrome-accent-text);
+  --md-tour-font: var(--pb-chrome-font);
+}

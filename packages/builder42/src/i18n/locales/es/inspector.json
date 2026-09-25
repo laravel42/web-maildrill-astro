@@ -636,6 +636,7 @@
     },
     "visibility": {
       "fieldLabel": "Visibilidad",
+      "help": "El ojo oculta el elemento en el breakpoint activo y en todos los más anchos, salvo que lo anules en uno de ellos. Para que vuelva a verse a partir de cierto tamaño, cambia a ese breakpoint con los botones de abajo y presiona \"Anular aquí\" (o el ojo, si ya está visible).",
       "overrideHere": "Anular aquí",
       "toggleShow": "Mostrar en {{bp}}",
       "toggleHide": "Ocultar en {{bp}}",

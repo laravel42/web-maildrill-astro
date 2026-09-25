@@ -523,31 +523,17 @@
   border-radius: 5px;
   padding: 1px 5px;
 }
-/* command palette */
+/* command palette — overlay/panel base (position, backdrop, elevation) now
+   comes from the shared amodal shell (shared/Modal.tsx); only the
+   top-anchored alignment and panel width/radius stay local. */
 .cmdk {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal);
-  display: flex;
   align-items: flex-start;
-  justify-content: center;
   padding-top: 120px;
 }
-.cmdkBackdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(28, 25, 23, 0.32);
-  backdrop-filter: blur(3px);
-  border: 0;
-}
 .cmdkPanel {
-  position: relative;
   width: 560px;
   max-width: 92%;
-  background: var(--surface);
   border-radius: 16px;
-  box-shadow: 0 24px 60px rgba(28, 25, 23, 0.32);
-  overflow: hidden;
 }
 .cmdkSearch {
   display: flex;

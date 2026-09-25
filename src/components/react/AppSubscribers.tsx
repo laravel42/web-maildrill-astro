@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import Icon from './Icon';
+import Modal from './shared/Modal';
 import ConfirmDialog from './shared/ConfirmDialog';
 import type { ChannelType, SubscriberStatus } from '@/types/app';
 import {
@@ -41,6 +42,7 @@ import { channelReportConfig } from '@/lib/app/campaign-report';
 import { agoNow } from './shared/time';
 import TimeAgo from './shared/TimeAgo';
 import { useToast } from './shared/useToast';
+import ToastHost from './shared/ToastHost';
 import { useEscapeClose } from './shared/useEscapeClose';
 import {
   STATUS_CHIP_STYLE,
@@ -2047,18 +2049,7 @@ export default function AppSubscribers({
         />
       )}
 
-      {toast && (
-        <div
-          className={styles.toast}
-          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-          role="status"
-        >
-          <span className={styles.toastic}>
-            <Icon name="check" size={13} stroke={3} />
-          </span>
-          {toast}
-        </div>
-      )}
+      <ToastHost toast={toast} />
     </div>
   );
 }
@@ -2623,28 +2614,25 @@ function SegmentModal({
   };
 
   return (
-    <div className={styles.segmOverlay} style={{ animation: 'ovfade .2s ease' }} onClick={onClose}>
-      <div
-        className={styles.segm}
-        style={{ animation: 'pop .18s ease' }}
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={edit ? 'Edit segment' : 'Create segment'}
-      >
-        <div className={styles.segmHead}>
-          <div>
-            <div className={styles.segmTitle}>{edit ? 'Edit segment' : 'Create segment'}</div>
-            <div className={styles.segmSub}>
-              Filter subscribers by rules that update automatically.
-            </div>
+    <Modal
+      open
+      onClose={onClose}
+      title={edit ? 'Edit segment' : 'Create segment'}
+      panelClassName={styles.segm}
+    >
+      <div className="amodal__head">
+        <div>
+          <div className={styles.segmTitle}>{edit ? 'Edit segment' : 'Create segment'}</div>
+          <div className={styles.segmSub}>
+            Filter subscribers by rules that update automatically.
           </div>
-          <button type="button" className="iconbtn" onClick={onClose} aria-label="Close">
-            <Icon name="x" size={16} />
-          </button>
         </div>
+        <button type="button" className="iconbtn" onClick={onClose} aria-label="Close">
+          <Icon name="x" size={16} />
+        </button>
+      </div>
 
-        <div className={styles.segmBody}>
+      <div className={`amodal__body ${styles.segmBody}`}>
           <span className={styles.segmChan}>
             <ChannelPill channel={channel} />
           </span>
@@ -2791,9 +2779,9 @@ function SegmentModal({
                 : `${count.toLocaleString('en-US')} subscriber${count === 1 ? '' : 's'} match`}
             </span>
           </div>
-        </div>
+      </div>
 
-        <div className={styles.segmFoot}>
+        <div className="amodal__foot">
           {edit && (
             <button type="button" className={styles.segmDel} onClick={() => onDelete(edit.id)}>
               Delete
@@ -2806,7 +2794,6 @@ function SegmentModal({
             {edit ? 'Save changes' : 'Save segment'}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

@@ -10,7 +10,11 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts"
     },
-    "./style.css": "./src/styles/chrome-embedded.css"
+    "./style.css": "./src/styles/chrome-embedded.css",
+    "./tour": {
+      "types": "./src/app/tour/tourAnchors.ts",
+      "import": "./src/app/tour/tourAnchors.ts"
+    }
   },
   "scripts": {
     "test": "vitest run",
@@ -24,11 +28,11 @@
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
+    "@types/alpinejs": "3.13.11",
+    "@types/node": "^26.2.0",
     "typescript": "^6.0.3",
     "vite": "8.0.13",
-    "vitest": "^4.1.10",
-    "@types/node": "^26.2.0",
-    "@types/alpinejs": "3.13.11"
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "2.0.1",
@@ -38,6 +42,7 @@
     "@floating-ui/dom": "1.7.6",
     "@josecortez1/c42-core": "0.1.0",
     "@josecortez1/c42-react": "0.1.0",
+    "@md/product-tour": "workspace:*",
     "@tiptap/core": "3.27.2",
     "@tiptap/extension-link": "3.27.2",
     "@tiptap/html": "3.27.2",

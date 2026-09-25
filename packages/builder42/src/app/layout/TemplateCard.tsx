@@ -27,6 +27,7 @@ import { themesToCss } from "@/builder/model/theme";
 import { useReorderControlsVisible } from "@/hooks/usePointerCoarse";
 import { useWebFontLinks } from "@/hooks/useWebFontLinks";
 import { Tooltip, Info } from "@/components";
+import { requestHoverEnter, requestHoverLeave } from "@/builder/dnd/templateHoverPreviewStore";
 import type { DragData } from "@/builder/dnd/contract";
 
 /** Ancho de referencia del contenedor "de escritorio" simulado en la miniatura
@@ -46,7 +47,7 @@ type PreviewMarkup = { html: string; css: string };
  * familias de `theme.fontFamilies` se emiten como `--typography-families-<key>`
  * (su *stack*); el archivo de la fuente lo carga `useWebFontLinks`.
  */
-function layoutThemePreviewCss(layout: LayoutDefinition, scopeSelector: string): string {
+export function layoutThemePreviewCss(layout: LayoutDefinition, scopeSelector: string): string {
   const theme = layout.theme;
   if (!theme) return "";
   const decls = Object.entries(theme.tokens).map(
@@ -73,7 +74,7 @@ function layoutThemePreviewCss(layout: LayoutDefinition, scopeSelector: string):
  */
 const previewCache = new Map<string, PreviewMarkup | null>();
 
-function useLayoutPreviewMarkup(
+export function useLayoutPreviewMarkup(
   layout: LayoutDefinition,
   visible: boolean,
 ): { preview: PreviewMarkup | null; loading: boolean } {
@@ -337,6 +338,8 @@ export function SectionTemplateCard({ layout }: { layout: SectionLayoutDefinitio
         className="pbx-template-card__action"
         aria-label={translatedLabel}
         onClick={handleClick}
+        onMouseEnter={(e) => requestHoverEnter({ layout, anchor: e.currentTarget })}
+        onMouseLeave={requestHoverLeave}
         title={t("templates.sectionTooltip")}
       />
       <TemplateCardInfo descriptionKey={layout.descriptionKey} />
@@ -375,6 +378,8 @@ export function PageTemplateCard({
         className="pbx-template-card__action"
         aria-label={translatedLabel}
         onClick={() => onSelect(layout.id)}
+        onMouseEnter={(e) => requestHoverEnter({ layout, anchor: e.currentTarget })}
+        onMouseLeave={requestHoverLeave}
       />
       <TemplateCardInfo descriptionKey={layout.descriptionKey} />
     </div>

@@ -31,15 +31,19 @@
   transition: grid-template-columns var(--pb-chrome-transition);
 }
 
-/* Panel collapse modifiers (Fase 11.10) — wide screens. */
-.pbx-body--sidebar-collapsed {
-  grid-template-columns: 0 1fr 326px;
+/* Panel collapse modifiers (Fase 11.10). Homologación UI/UX fase B: el
+ * sidebar YA NO colapsa a ancho 0 — su modo mínimo es "compact" (riel
+ * angosto de 168px con los bloques esenciales, ver `sidebar.css`
+ * `.pbx-compact-rail`), nunca desaparece del todo. El inspector conserva su
+ * colapso binario a 0 (fuera de alcance de esta fase). */
+.pbx-body--sidebar-compact {
+  grid-template-columns: 168px 1fr 326px;
 }
 .pbx-body--inspector-collapsed {
   grid-template-columns: 312px 1fr 0;
 }
-.pbx-body--sidebar-collapsed.pbx-body--inspector-collapsed {
-  grid-template-columns: 0 1fr 0;
+.pbx-body--sidebar-compact.pbx-body--inspector-collapsed {
+  grid-template-columns: 168px 1fr 0;
 }
 
 /* Preview (docs/21 §3.5): sin Sidebar/Inspector → una sola columna full-width. */

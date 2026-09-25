@@ -40,6 +40,9 @@ export {
   Smartphone,
   Tablet,
   Monitor,
+  // ---- Preview ampliado de templates (fase A, homologación UI/UX) -----
+  ZoomIn,
+  ZoomOut,
   // ---- Tema (Fase 11.d) + perfil / idioma -----------------------------
   Sun,
   Moon,
@@ -149,4 +152,6 @@ export {
   Columns3,
   Grid3x3,
   StretchHorizontal,
+  // ---- Product tour (F4, docs/product-tour-driverjs-plan.md §4) --------
+  HelpCircle,
 } from "lucide-react";

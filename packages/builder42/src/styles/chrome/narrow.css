@@ -10,9 +10,9 @@
  */
 @media (max-width: 1023px) {
   .pbx-body,
-  .pbx-body--sidebar-collapsed,
+  .pbx-body--sidebar-compact,
   .pbx-body--inspector-collapsed,
-  .pbx-body--sidebar-collapsed.pbx-body--inspector-collapsed,
+  .pbx-body--sidebar-compact.pbx-body--inspector-collapsed,
   .pbx-body--preview {
     grid-template-columns: 1fr;
   }
@@ -25,12 +25,23 @@
     bottom: 0;
     width: 280px;
     transform: translateX(-100%);
-    transition: transform 200ms ease;
+    transition: transform 200ms ease, width 200ms ease;
     box-shadow: var(--pb-chrome-frame-shadow);
   }
 
-  .pbx-sidebar--open {
+  /* Homologación UI/UX fase B: en viewport angosto el sidebar sigue siendo
+   * un overlay que se abre/cierra por gesto (el toggle real en móvil es
+   * `PanelHandle`), pero YA NO tiene un estado "cerrado sin contenido" —
+   * "compact" y "open" ambos abren el overlay, solo que "compact" lo abre
+   * más angosto (mismo ancho que en desktop, `.pbx-body--sidebar-compact`)
+   * mostrando el riel de esenciales en vez de la paleta completa. */
+  .pbx-sidebar--open,
+  .pbx-sidebar--compact {
     transform: translateX(0);
+  }
+
+  .pbx-sidebar--compact {
+    width: 168px;
   }
 
   .pbx-inspector {
@@ -54,9 +65,10 @@
    * pasa a ser solo el ancla de `position: relative` para el handle
    * absoluto, que aquí se fija al VIEWPORT (no al slot) para poder seguir al
    * `<aside>` fixed cuando se abre/cierra, en vez de quedar pegado a un slot
-   * colapsado a altura 0. `--collapsed` (clase de estado puesta por React,
-   * espejo de `--open` en el `<aside>`) decide el lado del viewport en el
-   * que el handle descansa — sin depender de `:has()`. */
+   * colapsado a altura 0. `--compact`/`--collapsed` (clases de estado
+   * puestas por React, espejo de `--open`/`--compact` en el `<aside>`)
+   * decide el lado del viewport en el que el handle descansa — sin
+   * depender de `:has()`. */
   .pbx-panel-slot {
     position: static;
   }
@@ -69,8 +81,8 @@
     transition: left 200ms ease;
   }
 
-  .pbx-panel-slot--left.pbx-panel-slot--collapsed .pbx-panel-handle {
-    left: 0;
+  .pbx-panel-slot--left.pbx-panel-slot--compact .pbx-panel-handle {
+    left: 168px;
   }
 
   .pbx-panel-slot--right .pbx-panel-handle {

@@ -335,32 +335,51 @@
 }
 
 /* ---- VisibilityStrip (docs/41 §5.2, checklist §8 #6/#7, Paso 7) ---------- *
- * Strip de ancho completo, sin tarjeta, 36px de alto, divisoria de 1px
- * debajo. El ámbar (`--pb-chrome-panel-hidden`) es la ÚNICA señal de color en
- * este strip fuera del switch — nunca el acento de marca (D4).
+ * 2 filas: fila 1 = label + acciones, fila 2 = chips de breakpoint a ancho
+ * completo. El ámbar (`--pb-chrome-panel-hidden`) es la ÚNICA señal de color
+ * en este strip fuera del switch — nunca el acento de marca (D4).
  */
 .pbx-visibility-strip {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 36px;
-  padding: 0;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0;
   border-bottom: 1px solid color-mix(in srgb, var(--pb-chrome-border) 8%, transparent);
-  border-left: 2px solid transparent;
 }
 
+/*
+ * Fondo ámbar de todo el strip: refuerza a nivel de fila que ALGO está
+ * oculto, además de la línea diagonal por chip (más abajo,
+ * `.pbx-visibility-strip__bp--hidden::after`) que marca CUÁL breakpoint
+ * concreto. Sin barra de acento a la izquierda (retirada, petición del
+ * usuario, este commit): con el fondo ámbar ya presente, la barra de 2px
+ * quedaba redundante — ambas eran la misma señal de color repetida dos
+ * veces en el mismo borde de la fila.
+ */
 .pbx-visibility-strip--hidden,
 .pbx-visibility-strip--hidden-inherited {
   background: color-mix(in srgb, var(--pb-chrome-panel-hidden) 10%, transparent);
-  border-left-color: var(--pb-chrome-panel-hidden);
+}
+
+.pbx-visibility-strip__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
 }
 
 .pbx-visibility-strip__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   flex: 1 1 auto;
   min-width: 0;
   font-size: 12px;
   font-weight: var(--pb-chrome-font-weight-medium);
   color: var(--pb-chrome-text);
+}
+
+.pbx-visibility-strip__label > .pbx-visibility-strip__label-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -382,30 +401,97 @@
   background: color-mix(in srgb, var(--pb-chrome-panel-hidden) 12%, transparent);
 }
 
-.pbx-visibility-strip__dots {
+.pbx-visibility-strip__breakpoints {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 4px;
-  flex-shrink: 0;
+  width: 100%;
 }
 
-.pbx-visibility-strip__dot {
-  width: 8px;
-  height: 8px;
-  padding: 0;
+/*
+ * Chip icono+abreviatura (reemplaza los `dots` sin contexto, feedback real de
+ * usuario: "no se entiende dónde están"). Mismo icono que `ViewportDropdown`
+ * (`viewportIcon`, compartido vía `breakpointIcons.ts`) + el id corto del
+ * breakpoint (sm/md/lg/xl) — legible sin depender del tooltip. Icono y
+ * texto EN LÍNEA (petición del usuario, este commit — antes apilados en
+ * columna): `flex-direction: row`, texto reducido a 9px para que ambos
+ * quepan cómodos uno junto al otro sin ensanchar el chip.
+ *
+ * `flex: 1` (fix, este commit): en la fila propia de ancho completo, cada
+ * chip se reparte el espacio disponible en partes iguales en vez de quedar
+ * pegado a la izquierda. Radio de esquina reducido (`--pb-chrome-radius-xs`,
+ * no `radius-pill`): petición explícita del usuario — deben leerse como
+ * "rectángulos redondeados", no como chips/pastillas.
+ */
+.pbx-visibility-strip__bp {
+  display: inline-flex;
+  flex: 1 1 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 26px;
+  padding: 4px 6px;
   border: 0;
-  border-radius: 50%;
-  background: var(--pb-chrome-border-strong);
+  border-radius: var(--pb-chrome-radius-xs);
+  background: var(--pb-chrome-panel-field-bg);
+  color: var(--pb-chrome-text-faint);
+  font-size: 9px;
+  font-weight: var(--pb-chrome-font-weight-medium);
+  line-height: 1;
+  text-transform: uppercase;
   cursor: pointer;
 }
 
-.pbx-visibility-strip__dot--hidden {
-  background: var(--pb-chrome-panel-hidden);
+.pbx-visibility-strip__bp:hover {
+  background: color-mix(in srgb, var(--pb-chrome-text-muted) 12%, transparent);
+  color: var(--pb-chrome-text);
 }
 
-.pbx-visibility-strip__dot--active {
-  outline: 2px solid var(--pb-chrome-text-muted);
-  outline-offset: 1px;
+.pbx-visibility-strip__bp-label {
+  flex-shrink: 0;
+}
+
+.pbx-visibility-strip__bp--hidden {
+  position: relative;
+  color: var(--pb-chrome-panel-hidden);
+}
+
+.pbx-visibility-strip__bp--hidden:hover {
+  background: color-mix(in srgb, var(--pb-chrome-panel-hidden) 12%, transparent);
+  color: var(--pb-chrome-panel-hidden);
+}
+
+/*
+ * Línea diagonal "tachando" el chip oculto (petición del usuario, este
+ * commit): mismo lenguaje visual que el propio glifo `EyeOff` (una línea
+ * atravesando el ojo) aplicado ahora también al chip que representa el
+ * breakpoint oculto, para reforzar la señal ámbar con una segunda pista que
+ * no dependa solo del color. `position: relative` ya declarado arriba ancla
+ * este `::after` de esquina a esquina; `currentColor` hereda el mismo ámbar
+ * que el resto del estado oculto, sin declarar un color propio.
+ */
+.pbx-visibility-strip__bp--hidden::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 58px;
+  height: 0;
+  border-top: 1.5px solid currentColor;
+  transform: translate(-50%, -50%) rotate(30deg);
+  transform-origin: center;
+  pointer-events: none;
+}
+
+.pbx-visibility-strip__bp--active {
+  background: var(--pb-chrome-accent-subtle);
+  color: var(--pb-chrome-accent-on-surface);
+}
+
+.pbx-visibility-strip__bp--active.pbx-visibility-strip__bp--hidden {
+  background: color-mix(in srgb, var(--pb-chrome-panel-hidden) 18%, transparent);
+  color: var(--pb-chrome-panel-hidden);
 }
 
 /* Botón-ojo (reemplaza el switch): control principal del strip. Visible =

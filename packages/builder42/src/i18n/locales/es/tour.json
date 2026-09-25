@@ -1,0 +1,82 @@
+{
+  "labels": {
+    "nextBtnText": "Siguiente",
+    "prevBtnText": "Atrás",
+    "doneBtnText": "Listo",
+    "progressText": "{{current}} de {{total}}"
+  },
+  "steps": {
+    "headerIdentity": {
+      "title": "Nombre y autoguardado",
+      "description": "Define aquí el nombre de la página. Los cambios se guardan solos mientras trabajas."
+    },
+    "toolbarViews": {
+      "title": "Editar o previsualizar",
+      "description": "Cambia entre el editor y una vista previa en vivo de la página."
+    },
+    "toolbarViewport": {
+      "title": "Prueba cada tamaño de pantalla",
+      "description": "Revisa y ajusta cómo se ve la página en móvil, tablet y escritorio."
+    },
+    "toolbarHistory": {
+      "title": "Deshacer sin miedo",
+      "description": "Cualquier cambio se puede deshacer o rehacer, así que puedes probar libremente."
+    },
+    "sidebarTabs": {
+      "title": "Componentes y plantillas",
+      "description": "Empieza desde un solo elemento o desde una sección ya armada."
+    },
+    "sidebarPalette": {
+      "title": "Arrastra al lienzo",
+      "description": "Arrastra cualquier elemento o sección desde aquí directamente a la página."
+    },
+    "sidebarTemplates": {
+      "title": "Plantillas de página",
+      "description": "Esta pestaña guarda páginas completas listas para usar como punto de partida. Aplicar una reemplaza la página actual, así que primero te pide confirmación."
+    },
+    "canvasFrame": {
+      "title": "El lienzo",
+      "description": "Haz clic en un elemento para seleccionarlo, o suelta uno desde el panel para añadirlo."
+    },
+    "canvasNodeActions": {
+      "title": "Duplicar o eliminar",
+      "description": "Una vez seleccionado un elemento, duplícalo o elimínalo desde esta franja lateral."
+    },
+    "inspectorTabs": {
+      "title": "Contenido, estilo, interactividad",
+      "description": "El contenido, el estilo y el comportamiento interactivo del elemento seleccionado viven en estas pestañas."
+    },
+    "inspectorBreakpoints": {
+      "title": "Estilo por tamaño de pantalla",
+      "description": "Ajusta cómo se ve el elemento seleccionado en cada breakpoint, de móvil a escritorio."
+    },
+    "settingsTabs": {
+      "title": "La configuración de la página",
+      "description": "Aquí se configura toda la página: capas, páginas, temas, SEO, idiomas, publicación y ajustes. Cada pestaña abre una sección distinta."
+    },
+    "settingsLayers": {
+      "title": "Capas",
+      "description": "Esta es la estructura completa de la página, en forma de árbol. Úsala para seleccionar un elemento que esté anidado dentro de otro."
+    },
+    "settingsPages": {
+      "title": "Páginas",
+      "description": "Aquí una página se convierte en un sitio de varias páginas. Añade una página nueva, renómbrala o cambia a otra cuando quieras."
+    },
+    "settingsLanguages": {
+      "title": "Idiomas",
+      "description": "Aquí viven los idiomas del contenido del sitio. Añade un idioma y luego traduce el contenido de la página a ese idioma."
+    },
+    "pagesBreadcrumb": {
+      "title": "Una página es una de varias",
+      "description": "Un mismo proyecto puede tener múltiples páginas — usa esta ruta para saltar entre ellas."
+    },
+    "publish": {
+      "title": "Publicar",
+      "description": "Publica el sitio y elige su subdominio desde aquí."
+    },
+    "profileMenu": {
+      "title": "Preferencias del editor",
+      "description": "Cambia el idioma del editor, el sistema de color, el nivel de experiencia y los controles de reordenamiento."
+    }
+  }
+}
