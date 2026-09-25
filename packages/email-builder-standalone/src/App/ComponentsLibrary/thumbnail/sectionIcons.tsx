@@ -312,10 +312,16 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'cta',
     svg: (
       <svg {...strokeProps}>
-        <rect x={2} y={3} width={20} height={18} rx={1.5} />
-        <line x1={7} y1={9} x2={17} y2={9} />
-        <line x1={8.5} y1={12} x2={15.5} y2={12} />
-        <rect x={8.5} y={15} width={7} height={3} rx={1} />
+        {/* Full-bleed dark band (`Container`, `backgroundColor: #111827`,
+            no radius, no border) — the tinted rect is the fill, same
+            criterion as `banner`'s Announcement bar. This is the only
+            `cta` with a dark background AND an inverted (white-filled)
+            button — that's the pairing that actually distinguishes it
+            from #3 Newsletter, which is also centered but light. */}
+        <rect x={1.5} y={1.5} width={21} height={21} fill="currentColor" fillOpacity={0.08} />
+        <line x1={7} y1={8} x2={17} y2={8} />
+        <line x1={8} y1={11} x2={16} y2={11} />
+        <rect x={9} y={14.5} width={6} height={3} rx={1} fill="currentColor" fillOpacity={0.35} />
       </svg>
     ),
   },
@@ -325,10 +331,14 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'cta',
     svg: (
       <svg {...strokeProps}>
-        <rect x={2} y={4} width={20} height={16} rx={1.5} />
-        <line x1={4.5} y1={9} x2={12} y2={9} />
-        <line x1={4.5} y1={12} x2={10.5} y2={12} />
-        <rect x={14.5} y={9.5} width={6.5} height={6} rx={1} />
+        {/* `ColumnsContainer[fixedWidths: [60, 40]]`,
+            `contentAlignment: "middle"` — text column and the pill
+            `Button` (`shape: pill`, `fullWidth: true`) sit on the SAME
+            vertical center, not offset from each other. */}
+        <rect x={1.5} y={2} width={21} height={20} rx={1.5} />
+        <line x1={4} y1={10.5} x2={11.5} y2={10.5} />
+        <line x1={4} y1={13.5} x2={9.5} y2={13.5} />
+        <rect x={14} y={10} width={7} height={4} rx={2} />
       </svg>
     ),
   },
@@ -338,11 +348,17 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'cta',
     svg: (
       <svg {...strokeProps}>
-        <rect x={2} y={3} width={20} height={18} rx={1.5} />
-        <line x1={7} y1={8} x2={17} y2={8} />
-        <line x1={8.5} y1={11} x2={15.5} y2={11} />
-        <rect x={8.5} y={13.5} width={7} height={3} rx={1} />
-        <line x1={7.5} y1={19} x2={16.5} y2={19} />
+        {/* Light background (`#F9FAFB`, no border, no radius) + a
+            rectangle button + a disclaimer line BELOW the button — the
+            only light, borderless `cta` with 4 stacked text/button
+            elements (title, desc, button, disclaimer). #1 shares the
+            same centered-band skeleton but is dark + pill/inverted only;
+            #5 shares the disclaimer line but lives inside a bordered
+            card. */}
+        <line x1={6.5} y1={5} x2={17.5} y2={5} />
+        <line x1={8} y1={8.5} x2={16} y2={8.5} />
+        <rect x={8.5} y={11.5} width={7} height={3} rx={1} />
+        <line x1={6} y1={18.5} x2={18} y2={18.5} />
       </svg>
     ),
   },
@@ -352,11 +368,17 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'cta',
     svg: (
       <svg {...strokeProps}>
-        <rect x={1.5} y={1.5} width={21} height={21} rx={1} />
-        <rect x={3.5} y={3.5} width={17} height={17} rx={2.5} />
-        <rect x={9} y={6.5} width={6} height={2} rx={1} />
-        <line x1={7} y1={12} x2={17} y2={12} />
-        <rect x={9} y={15.5} width={6} height={2.8} rx={1} />
+        {/* Nested `Container` with `shape: 16` (uniform rounded corners)
+            + a real photo `background` — the fill (not just an outline)
+            is what signals "image", same criterion as `banner`'s Promo
+            CTA. Above the copy sits a badge pill ("LIMITED"), and the
+            button is a `pill`, not a rectangle — both real props that
+            set this apart from #5 Card, which is bordered/unfilled with
+            a rectangle button. */}
+        <rect x={1.5} y={1.5} width={21} height={21} rx={3} fill="currentColor" fillOpacity={0.1} />
+        <rect x={9} y={4.5} width={6} height={2} rx={1} />
+        <line x1={6.5} y1={10} x2={17.5} y2={10} />
+        <rect x={9} y={15.5} width={6} height={3} rx={1.5} />
       </svg>
     ),
   },
@@ -366,11 +388,16 @@ export const SECTION_ICONS: Record<string, SectionIconEntry> = {
     role: 'cta',
     svg: (
       <svg {...strokeProps}>
-        <rect x={2} y={3} width={20} height={18} rx={1.5} />
-        <rect x={4.5} y={6} width={15} height={12} rx={1.8} />
-        <line x1={7.5} y1={10} x2={16.5} y2={10} />
-        <rect x={8.5} y={13} width={7} height={2.6} rx={1} />
-        <line x1={8} y1={17} x2={16} y2={17} />
+        {/* Bordered card (`borderColor: #E5E7EB`, no fill) centered
+            inside a plain container — the outline-only card is the
+            direct counterpoint to #4's filled/image card. Title + desc
+            + rectangle button + a disclaimer line below it (4 elements,
+            like #3, but framed by the card border here). */}
+        <rect x={2} y={3.5} width={20} height={17} rx={2} />
+        <line x1={7} y1={8} x2={17} y2={8} />
+        <line x1={8} y1={11} x2={16} y2={11} />
+        <rect x={9} y={13.5} width={6} height={2.5} rx={1} />
+        <line x1={7} y1={18} x2={17} y2={18} />
       </svg>
     ),
   },

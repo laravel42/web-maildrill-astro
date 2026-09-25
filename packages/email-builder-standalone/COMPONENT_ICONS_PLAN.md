@@ -1375,3 +1375,57 @@ tandas). Falta la captura visual del usuario.
 que exigen rework son: `cta` Two-column mobile stack (0.50u), `cta` Card
 (1.00u), `faq` Pill question rows (1.80u) y `faq` Mobile reflow 2
 columns (1.00u en Y).
+
+## 24. Fase C · tanda `cta` (5 iconos) — rework geométrico
+
+**Estado: implementado, pendiente visto bueno visual del usuario.**
+Feedback directo del usuario tras ver la Tanda 2 original en el editor:
+*"me gustan los de faq pero no los de cta, siento que se ven demasiado
+iguales todos y poco parecidos a sus contrapartes en bloque real"* —
+`faq` (5 iconos, ver §9) quedó sin cambios; esta tanda es solo los 5 de
+`cta`.
+
+### 24.1 Diagnóstico (mismo defecto raíz que `banner` antes del rework)
+
+4 de los 5 iconos originales (`Centered band`, `Newsletter`,
+`BG image promo card`, `Card`) compartían el mismo esqueleto — rect
+contenedor + 2 líneas + rect botón, con solo micro-variaciones de
+posición — sin dibujar ninguno de los rasgos que sí distinguen sus
+bloques reales en `localPresets.data.json`:
+
+| # | Bloque real | Rasgo real no dibujado |
+|---|---|---|
+| Centered band | `Container` fondo `#111827` a sangre + `Button` relleno blanco (invertido) | sin fondo, botón outline igual que los demás |
+| Newsletter | fondo claro `#F9FAFB`, 4 elementos (título + desc + botón + disclaimer) | idéntico a Centered band salvo una línea |
+| BG image promo card | `Container` anidado `shape: 16` con `background: url(...)`, badge "LIMITED", `Button shape: pill` | rects concéntricos genéricos, sin señal de imagen ni badge |
+| Card | card con **solo borde** (`borderColor`, sin `backgroundColor`), botón rect + disclaimer | casi igual a BG image promo card |
+
+Solo `Two-column mobile stack` (respaldado por un `ColumnsContainer`
+60/40 real) ya se distinguía y se mantuvo con ajustes menores.
+
+### 24.2 Qué cambió y por qué (citando el dato)
+
+| # | Icono | Cambio |
+|---|---|---|
+| 1 | Centered band | Rect de fondo pasa a `fillOpacity 0.08` a sangre completa (mismo criterio que `banner` Announcement bar — `backgroundColor: #111827` real) y el botón lleva `fillOpacity 0.35` (relleno blanco invertido sobre fondo oscuro, `buttonBackgroundColor: #FFFFFF`). Es el único `cta` con ambos rasgos combinados. |
+| 2 | Two-column mobile stack | Botón pasa de rect pequeño a `rx=2` sobre una franja más ancha — refleja `shape: pill` + `fullWidth: true` real en la columna derecha. |
+| 3 | Newsletter | Sin fondo ni card (bloque real no tiene borde ni radio): 4 líneas/formas — título, desc, botón rect, disclaimer — nada de relleno. Es la única `cta` clara con 4 elementos y sin card. |
+| 4 | BG image promo card | Pasa a un solo rect con `rx=3` y `fillOpacity 0.1` (simula la imagen de fondo + `shape: 16`), badge outline arriba, botón `rx=1.5` (pill, `shape: pill` real). Ya no son rects concéntricos. |
+| 5 | Card | Card outline sin relleno (`borderColor: #E5E7EB`, sin `backgroundColor` — contraste directo con #4, que sí lleva relleno) + botón rect + disclaimer, igual composición de 4 elementos que #3 pero enmarcada por el borde de card. |
+
+### 24.3 Verificación
+
+Rejilla de 0.5u: las 5 coordenadas pasan (`x*2`/`y*2` enteros); se
+corrigió un `height={2.6}` fuera de rejilla a `2.5` en #5 durante la
+implementación. `prettier --write` aplicado (reformateo de comillas,
+sin cambios de geometría). `astro check`: 0 errores, 0 warnings nuevos
+(3 hints preexistentes sin relación). `npm run build`: completo sin
+errores.
+
+Falta la captura visual del usuario.
+
+### 24.4 Siguiente tanda
+
+`features` + `footer` (Tanda 3 original, §11) — pendiente de aplicar el
+mismo criterio de auditoría (fiel al dato real, sin esqueleto
+compartido) si el usuario reporta el mismo problema ahí.
