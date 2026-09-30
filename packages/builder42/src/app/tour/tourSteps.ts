@@ -15,10 +15,24 @@
  * export (§1.4.7). El copy (ver los JSON de `src/i18n/locales` bajo la clave "tour")
  * describe solo el editor en sí, para que viaje literalmente el día de la
  * extracción a la demo de landing (§0.6).
+ *
+ * i18n (F19.2 — D-F19.2): este módulo NO importa el singleton global `@/i18n`. El
+ * copy se resuelve desde la instancia i18next que el CALLER ya tiene montada,
+ * recibida como último parámetro (`i18nInstance`, REQUERIDO) de
+ * `buildBuilder42TourSteps` y `getBuilder42TourLabels` — el mismo objeto que
+ * `useBuilder42Tour` ya recibe como opción `i18nInstance` y al que ya se suscribe
+ * (`languageChanged`) para reconstruir el tour. Antes de este cambio, `t()` leía
+ * siempre el singleton (`@/i18n`, que en el embed nadie inicializa con el idioma del
+ * host — `Builder42Editor.tsx` construye su PROPIA instancia con
+ * `createEditorI18n(locale)`), así que un editor embebido en inglés mostraba el tour
+ * en español: el singleton solo lo consume el shell standalone (`app/App.tsx`), pero
+ * `tourSteps.ts` lo importaba sin condición. No va dentro de
+ * `Builder42TourStepsConfig` porque ese tipo documenta el conjunto de FLAGS que
+ * filtran pasos — una instancia de i18n no es un filtro, es de dónde sale el copy.
  */
 
 import type { TourStep } from "@md/product-tour";
-import i18n from "@/i18n";
+import type { i18n as I18nInstance } from "i18next";
 import { useDocumentStore, type SideTab } from "@/builder/store/documentStore";
 import type { InspectorTab } from "@/builder/inspector/form/types";
 import type { Breakpoint } from "@/builder/model/types";
@@ -38,31 +52,50 @@ import { BUILDER42_TOUR_ANCHORS } from "./tourAnchors";
  *    publicación del host responde `enabled` (ver `fetchHealth().publish.enabled`,
  *    igual que consulta `EditorPreferences`/`PublishPanel` — este módulo no llama a la
  *    red directamente, recibe el resultado ya resuelto).
- *  - `standaloneChrome`: `pbx.pages.breadcrumb` (`PageBreadcrumb.tsx`) y
- *    `pbx.profileMenu` (`ProfileMenu.tsx`) solo existen en el DOM cuando el editor
- *    renderiza su propio `Header` (el shell standalone, `app/App.tsx`) — el embed
- *    (`Builder42Editor.tsx`) nunca monta `Header`; el host le da su propio
- *    header/toolbar en su lugar. `tourSteps.ts` no es un componente de React y no
- *    puede leer `useEmbeddedChrome` (el context que distingue standalone de embed en
- *    tiempo de render), así que cada caller resuelve el valor y lo pasa explícito,
- *    igual que `publishAvailable`: `app/App.tsx` pasa `true`, `Builder42Editor.tsx`
- *    pasa `false` (D49).
+ *  - `standaloneChrome`: `pbx.profileMenu` (`ProfileMenu.tsx`) solo existe en el DOM
+ *    cuando el editor renderiza su propio `Header` (el shell standalone,
+ *    `app/App.tsx`) — el embed (`Builder42Editor.tsx`) nunca monta `Header`; el host
+ *    le da su propio header/toolbar en su lugar, y no tiene equivalente embebido para
+ *    el menú de perfil. `tourSteps.ts` no es un componente de React y no puede leer
+ *    `useEmbeddedChrome` (el context que distingue standalone de embed en tiempo de
+ *    render), así que cada caller resuelve el valor y lo pasa explícito, igual que
+ *    `publishAvailable`: `app/App.tsx` pasa `true`, `Builder42Editor.tsx` pasa `false`
+ *    (D49). Hasta D-F19.1 este mismo flag también gateaba `pbx.pages.breadcrumb` —
+ *    ver `pagesBreadcrumbAvailable` abajo para por qué eso dejó de ser cierto.
+ *  - `pagesBreadcrumbAvailable` (D-F19.1): `pbx.pages.breadcrumb` (`PageBreadcrumb.tsx`)
+ *    existe en el DOM en DOS casos, no uno: (a) el shell standalone, que la monta
+ *    dentro de su propio `Header`, o (b) el embed, cuando el HOST le presta un slot de
+ *    página (`Builder42Editor.tsx`'s `pagesSlotId`) y `HostPagesPortal` porta
+ *    `PageBreadcrumb` dentro del header del host. El commit 5332e8b introdujo (b) y
+ *    dejó falsa la premisa original de `standaloneChrome` ("esas anclas solo existen
+ *    en standalone") para la mitad del breadcrumb: verificado en `/editor` de este
+ *    host, `.pbx-breadcrumb` está presente dentro de `nav.ed-nav` con `.pbx-header`
+ *    en `null`. De ahí el campo separado: un flag nombrado por el SHELL no puede
+ *    seguir sirviendo de proxy para dos superficies con reglas de existencia
+ *    distintas. Es REQUERIDO (no opcional con default) para que el compilador nombre
+ *    a cada caller en vez de que uno se quede en silencio con el comportamiento
+ *    viejo. `app/App.tsx` pasa `true` (el standalone siempre monta el breadcrumb);
+ *    `Builder42Editor.tsx` pasa `Boolean(pagesSlotId)` — el editor ya sabe si el host
+ *    le prestó el slot, no hace falta plumbing nuevo.
  */
 export interface Builder42TourStepsConfig {
   /** Nivel de experiencia actual (`useLocalConfig("experienceLevel")`). */
   experienceLevel: "simple" | "advanced";
   /** `true` si el adapter/servidor de publicación está disponible (`fetchHealth().publish.enabled`). */
   publishAvailable: boolean;
-  /** `true` si el editor renderiza su propio `Header` (shell standalone); `false` en el embed (D49). */
+  /** `true` si el editor renderiza su propio `Header` (shell standalone); `false` en el embed. Desde D-F19.1 gatea SOLO `pbx.profileMenu` (D49). */
   standaloneChrome: boolean;
+  /**
+   * `true` si `pbx.pages.breadcrumb` (`PageBreadcrumb.tsx`) existe en el DOM: en
+   * standalone siempre (dentro del `Header` propio); en el embed solo si el host
+   * prestó un slot de página (`pagesSlotId`) y el breadcrumb quedó portado dentro de
+   * su header (D-F19.1).
+   */
+  pagesBreadcrumbAvailable: boolean;
 }
 
 /** Namespace i18n de este registro — ver `src/i18n/locales/<lang>/tour.json`. */
 const TOUR_I18N_NAMESPACE = "tour";
-
-function t(key: string): string {
-  return i18n.t(key, { ns: TOUR_I18N_NAMESPACE });
-}
 
 /** Primer hijo del nodo raíz del documento activo, o `null` si el lienzo está vacío. */
 function firstRootChildId(): string | null {
@@ -116,12 +149,18 @@ function removeExampleNodeIfInserted(insertedExampleId: string | null): void {
 
 /**
  * Construye los pasos elegibles del tour de Builder42, ya filtrados por `config` y con
- * el copy resuelto desde el namespace i18n `tour` en el idioma activo de la instancia
- * i18next del editor. El propio motor (`createTour`) vuelve a aplicar `when()` en
- * runtime; los `when` de aquí son la garantía estática de que ningún paso apunta a una
- * superficie apagada (§1.4.6).
+ * el copy resuelto desde el namespace i18n `tour` en el idioma activo de
+ * `i18nInstance` — la instancia i18next que YA está montada en el caller
+ * (`useBuilder42Tour`'s `i18nInstance`, reenviada tal cual: el singleton global en
+ * standalone, `createEditorI18n(locale)` en el embed — D-F19.2). El propio motor
+ * (`createTour`) vuelve a aplicar `when()` en runtime; los `when` de aquí son la
+ * garantía estática de que ningún paso apunta a una superficie apagada (§1.4.6).
  */
-export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourStep[] {
+export function buildBuilder42TourSteps(
+  config: Builder42TourStepsConfig,
+  i18nInstance: I18nInstance,
+): TourStep[] {
+  const t = (key: string): string => i18nInstance.t(key, { ns: TOUR_I18N_NAMESPACE });
   const steps: TourStep[] = [
     // 1. pbx.header.identity — Host: EditorHeader.tsx (nombre + autoguardado de la
     // landing). Siempre visible: no depende de ningún flag del embed.
@@ -523,14 +562,15 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
     })(),
   );
 
-  // 16. pbx.pages.breadcrumb — PageBreadcrumb.tsx. Solo existe en el DOM cuando el
-  // editor renderiza su propio Header (shell standalone) — el embed nunca monta
-  // `Header` (§ doc del `Builder42TourStepsConfig` de arriba, D49). Con
-  // `standaloneChrome = false` el paso se omite entero, mismo patrón que
-  // `pbx.publish` (paso 17) usa para `publishAvailable`: push condicional +
-  // `when()` como garantía redundante en runtime. El copy transmite el concepto
-  // clave de que una landing es un sitio multipágina (§3.2).
-  if (config.standaloneChrome) {
+  // 16. pbx.pages.breadcrumb — PageBreadcrumb.tsx. Existe en el DOM en standalone
+  // (dentro de su propio Header) o en el embed cuando el host prestó un slot de
+  // página y el breadcrumb quedó portado dentro de SU header (D-F19.1; ver el doc
+  // del `Builder42TourStepsConfig` de arriba). Con `pagesBreadcrumbAvailable = false`
+  // el paso se omite entero, mismo patrón que `pbx.publish` (paso 17) usa para
+  // `publishAvailable`: push condicional + `when()` como garantía redundante en
+  // runtime. El copy transmite el concepto clave de que una landing es un sitio
+  // multipágina (§3.2).
+  if (config.pagesBreadcrumbAvailable) {
     steps.push({
       anchorKey: BUILDER42_TOUR_ANCHORS.pagesBreadcrumb,
       popover: {
@@ -538,7 +578,7 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
         description: t("steps.pagesBreadcrumb.description"),
         side: "bottom",
       },
-      when: () => config.standaloneChrome,
+      when: () => config.pagesBreadcrumbAvailable,
     });
   }
 
@@ -579,9 +619,11 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
 
   // 18. pbx.profileMenu — ProfileMenu.tsx (tema, idioma, nivel simple/avanzado,
   // controles de reorden). Solo existe en el DOM cuando el editor renderiza su
-  // propio Header (shell standalone) — el embed nunca monta `Header` (§ doc del
-  // `Builder42TourStepsConfig` de arriba, D49). Con `standaloneChrome = false` el
-  // paso se omite entero, mismo patrón que `pbx.publish` (paso 17) usa para
+  // propio Header (shell standalone) — el embed nunca monta `Header` y no tiene
+  // equivalente embebido para esta superficie (§ doc del `Builder42TourStepsConfig`
+  // de arriba, D49; a diferencia de `pbx.pages.breadcrumb`, que desde D-F19.1 tiene
+  // su propio flag porque sí puede existir embebida). Con `standaloneChrome = false`
+  // el paso se omite entero, mismo patrón que `pbx.publish` (paso 17) usa para
   // `publishAvailable`: push condicional + `when()` como garantía redundante en
   // runtime.
   if (config.standaloneChrome) {
@@ -600,13 +642,16 @@ export function buildBuilder42TourSteps(config: Builder42TourStepsConfig): TourS
   return steps;
 }
 
-/** Textos de botones/progreso del tour, resueltos desde el namespace i18n `tour`. */
-export function getBuilder42TourLabels(): {
+/** Textos de botones/progreso del tour, resueltos desde el namespace i18n `tour` en
+ * el idioma activo de `i18nInstance` (mismo contrato que `buildBuilder42TourSteps`,
+ * D-F19.2). */
+export function getBuilder42TourLabels(i18nInstance: I18nInstance): {
   nextBtnText: string;
   prevBtnText: string;
   doneBtnText: string;
   progressText: string;
 } {
+  const t = (key: string): string => i18nInstance.t(key, { ns: TOUR_I18N_NAMESPACE });
   return {
     nextBtnText: t("labels.nextBtnText"),
     prevBtnText: t("labels.prevBtnText"),

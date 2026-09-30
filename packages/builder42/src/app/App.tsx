@@ -40,7 +40,12 @@ export function App() {
   }, []);
 
   useBuilder42Tour({
-    config: { experienceLevel, publishAvailable, standaloneChrome: true },
+    config: {
+      experienceLevel,
+      publishAvailable,
+      standaloneChrome: true,
+      pagesBreadcrumbAvailable: true,
+    },
     onboardingResolved: experienceLevelChosen,
     i18nInstance: i18n,
   });

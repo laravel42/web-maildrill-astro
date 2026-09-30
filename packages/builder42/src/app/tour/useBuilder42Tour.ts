@@ -238,10 +238,10 @@ export function useBuilder42Tour({
     return createTour({
       tourId: TOUR_ID,
       version: TOUR_VERSION,
-      steps: buildBuilder42TourSteps(configRef.current),
+      steps: buildBuilder42TourSteps(configRef.current, i18nInstance),
       persistence: createConfigBackedTourPersistence(),
       onEvent: (event) => onTourEventRef.current?.(event),
-      labels: getBuilder42TourLabels(),
+      labels: getBuilder42TourLabels(i18nInstance),
       popoverClass: "md-tour",
       ...resolveTourOverlayColor(),
     });

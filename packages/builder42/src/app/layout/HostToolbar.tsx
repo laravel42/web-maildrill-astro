@@ -2,7 +2,14 @@
  * Canvas tools that used to live in Builder42's own 57px header, then in
  * the Maildrill document header. In embed they sit in a 50px bar above the
  * canvas (same row as the email editor's `#ee-editor-header`): Edit/Preview
- * and viewport centered, undo/redo on the right, panel toggles on the left.
+ * and viewport centered, undo/redo on the right.
+ *
+ * D-F22.1: this bar IS the builder's own header in embedded mode (the host's
+ * document header is a different header entirely), so when no host slot is
+ * lent for `PageBreadcrumb` (`pagesSlotId`, see `Builder42Editor.tsx`), it
+ * belongs here instead — a `__left` slot, added by this task.
+ * `showPageBreadcrumb` keeps the portal seam (`HostPagesPortal`) and this
+ * in-bar placement from ever coexisting: see D-F22.2.
  */
 
 import { useTranslation } from "react-i18next";
@@ -18,6 +25,7 @@ import { HOST_VIEWS_ID, HOST_HISTORY_ID } from "@/app/EmbeddedChrome";
 import { ViewportDropdown } from "./ViewportDropdown";
 import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 import { requestBuilder42TourRestart } from "@/app/tour/useBuilder42Tour";
+import { PageBreadcrumb } from "./PageBreadcrumb";
 
 function HostViews() {
   const { t } = useTranslation("header");
@@ -104,11 +112,26 @@ function HostTourRestart() {
   );
 }
 
-export function HostCanvasToolbar() {
+export function HostCanvasToolbar({
+  showPageBreadcrumb = false,
+}: {
+  /**
+   * D-F22.2: pinta `PageBreadcrumb` aquí solo cuando el host NO le prestó su
+   * slot al portal (`pagesSlotId` en `Builder42Editor.tsx`) — así nunca
+   * coexisten las dos ubicaciones. `Builder42EditorInner` es quien decide el
+   * valor (`!pagesSlotId`); este componente no conoce esa prop.
+   */
+  showPageBreadcrumb?: boolean;
+}) {
   const { t } = useTranslation("header");
 
   return (
     <div className="pbx-canvas-toolbar" role="toolbar" aria-label={t("canvasControls.label")}>
+      {showPageBreadcrumb && (
+        <div className="pbx-canvas-toolbar__left">
+          <PageBreadcrumb />
+        </div>
+      )}
       <div id={HOST_VIEWS_ID} className="pbx-canvas-toolbar__center">
         <HostViews />
         <ViewportDropdown />
