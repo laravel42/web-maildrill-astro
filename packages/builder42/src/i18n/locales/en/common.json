@@ -15,6 +15,7 @@
     "spacer": "Spacer",
     "section": "Section",
     "badge": "Badge",
+    "sticker": "Sticker",
     "icon": "Icon",
     "quote": "Quote",
     "stat": "Stat",
@@ -39,6 +40,18 @@
     "navbar": "Navbar"
   },
   "props": {
+    "sticker": {
+      "anchor": "Anchor",
+      "anchorOptions": {
+        "top_left": "Top left",
+        "top_right": "Top right",
+        "bottom_left": "Bottom left",
+        "bottom_right": "Bottom right",
+        "center": "Center"
+      },
+      "rotation": "Rotation",
+      "offset": "Distance from the edge"
+    },
     "accordion-item": {
       "label": "Section title",
       "openByDefault": "Open by default"

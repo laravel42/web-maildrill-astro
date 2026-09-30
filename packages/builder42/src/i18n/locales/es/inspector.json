@@ -132,6 +132,7 @@
       "theme-toggle": "Botón para alternar entre tema claro y oscuro.",
       "form-validation": "Valida los campos en tiempo real con mensajes de error (requiere JS).",
       "sticky": "Fija el elemento al hacer scroll; añade una marca visual cuando ya se scrolleó.",
+      "sticker-drag": "Permite al visitante arrastrar la pegatina; se puede limitar a un eje o al contenedor.",
       "count-up": "Anima el número de 0 al valor final al entrar en pantalla.",
       "marquee": "Desplaza los logos en un bucle continuo (requiere JS para pausar al pasar el mouse).",
       "expandable": "Colapsa el bloque a una altura y agrega un botón para ver más (sin JS se ve completo).",
@@ -150,6 +151,7 @@
       "tabs": "Pestañas (animadas)",
       "form-validation": "Validación en tiempo real (Alpine)",
       "sticky": "Fijo al hacer scroll (sticky)",
+      "sticker-drag": "Pegatina arrastrable",
       "count-up": "Contador animado",
       "marquee": "Desplazamiento continuo (marquee)",
       "expandable": "Ver más (expandible)",
@@ -159,6 +161,16 @@
       "lightbox": "Lightbox (pantalla completa)"
     },
     "fields": {
+      "sticker-drag": {
+        "axis": "Ejes",
+        "axisOptions": {
+          "both": "Ambos",
+          "x": "Solo horizontal",
+          "y": "Solo vertical"
+        },
+        "bounded": "Limitar al contenedor",
+        "boundedHelp": "Con esto activado, la pegatina no puede arrastrarse más allá de los bordes de la sección que la contiene, así que el visitante no puede perderla de vista."
+      },
       "theme-toggle": {
         "light": "Tema claro",
         "dark": "Tema oscuro",

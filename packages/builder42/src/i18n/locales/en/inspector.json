@@ -132,6 +132,7 @@
       "theme-toggle": "Button to switch between light and dark theme.",
       "form-validation": "Validates fields in real time with error messages (requires JS).",
       "sticky": "Sticks the element while scrolling; adds a visual marker once the page has scrolled.",
+      "sticker-drag": "Lets the visitor drag the sticker around; can be locked to one axis or kept inside its container.",
       "count-up": "Animates the number from 0 to its final value as it enters the screen.",
       "marquee": "Scrolls the logos in a continuous loop (requires JS to pause on hover).",
       "expandable": "Collapses the block to a set height and adds a \"Show more\" button (fully visible without JS).",
@@ -150,6 +151,7 @@
       "tabs": "Tabs (animated)",
       "form-validation": "Real-time validation (Alpine)",
       "sticky": "Sticky on scroll",
+      "sticker-drag": "Draggable sticker",
       "count-up": "Animated counter",
       "marquee": "Continuous scroll (marquee)",
       "expandable": "Show more (expandable)",
@@ -159,6 +161,16 @@
       "lightbox": "Lightbox (full-screen)"
     },
     "fields": {
+      "sticker-drag": {
+        "axis": "Axes",
+        "axisOptions": {
+          "both": "Both",
+          "x": "Horizontal only",
+          "y": "Vertical only"
+        },
+        "bounded": "Keep inside the container",
+        "boundedHelp": "When on, the sticker cannot be dragged past the edges of the section that holds it, so a visitor cannot lose it off-screen."
+      },
       "theme-toggle": {
         "light": "Light theme",
         "dark": "Dark theme",

@@ -15,6 +15,7 @@
     "spacer": "Espaciador",
     "section": "Sección",
     "badge": "Etiqueta",
+    "sticker": "Pegatina",
     "icon": "Icono",
     "quote": "Cita",
     "stat": "Estadística",
@@ -39,6 +40,18 @@
     "navbar": "Barra de navegación"
   },
   "props": {
+    "sticker": {
+      "anchor": "Anclaje",
+      "anchorOptions": {
+        "top_left": "Arriba izquierda",
+        "top_right": "Arriba derecha",
+        "bottom_left": "Abajo izquierda",
+        "bottom_right": "Abajo derecha",
+        "center": "Centro"
+      },
+      "rotation": "Rotación",
+      "offset": "Separación del borde"
+    },
     "accordion-item": {
       "label": "Título de la sección",
       "openByDefault": "Abierta por defecto"
