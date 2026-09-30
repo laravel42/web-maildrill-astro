@@ -44,7 +44,8 @@
     "label": "Sistema colore",
     "system": "Sistema",
     "light": "Chiaro",
-    "dark": "Scuro"
+    "dark": "Scuro",
+    "toggleTo": "Passa alla modalità {{mode}}"
   },
   "profile": {
     "label": "Preferenze"

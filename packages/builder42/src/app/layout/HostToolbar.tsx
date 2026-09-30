@@ -20,7 +20,7 @@ import {
   undo,
   redo,
 } from "@/builder/store/useTemporalStore";
-import { UndoIcon, RedoIcon, HelpCircle } from "@/components";
+import { UndoIcon, RedoIcon, HelpCircle, Sun, Moon } from "@/components";
 import { HOST_VIEWS_ID, HOST_HISTORY_ID } from "@/app/EmbeddedChrome";
 import { ViewportDropdown } from "./ViewportDropdown";
 import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
@@ -112,8 +112,51 @@ function HostTourRestart() {
   );
 }
 
+/**
+ * The header's visible theme switch, lent by the host via
+ * `hostThemeControl` (`Builder42Editor.tsx`). Renders nothing when the host
+ * omits the prop — the same "additive, no behavioural change if unused"
+ * contract every other host seam in this file follows
+ * (`showPageBreadcrumb`). A single icon button, not a 3-state segmented
+ * control, because a host that lends this prop already resolved "system" once
+ * at load (see the prop's own doc comment) — there is no third state to show
+ * here, unlike `EditorPreferences`'s `ThemeToggle`, which stays exactly as it
+ * was for a host that does NOT lend this control.
+ */
+function HostThemeToggle({
+  hostThemeControl,
+}: {
+  hostThemeControl?: { effective: "light" | "dark"; onToggle: () => void };
+}) {
+  const { t } = useTranslation("header");
+  if (!hostThemeControl) return null;
+  const { effective, onToggle } = hostThemeControl;
+  const nextMode = effective === "dark" ? t("theme.light") : t("theme.dark");
+  const nextLabel = t("theme.toggleTo", { mode: nextMode });
+
+  return (
+    <div className="pbx-history">
+      <button
+        type="button"
+        className="pbx-history__btn"
+        title={nextLabel}
+        aria-label={nextLabel}
+        aria-pressed={effective === "dark"}
+        onClick={onToggle}
+      >
+        {effective === "dark" ? (
+          <Moon size={16} aria-hidden="true" />
+        ) : (
+          <Sun size={16} aria-hidden="true" />
+        )}
+      </button>
+    </div>
+  );
+}
+
 export function HostCanvasToolbar({
   showPageBreadcrumb = false,
+  hostThemeControl,
 }: {
   /**
    * D-F22.2: pinta `PageBreadcrumb` aquí solo cuando el host NO le prestó su
@@ -122,6 +165,8 @@ export function HostCanvasToolbar({
    * valor (`!pagesSlotId`); este componente no conoce esa prop.
    */
   showPageBreadcrumb?: boolean;
+  /** See `Builder42EditorProps.hostThemeControl` for the full contract. */
+  hostThemeControl?: { effective: "light" | "dark"; onToggle: () => void };
 }) {
   const { t } = useTranslation("header");
 
@@ -140,6 +185,7 @@ export function HostCanvasToolbar({
         <div {...dataTourAttr(BUILDER42_TOUR_ANCHORS.toolbarHistory)}>
           <HostHistory />
         </div>
+        <HostThemeToggle hostThemeControl={hostThemeControl} />
         <HostTourRestart />
       </div>
     </div>

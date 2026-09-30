@@ -55,6 +55,7 @@ import { TemplatesPanel } from "./TemplatesPanel";
 import { SectionTemplateCard } from "./TemplateCard";
 import { TemplateHoverPreviewPortal } from "@/builder/dnd/TemplateHoverPreviewPortal";
 import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
+import { notifyTourZoneClick } from "@/app/tour/zoneTourTriggers";
 import type { SideTab } from "@/builder/store/documentStore";
 
 // ---------------------------------------------------------------------------
@@ -155,7 +156,22 @@ function CategoryAccordion({
   );
 }
 
-function SidebarItem({ def, compact = false }: { def: ComponentDefinition; compact?: boolean }) {
+function SidebarItem({
+  def,
+  compact = false,
+  tourAnchor = false,
+}: {
+  def: ComponentDefinition;
+  compact?: boolean;
+  /**
+   * chain F29, T2b (D-F29.20): cuando `true`, estampa `pbx.sidebar.dragHint` en
+   * el botón. Solo el sitio de montaje del PRIMER item del primer grupo de
+   * "Básicos" (modo "open") lo pasa `true` — nunca `CompactRail`, que no
+   * renderiza este componente en modo `compact` como paleta arrastrable con la
+   * misma affordance de grip.
+   */
+  tourAnchor?: boolean;
+}) {
   const { t } = useTranslation("sidebar");
   const { t: tc } = useTranslation("common");
   const ref = useRef<HTMLElement>(null);
@@ -235,6 +251,7 @@ function SidebarItem({ def, compact = false }: { def: ComponentDefinition; compa
       className={"pbx-palette__item" + (dragging ? " pbx-palette__item--dragging" : "")}
       onClick={handleClick}
       title={`${translatedLabel} — ${t("palette.dragTooltip")}`}
+      {...(tourAnchor ? dataTourAttr(BUILDER42_TOUR_ANCHORS.sidebarDragHint) : {})}
     >
       <GripVertical className="pbx-palette__grip" aria-hidden="true" />
       <ComponentTypeIcon type={def.type} className="pbx-palette__icon" />
@@ -304,8 +321,15 @@ function ComponentsPanel() {
               defaultOpen={idx === 0}
             >
               <div className="pbx-palette">
-                {g.defs.map((def) => (
-                  <SidebarItem key={`basics-${def.type}`} def={def} />
+                {g.defs.map((def, defIdx) => (
+                  <SidebarItem
+                    key={`basics-${def.type}`}
+                    def={def}
+                    // chain F29, T2b (D-F29.20): `pbx.sidebar.dragHint` lands on
+                    // exactly ONE button — the first item of the first
+                    // "Básicos" group — not on every item this map renders.
+                    tourAnchor={idx === 0 && defIdx === 0}
+                  />
                 ))}
               </div>
             </CategoryAccordion>
@@ -399,6 +423,7 @@ export function Sidebar() {
               role="tabpanel"
               id={`pbx-side-panel-${activeTab}`}
               aria-labelledby={`pbx-side-tab-${activeTab}`}
+              onClickCapture={() => notifyTourZoneClick("library")}
               {...dataTourAttr(BUILDER42_TOUR_ANCHORS.sidebarPalette)}
             >
               {activeTab === "components" ? (

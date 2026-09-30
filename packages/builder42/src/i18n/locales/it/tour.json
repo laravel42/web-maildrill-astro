@@ -5,7 +5,46 @@
     "doneBtnText": "Fine",
     "progressText": "{{current}} di {{total}}"
   },
+  "chooser": {
+    "title": "Scegli un percorso",
+    "subtitle": "Ognuno esplora una parte diversa dell'editor — scegli quello che vuoi vedere.",
+    "closeLabel": "Non ora",
+    "tours": {
+      "overview": {
+        "title": "Panoramica",
+        "description": "Un rapido giro tra l'intestazione, la libreria, la tela e il pannello delle impostazioni."
+      },
+      "library": {
+        "title": "Libreria e template di pagina",
+        "description": "La tavolozza di elementi e sezioni, più pagine intere pronte da usare come punto di partenza."
+      },
+      "canvas": {
+        "title": "Modificare sulla tela",
+        "description": "Selezionare, spostare, duplicare ed eliminare elementi direttamente sulla pagina."
+      },
+      "rightPanel": {
+        "title": "Impostazioni dell'elemento e del sito",
+        "description": "Il contenuto e lo stile di un elemento, i suoi breakpoint, e le pagine, le lingue e le impostazioni del sito."
+      }
+    }
+  },
   "steps": {
+    "sidebarDragHint": {
+      "title": "Prendi e sposta un blocco",
+      "description": "Quella maniglia a sinistra è ciò che afferri: prendi un blocco e trascinalo sulla tela per aggiungerlo. Anche un clic funziona."
+    },
+    "canvasInlineText": {
+      "title": "Modifica il testo sul posto",
+      "description": "Fai doppio clic su un testo della pagina per modificarlo lì stesso. Compare una piccola barra per grassetto, corsivo, link, titoli ed elenchi."
+    },
+    "canvasDragNode": {
+      "title": "Spostalo trascinandolo",
+      "description": "Trascina questa maniglia per spostare l'elemento selezionato altrove. Sui dispositivi touch, le freccette qui a fianco fanno lo stesso."
+    },
+    "settingsTheme": {
+      "title": "Il tema del sito",
+      "description": "Il tema fissa i colori, i font e gli spazi che eredita tutto il sito — cambiarlo restila tutte le pagine in un colpo."
+    },
     "headerIdentity": {
       "title": "Nome e salvataggio automatico",
       "description": "Imposta qui il nome della pagina. Le modifiche si salvano da sole mentre lavori."

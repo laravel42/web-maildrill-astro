@@ -93,6 +93,16 @@ export interface ConfigMap {
    */
   experienceLevelChosen: boolean;
   /**
+   * LEGACY desde el port del bundle D (chain F29, T1, D-F29.18): las CUATRO claves
+   * planas de tour que siguen (`tourSeen`, `tourVersion`, `tourCompleted`,
+   * `tourLastStepIndex`) ya no las lee ni las escribe nadie — `app/tour/
+   * useBuilder42Tour.ts` persiste ahora por tour en el record `tours` de más abajo.
+   * Se mantienen DECLARADAS a propósito: hay navegadores con `pb:tourSeen` y
+   * compañía ya escritos, y no se escribió migración — la decisión fue re-ofrecer
+   * los tours nuevos a todo el mundo en vez de trasvasar el valor viejo a `tours`.
+   * Borrar las declaraciones solo agrandaría el diff contra `builder42-landing`
+   * sin ganancia de comportamiento.
+   *
    * Product tour (F4, docs/product-tour-driverjs-plan.md §4). Cableadas a la
    * persistencia por defecto de `@md/product-tour`
    * (`createLocalStoragePersistence`) a través del prefijo `pb:` que YA
@@ -130,6 +140,27 @@ export interface ConfigMap {
    * del paquete — `useLocalConfig` no admite `undefined` como valor persistido).
    */
   tourLastStepIndex: number;
+  /**
+   * Per-tour product-tour state (chain F29, T1, D-F29.17), one record keyed by `tourId`.
+   * Replaces the four flat `tour*` keys above so several tours (F29's four) can each keep
+   * independent `seen`/`completed`/`version`/`lastStepIndex` without adding four typed
+   * `ConfigMap` entries per tour. `lastStepIndex` is genuinely optional here — omitted
+   * means "no saved progress" — unlike the legacy flat key's `-1` sentinel, because a
+   * record field can be absent while a scalar `useLocalConfig` value cannot be `undefined`.
+   */
+  tours: Record<string, TourPersistedState>;
+}
+
+/**
+ * Shape of one tour's entry inside the `tours` record (D-F29.17). Exported because
+ * `ConfigMap.tours` references it and any future consumer of `readConfig("tours")` needs
+ * the same type without redeclaring it.
+ */
+export interface TourPersistedState {
+  seen: boolean;
+  completed: boolean;
+  version: number;
+  lastStepIndex?: number;
 }
 
 const DEFAULTS: ConfigMap = {
@@ -149,6 +180,7 @@ const DEFAULTS: ConfigMap = {
   tourVersion: 0,
   tourCompleted: false,
   tourLastStepIndex: -1,
+  tours: {},
 };
 
 // ---------------------------------------------------------------------------

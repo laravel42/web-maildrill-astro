@@ -44,7 +44,8 @@
     "label": "Color system",
     "system": "System",
     "light": "Light",
-    "dark": "Dark"
+    "dark": "Dark",
+    "toggleTo": "Switch to {{mode}} mode"
   },
   "profile": {
     "label": "Preferences"

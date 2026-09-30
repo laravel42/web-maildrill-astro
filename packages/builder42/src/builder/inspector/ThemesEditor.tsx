@@ -20,6 +20,7 @@ import type { Theme, TokenGroupTree } from "@/builder/model/types";
 import { CommittableInput } from "./controls/CommittableInput";
 import { NumericUnitInput } from "./controls/NumericUnitInput";
 import { CompatWarning } from "./controls/CompatWarning";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 /** Fila de edición de un color semántico dentro de un tema. */
 function ThemeColorRow({
@@ -208,7 +209,10 @@ export function ThemesEditor() {
       : null;
 
   return (
-    <section className="pbx-site-settings__section pbx-themes">
+    <section
+      className="pbx-site-settings__section pbx-themes"
+      {...dataTourAttr(BUILDER42_TOUR_ANCHORS.settingsTheme)}
+    >
       <h4 className="pbx-inspector__heading">{t("themes.title")}</h4>
 
       <div className="pbx-theme-gallery">

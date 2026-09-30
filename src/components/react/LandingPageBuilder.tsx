@@ -13,6 +13,7 @@ import ConfirmDialog from './shared/ConfirmDialog';
 import { LANDING_IDENTITY } from './shared/channels';
 import { useAutosave } from './shared/useAutosave';
 import { useToast } from './shared/useToast';
+import { useHostTheme } from './hooks/useHostTheme';
 // Global z-index fix for Builder42's own modals nested inside this shell —
 // see LandingPageBuilder.module.css. No local classes are used from it.
 import './LandingPageBuilder.module.css';
@@ -77,6 +78,22 @@ export default function LandingPageBuilder({
   const [Builder, setBuilder] = useState<BuilderComponent | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { toast, tone, show } = useToast();
+  // VENDOR #45 — the theme control the package's toolbar renders for us. D30:
+  // the host owns both the `data-theme` attribute and the `md-theme` storage
+  // key; the package only receives the effective value and an action.
+  // `useHostTheme` already observes the attribute, so writing it here is what
+  // re-renders this component with the new value — same pair `AppShell.tsx`'s
+  // own `toggleTheme` owns, and the same hook `VisualEmailBuilder.tsx` uses.
+  const hostTheme = useHostTheme();
+  const toggleHostTheme = useCallback(() => {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try {
+      localStorage.setItem('md-theme', next);
+    } catch {
+      /* no-op — a blocked storage write must not stop the visible toggle */
+    }
+  }, []);
   // Editable copy of the site's display name, shown in the shell's own name
   // field — the vendored editor has no UI of its own for this (`meta.name` is
   // only ever read internally, for the publish slug/export title). Seeded from
@@ -270,6 +287,20 @@ export default function LandingPageBuilder({
             adapters={landingBuilderAdapters}
             tourEnabled={tourEnabled}
             onTourEvent={handleTourEvent}
+            // VENDOR #45 — the package's own chrome carries no theme control
+            // under `themeMode="host"` (`useThemeMode`'s `hostControlled` flag
+            // hides `EditorPreferences`'s 3-state `ThemeToggle`), so the editor
+            // used to be the one place in the workspace with no way to flip
+            // dark mode. This host lends one: `useHostTheme()` reads the
+            // effective theme off `<html data-theme>` (D30 — the package never
+            // reads the attribute itself), and `toggleHostTheme` writes the
+            // attribute plus the `md-theme` storage key, the same pair
+            // `AppShell.tsx`'s own `toggleTheme` owns. Rendered inside the
+            // package's canvas toolbar, next to undo/redo: unlike
+            // builder42-landing, this host's editor chrome is the shared
+            // `ChannelEditorShell`, which has no header slot of its own to put
+            // a control in.
+            hostThemeControl={{ effective: hostTheme, onToggle: toggleHostTheme }}
           />
         ) : (
           <div className={shellStyles.state}>

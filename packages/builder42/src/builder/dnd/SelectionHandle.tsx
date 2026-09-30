@@ -101,6 +101,7 @@ import { useDraggable } from "./useDraggable";
 import { useReorderControlsVisible } from "@/hooks/usePointerCoarse";
 import { announceReorder } from "../canvas/reorderAnnouncer";
 import type { DragData } from "./contract";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 interface SelectionHandleProps {
   /** Frame del canvas: sistema de coordenadas y `offsetParent` de la pestaña. */
@@ -399,6 +400,11 @@ export function SelectionHandle({ frameRef }: SelectionHandleProps) {
         left: box?.left ?? 0,
         visibility: box ? undefined : "hidden",
       }}
+      // chain F29, T2b (D-F29.20): `pbx.canvas.dragNode` — this grip is
+      // deliberately HIDDEN in the merged/coarse-pointer mode (see the file
+      // header comment), so the tour step that anchors here must carry
+      // `skipMissingElement: true`.
+      {...dataTourAttr(BUILDER42_TOUR_ANCHORS.canvasDragNode)}
     >
       {reorderControlsVisible ? null : (
         <span className="pbx-drag-handle__grip" aria-hidden="true">

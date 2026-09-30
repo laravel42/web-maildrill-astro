@@ -51,6 +51,7 @@ import type { DragData, DropData } from "../dnd/contract";
 import { nextFreeCell, computeDropTargetAtPoint, type LayoutDirection } from "../dnd/geometry";
 import type { BuilderNode, NodeId } from "../model/types";
 import type { SlotChild } from "../registry/types";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 const EMPTY_SLOT_NODES: (BuilderNode | undefined)[] = [];
 
@@ -577,6 +578,11 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
     ? {
         ...actionAttrs,
         ...(previewPressed ? { "aria-pressed": true } : {}),
+        // chain F29, T2b (D-F29.20): `pbx.canvas.inlineText` lands only on the
+        // currently selected node — never unconditionally — so exactly one
+        // element in the DOM carries it at a time, same condition already
+        // computed for the `pbx-node--selected` class below.
+        ...(selectedId === id ? dataTourAttr(BUILDER42_TOUR_ANCHORS.canvasInlineText) : {}),
         "data-node-id": id,
         className: [
           "pbx-node",

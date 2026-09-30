@@ -61,6 +61,38 @@ export const BUILDER42_TOUR_ANCHORS = {
   publish: 'pbx.publish',
   /** `app/layout/ProfileMenu.tsx` — preferencias del editor (tema, idioma, nivel, reorder). */
   profileMenu: 'pbx.profileMenu',
+  /**
+   * `app/layout/Sidebar.tsx` (`SidebarItem`, el PRIMER item de la paleta en modo
+   * "open") — el grip de arrastre (`.pbx-palette__grip`) sobre un item real de la
+   * paleta, para enseñar el gesto de arrastrar-para-insertar (chain F29, T2b,
+   * D-F29.20). Se aplica CONDICIONALMENTE (una prop `tourAnchor`), no a los ~30
+   * items que renderiza el sidebar: solo al primero del primer grupo, en el sitio
+   * de montaje de "open" (no en `CompactRail`, que renderiza tiles distintas,
+   * `.pbx-compact-rail__tile`, y no items de paleta).
+   */
+  sidebarDragHint: 'pbx.sidebar.dragHint',
+  /**
+   * `builder/canvas/NodeRenderer.tsx` — el nodo SELECCIONADO (misma condición que
+   * ya calcula `pbx-node--selected`), para enseñar la edición de texto en línea
+   * (doble click) (chain F29, T2b, D-F29.20). Se aplica CONDICIONALMENTE: solo al
+   * nodo cuyo id coincide con `selectedId`, nunca a los demás — un único elemento
+   * en el DOM lleva esta ancla en un momento dado.
+   */
+  canvasInlineText: 'pbx.canvas.inlineText',
+  /**
+   * `builder/dnd/SelectionHandle.tsx` (`.pbx-drag-handle`) — el grip de arrastre
+   * del nodo seleccionado, para enseñar a moverlo (chain F29, T2b, D-F29.20). Ese
+   * grip se OCULTA deliberadamente en el modo touch/coarse-pointer (los controles
+   * de flecha lo sustituyen — ver la cabecera de `SelectionHandle.tsx`), así que
+   * el paso que usa esta ancla debe llevar `skipMissingElement: true`.
+   */
+  canvasDragNode: 'pbx.canvas.dragNode',
+  /**
+   * `builder/inspector/ThemesEditor.tsx` (raíz) — precondición: tab "themes"
+   * activa (`requestedSiteTab = "themes"`), mismo seam D39 que `settingsLayers`/
+   * `settingsPages`/`settingsLanguages` (chain F29, T2b, D-F29.20).
+   */
+  settingsTheme: 'pbx.settings.theme',
 } as const;
 
 /** Unión de todas las claves de ancla válidas del tour de Builder42. */

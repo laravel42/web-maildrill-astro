@@ -37,7 +37,7 @@ import { useDocumentStore, type SideTab } from "@/builder/store/documentStore";
 import type { InspectorTab } from "@/builder/inspector/form/types";
 import type { Breakpoint } from "@/builder/model/types";
 import { readConfig, writeConfig } from "@/hooks/useLocalConfig";
-import { BUILDER42_TOUR_ANCHORS } from "./tourAnchors";
+import { BUILDER42_TOUR_ANCHORS, type Builder42TourAnchorKey } from "./tourAnchors";
 
 /**
  * Subconjunto de condiciones externas que determinan qué pasos del tour son
@@ -273,6 +273,26 @@ export function buildBuilder42TourSteps(
     skipMissingElement: true,
   });
 
+  // 6b. pbx.sidebar.dragHint — Sidebar.tsx (SidebarItem, el primer item de la
+  // paleta en modo "open"). chain F29, T2b (D-F29.20): enseña el gesto de
+  // arrastrar un bloque de la paleta al lienzo (clicar también lo inserta).
+  // Mismo `before` que el paso anterior (fija la tab "components") porque este
+  // paso también depende de que la paleta de componentes, no de plantillas,
+  // esté montada. `skipMissingElement: true` — en modo compact no existe
+  // ningún `.pbx-palette__item` (el riel compacto no monta este ancla).
+  steps.push({
+    anchorKey: BUILDER42_TOUR_ANCHORS.sidebarDragHint,
+    popover: {
+      title: t("steps.sidebarDragHint.title"),
+      description: t("steps.sidebarDragHint.description"),
+      side: "right",
+    },
+    before: () => {
+      useDocumentStore.getState().setSidebarTab("components");
+    },
+    skipMissingElement: true,
+  });
+
   // 7. pbx.sidebar.templates — TemplatesPanel.tsx (tarjetas de plantillas de
   // página). Solo existe en el DOM con la tab "templates" activa Y el sidebar
   // abierto (mismo requisito de `sidebarMode` que el paso 5) — `before` fuerza
@@ -359,6 +379,80 @@ export function buildBuilder42TourSteps(
           removeExampleNodeIfInserted(insertedExampleId);
           insertedExampleId = null;
           useDocumentStore.getState().setActiveBreakpoint(previousBreakpoint);
+        },
+        skipMissingElement: true,
+      } satisfies TourStep;
+    })(),
+  );
+
+  // 9b. pbx.canvas.inlineText — NodeRenderer.tsx (el nodo SELECCIONADO). chain
+  // F29, T2b (D-F29.20): enseña a editar un texto en línea con doble click (el
+  // toolbar de formato es `builder/canvas/TextToolbar.tsx`). `before` selecciona
+  // el PRIMER nodo `"text"` del documento activo (no reutiliza
+  // `ensureSelectableNodeForStep`, y NO inserta nada — tras el wrapper de
+  // plantilla de #26 el primer hijo del root es un contenedor, no un texto, y
+  // D-F29.10 prohíbe insertar en un lienzo que el visitante vació a propósito).
+  // Si el documento no tiene ningún nodo `"text"`, `when` descarta el paso
+  // entero — no hay nada que seleccionar, y `skipMissingElement: true` es la red
+  // de seguridad redundante en runtime, mismo patrón que usa `pbx.publish` con
+  // su propio flag.
+  steps.push(
+    (() => {
+      let previousSelectedId: string | null = null;
+      const firstTextNodeId = (): string | null => {
+        const { document } = useDocumentStore.getState();
+        const match = Object.values(document.nodes).find((n) => n.type === "text");
+        return match?.id ?? null;
+      };
+      return {
+        anchorKey: BUILDER42_TOUR_ANCHORS.canvasInlineText,
+        popover: {
+          title: t("steps.canvasInlineText.title"),
+          description: t("steps.canvasInlineText.description"),
+          side: "top",
+        },
+        when: () => firstTextNodeId() !== null,
+        before: () => {
+          const textId = firstTextNodeId();
+          if (!textId) return;
+          const { selectedId, select } = useDocumentStore.getState();
+          previousSelectedId = selectedId;
+          select(textId);
+        },
+        after: () => {
+          useDocumentStore.getState().select(previousSelectedId);
+          previousSelectedId = null;
+        },
+        skipMissingElement: true,
+      } satisfies TourStep;
+    })(),
+  );
+
+  // 9c. pbx.canvas.dragNode — SelectionHandle.tsx (`.pbx-drag-handle`, el grip
+  // de arrastre del nodo seleccionado). chain F29, T2b (D-F29.20): enseña a
+  // mover el nodo seleccionado arrastrando el grip (las flechas junto a él
+  // hacen lo mismo en touch). Mismo patrón que `canvasNodeActions` (paso 9):
+  // `ensureSelectableNodeForStep` garantiza una selección, y `after` retira el
+  // nodo de ejemplo si fue este paso quien lo insertó. `skipMissingElement:
+  // true` es OBLIGATORIO — el grip se OCULTA deliberadamente en el modo
+  // touch/coarse-pointer (ver la cabecera de `SelectionHandle.tsx`), donde las
+  // flechas de reorden lo sustituyen.
+  steps.push(
+    (() => {
+      let insertedExampleId: string | null = null;
+      return {
+        anchorKey: BUILDER42_TOUR_ANCHORS.canvasDragNode,
+        popover: {
+          title: t("steps.canvasDragNode.title"),
+          description: t("steps.canvasDragNode.description"),
+          side: "top",
+        },
+        before: () => {
+          insertedExampleId = ensureSelectableNodeForStep().insertedExampleId;
+        },
+        after: () => {
+          removeExampleNodeIfInserted(insertedExampleId);
+          insertedExampleId = null;
         },
         skipMissingElement: true,
       } satisfies TourStep;
@@ -562,6 +656,37 @@ export function buildBuilder42TourSteps(
     })(),
   );
 
+  // 15b. pbx.settings.theme — ThemesEditor.tsx (raíz). chain F29, T2b
+  // (D-F29.20): enseña que el tema fija color/tipografía/espaciado del sitio
+  // entero. Mismo patrón D39/D41 que los pasos 13-15, con
+  // `openSiteSettings("themes")`. Deliberadamente ADYACENTE al paso anterior
+  // (`settingsLanguages`) y no al final del tour `rightPanel` (donde el plan
+  // original lo listaba): `settingsLanguages` y `settingsTheme` son dos tabs del
+  // MISMO panel de configuración del sitio, así que mantenerlos contiguos deja
+  // el recorrido cambiando de tab una sola vez en vez de salir y volver.
+  steps.push(
+    (() => {
+      let restoreInspectorPanel: (() => void) | null = null;
+      return {
+        anchorKey: BUILDER42_TOUR_ANCHORS.settingsTheme,
+        popover: {
+          title: t("steps.settingsTheme.title"),
+          description: t("steps.settingsTheme.description"),
+          side: "left",
+        },
+        before: () => {
+          restoreInspectorPanel = expandInspectorPanel();
+          useDocumentStore.getState().openSiteSettings("themes");
+        },
+        after: () => {
+          restoreInspectorPanel?.();
+          restoreInspectorPanel = null;
+        },
+        skipMissingElement: true,
+      } satisfies TourStep;
+    })(),
+  );
+
   // 16. pbx.pages.breadcrumb — PageBreadcrumb.tsx. Existe en el DOM en standalone
   // (dentro de su propio Header) o en el embed cuando el host prestó un slot de
   // página y el breadcrumb quedó portado dentro de SU header (D-F19.1; ver el doc
@@ -640,6 +765,163 @@ export function buildBuilder42TourSteps(
   }
 
   return steps;
+}
+
+/**
+ * chain F29, T2a — id vocabulary for the four tours the single flat list (above) is
+ * split into (D-F29.2/D-F29.20). Namespaced strings (`"builder42.<name>"`, never a bare
+ * `"overview"`) so they cannot collide with anything else stored under the `tours`
+ * record key (`createConfigBackedTourPersistence()`, chain F29 T1, D-F29.17) — that
+ * record is keyed by tour id and is shared with whatever else eventually lands in it.
+ */
+export const BUILDER42_TOUR_IDS = {
+  overview: "builder42.overview",
+  library: "builder42.library",
+  canvas: "builder42.canvas",
+  rightPanel: "builder42.rightPanel",
+} as const;
+
+export type Builder42TourId = (typeof BUILDER42_TOUR_IDS)[keyof typeof BUILDER42_TOUR_IDS];
+
+/** Presentation order for the chooser (T3) — overview first. */
+export const BUILDER42_TOUR_ORDER: readonly Builder42TourId[] = [
+  BUILDER42_TOUR_IDS.overview,
+  BUILDER42_TOUR_IDS.library,
+  BUILDER42_TOUR_IDS.canvas,
+  BUILDER42_TOUR_IDS.rightPanel,
+];
+
+/**
+ * D-F29.20 — the mapping: an ORDERED list of anchor keys per tour, deliberately not in
+ * the flat list's own order. This is a contract, not a convenience grouping — copy it
+ * exactly. `canvasFrame` (overview + canvas) and `inspectorTabs` (overview + rightPanel)
+ * appear in TWO tours on purpose: this is a mapping, not a partition. `publish` and
+ * `profileMenu` appear in NO tour — they stay filtered by the flags they already have
+ * in `buildBuilder42TourSteps`, and must never be added here.
+ *
+ * **Divergence from `builder42-landing` (VENDOR #12, deliberate):** upstream's
+ * `overview` list has a FIFTH entry, `headerDownload` (`pbx.header.download`). This
+ * host persists landings through its own backend and mounts no `.zip`-download button
+ * in its chrome, so that anchor does not exist here and was never ported — the step
+ * would have nothing to highlight. `overview` is therefore 4 steps here, 5 upstream;
+ * the other three tours match (3 / 8 / 7).
+ *
+ * Declared as `Record<Builder42TourId, readonly Builder42TourAnchorKey[]>` so the
+ * compiler forces all four tours to be present. T2b (D-F29.20) appended one new
+ * anchor to `library` (`sidebarDragHint`), two to `canvas` (`canvasInlineText`,
+ * `canvasDragNode`) and one to `rightPanel` (`settingsTheme`) — the shape needed
+ * no change to grow.
+ */
+export const BUILDER42_TOUR_ANCHOR_MAP: Record<Builder42TourId, readonly Builder42TourAnchorKey[]> = {
+  [BUILDER42_TOUR_IDS.overview]: [
+    BUILDER42_TOUR_ANCHORS.headerIdentity,
+    BUILDER42_TOUR_ANCHORS.sidebarTabs,
+    BUILDER42_TOUR_ANCHORS.canvasFrame,
+    BUILDER42_TOUR_ANCHORS.inspectorTabs,
+  ],
+  [BUILDER42_TOUR_IDS.library]: [
+    BUILDER42_TOUR_ANCHORS.sidebarPalette,
+    // chain F29, T2b (D-F29.20): `sidebarDragHint` sits in position 2, between
+    // `sidebarPalette` and `sidebarTemplates` — NOT position 3 as the original
+    // plan listed. Mechanical reason: `sidebarTemplates`'s own `before` switches
+    // the sidebar to the Templates tab, which unmounts every
+    // `.pbx-palette__item` in the DOM. A drag-hint step placed AFTER that switch
+    // would have no element left to highlight.
+    BUILDER42_TOUR_ANCHORS.sidebarDragHint,
+    BUILDER42_TOUR_ANCHORS.sidebarTemplates,
+  ],
+  [BUILDER42_TOUR_IDS.canvas]: [
+    BUILDER42_TOUR_ANCHORS.canvasFrame,
+    BUILDER42_TOUR_ANCHORS.settingsLayers,
+    BUILDER42_TOUR_ANCHORS.canvasNodeActions,
+    // chain F29, T2b (D-F29.20): `canvasInlineText` (position 4) and
+    // `canvasDragNode` (position 5) sit right after `canvasNodeActions` — the
+    // task's own contract placement, no deviation here.
+    BUILDER42_TOUR_ANCHORS.canvasInlineText,
+    BUILDER42_TOUR_ANCHORS.canvasDragNode,
+    BUILDER42_TOUR_ANCHORS.toolbarViewport,
+    BUILDER42_TOUR_ANCHORS.toolbarViews,
+    BUILDER42_TOUR_ANCHORS.toolbarHistory,
+  ],
+  [BUILDER42_TOUR_IDS.rightPanel]: [
+    BUILDER42_TOUR_ANCHORS.inspectorTabs,
+    BUILDER42_TOUR_ANCHORS.inspectorBreakpoints,
+    BUILDER42_TOUR_ANCHORS.settingsTabs,
+    BUILDER42_TOUR_ANCHORS.settingsPages,
+    BUILDER42_TOUR_ANCHORS.settingsLanguages,
+    // chain F29, T2b (D-F29.20): `settingsTheme` sits right after
+    // `settingsLanguages` and before `pagesBreadcrumb` — NOT last, as the
+    // original plan listed. Mechanical reason: `settingsLanguages` and
+    // `settingsTheme` are both tabs of the same site-settings panel, so keeping
+    // them adjacent means the tour switches tabs once in a run instead of
+    // leaving the panel's tab strip and coming back to it later.
+    BUILDER42_TOUR_ANCHORS.settingsTheme,
+    BUILDER42_TOUR_ANCHORS.pagesBreadcrumb,
+  ],
+};
+
+/**
+ * D-F29.24 — selects and re-orders a subset of `buildBuilder42TourSteps`'s flat,
+ * already flag-filtered list for one tour, per `BUILDER42_TOUR_ANCHOR_MAP`
+ * (D-F29.20). `buildBuilder42TourSteps` itself is untouched by this function: every
+ * call here rebuilds the flat list from scratch, so a step reused by two tours (
+ * `canvasFrame`, `inspectorTabs`) gets its OWN fresh `before`/`after` closures — those
+ * closures hold per-run state (see `sidebarTabs`'s `wasCompactBeforeStep`), so sharing
+ * one instance across two tours would let one tour's run leak state into the other's.
+ *
+ * A mapped anchor whose step is absent from the flat list (filtered off by a flag —
+ * `publish`/`profileMenu`/`pagesBreadcrumb` are the only anchors in this registry that
+ * can be absent) is simply skipped: never a hole, never a thrown error.
+ *
+ * THE TRAP: in the flat list, `toolbarViews` is the step that forces
+ * `useDocumentStore`'s `view` to `"edit"` before anything else runs, because in preview
+ * mode the canvas is an `<iframe>` driver.js cannot highlight into — every later
+ * canvas/sidebar/inspector anchor depends on that guarantee. Splitting the flat list
+ * breaks it: `overview` and `rightPanel` never reach `toolbarViews` at all, and
+ * `canvas` only reaches it fifth. So every tour's FIRST returned step here has its
+ * `before` wrapped to force `view === "edit"` first, preserving and then calling
+ * whatever `before` that step already had — unconditionally, since forcing an
+ * already-`"edit"` view is a cheap no-op. The step object itself is never mutated
+ * (spread + replaced `before`): the same flat-list step position is reused across
+ * multiple tours, and mutating it would leak one tour's wrapper into the next tour's
+ * copy of that step.
+ *
+ * The wrapper RETURNS whatever `originalBefore?.()` returns, rather than calling it as
+ * a bare statement. `TourStep.before` is typed `() => void | Promise<void>` and the
+ * engine `await`s it (`createTour.ts`), so a wrapper that swallows the inner call's
+ * return value would drop an async original `before`'s promise on the floor. The
+ * wrapper itself stays a plain, non-`async` arrow function — wrapping it in `async`
+ * would force every tour's first step through a promise even when the original
+ * `before` is synchronous, which is a timing change nothing here asked for.
+ */
+export function buildBuilder42TourStepsFor(
+  tourId: Builder42TourId,
+  config: Builder42TourStepsConfig,
+  i18nInstance: I18nInstance,
+): TourStep[] {
+  const flatSteps = buildBuilder42TourSteps(config, i18nInstance);
+  const anchorOrder = BUILDER42_TOUR_ANCHOR_MAP[tourId];
+
+  const orderedSteps: TourStep[] = [];
+  for (const anchorKey of anchorOrder) {
+    const step = flatSteps.find((candidate) => candidate.anchorKey === anchorKey);
+    if (step) orderedSteps.push(step);
+  }
+
+  const [firstStep, ...restSteps] = orderedSteps;
+  if (!firstStep) return orderedSteps;
+
+  const originalBefore = firstStep.before;
+  const forcedFirstStep: TourStep = {
+    ...firstStep,
+    before: () => {
+      const { view, setView } = useDocumentStore.getState();
+      if (view !== "edit") setView("edit");
+      return originalBefore?.();
+    },
+  };
+
+  return [forcedFirstStep, ...restSteps];
 }
 
 /** Textos de botones/progreso del tour, resueltos desde el namespace i18n `tour` en

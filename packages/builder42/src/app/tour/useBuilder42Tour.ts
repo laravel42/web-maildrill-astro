@@ -7,24 +7,30 @@
  * - Builds a `Tour` (`@md/product-tour`) from `buildBuilder42TourSteps` (F3b),
  *   re-created whenever the step-relevant config or the active i18next instance's
  *   language changes (copy is resolved at build time from `i18n.t`, not reactively).
- * - Persists "seen"/version through `useLocalConfig`'s `tourSeen`/`tourVersion` keys
- *   (`pb:tourSeen`, `pb:tourVersion` in `localStorage`) rather than letting
- *   `@md/product-tour`'s own `createLocalStoragePersistence` mint a second,
- *   independent set of keys — a custom `TourPersistence` adapter (below) bridges the
- *   package's persistence contract onto `readConfig`/`writeConfig` so there is a
- *   SINGLE source of truth for "has this browser seen the tour", reachable from both
- *   this controller and any future chrome UI that wants to read `tourSeen` directly
- *   (e.g. a settings toggle) without reaching into `localStorage` under a second key
- *   convention. `@md/product-tour` itself stays unaware of `useLocalConfig` — it only
- *   sees the `TourPersistence` interface (§0.4: the package never assumes a prefix or
- *   a storage backend).
+ * - Persists "seen"/version through `useLocalConfig`'s `tours` record key
+ *   (`pb:tours` in `localStorage`, one entry per tour id — chain F29, T1,
+ *   D-F29.17) rather than letting `@md/product-tour`'s own
+ *   `createLocalStoragePersistence` mint a second, independent set of keys —
+ *   a custom `TourPersistence` adapter (below) bridges the package's
+ *   persistence contract onto `readConfig`/`writeConfig` so there is a
+ *   SINGLE source of truth for "has this browser seen this tour", reachable
+ *   from both this controller and any future chrome UI that wants to read
+ *   `tours` directly (e.g. a settings toggle) without reaching into
+ *   `localStorage` under a second key convention. `@md/product-tour` itself
+ *   stays unaware of `useLocalConfig` — it only sees the `TourPersistence`
+ *   interface (§0.4: the package never assumes a prefix or a storage
+ *   backend).
  * - Auto-starts once per mount, but ONLY after `OnboardingExperienceModal` has been
  *   resolved (`experienceLevelChosen === true`) — the tour and the modal must never
  *   overlap (§4 F4 acceptance). Callers pass `onboardingResolved` explicitly instead
  *   of this module reading `useLocalConfig("experienceLevelChosen")` itself, so the
  *   gating stays visible at the call site (`App.tsx` / `Builder42Editor.tsx`).
- * - Exposes `requestBuilder42TourRestart()` as the one way to relaunch the tour on
- *   demand — wired to the `ProfileMenu` entry.
+ * - Exposes `requestBuilder42TourRestart()` — since chain F29 T3 (D-F29.27), it opens
+ *   the tour chooser (`TourChooserModal`) rather than restarting the overview tour
+ *   directly, so the visitor can pick any of the four tours. Wired to the
+ *   `ProfileMenu`/`HostToolbar` "tour again" control. `startBuilder42Tour(tourId)`
+ *   (D-F29.28) is the chooser's own way to start a specific tour, built on the same
+ *   module-scoped bridge pattern.
  * - Never imports `driver.js` eagerly: `createTour()` defers that import to
  *   `start()` (§1.3); this module also defers the theme stylesheet import to the
  *   same moment, so mounting this controller costs nothing until the tour opens.
@@ -49,20 +55,33 @@ import {
 } from "@md/product-tour";
 
 import { readConfig, writeConfig } from "@/hooks/useLocalConfig";
-import { buildBuilder42TourSteps, getBuilder42TourLabels } from "./tourSteps";
-import type { Builder42TourStepsConfig } from "./tourSteps";
+import { buildBuilder42TourStepsFor, getBuilder42TourLabels, BUILDER42_TOUR_IDS } from "./tourSteps";
+import type { Builder42TourStepsConfig, Builder42TourId } from "./tourSteps";
+import type { TourPersistedState } from "@/hooks/useLocalConfig";
+import { useTourChooserStore } from "./tourChooserStore";
 
-const TOUR_ID = "builder42";
-/** Bump to re-offer the tour to everyone who already saw a previous version. */
-const TOUR_VERSION = 1;
+/** Bump to re-offer the tour to everyone who already saw a previous version — shared
+ * across all four tours (chain F29, T2a, D-F29.19). Exported (chain F29, T4) so
+ * `zoneTourTriggers.ts` reads persisted state at the same version this module builds
+ * tours with, rather than hardcoding a second copy of the number. */
+export const TOUR_VERSION = 1;
 
 /**
- * Bridges `@md/product-tour`'s `TourPersistence` contract onto the two
- * `useLocalConfig` keys (`tourSeen`, `tourVersion`) instead of a second
- * independent `localStorage` namespace — see module doc. `tourId` is accepted
- * for interface compatibility but unused: Builder42 only ever runs a single
- * tour, so there is nothing to disambiguate between multiple tour ids (unlike
- * the generic package, which supports many tours sharing one prefix).
+ * Bridges `@md/product-tour`'s `TourPersistence` contract onto ONE `useLocalConfig`
+ * record key, `tours` (chain F29, T1, D-F29.17) — `Record<tourId, TourPersistedState>` —
+ * instead of the four flat keys (`tourSeen`/`tourVersion`/`tourCompleted`/
+ * `tourLastStepIndex`) this bridge used before. Those four keys are now legacy: still
+ * declared in `ConfigMap` (deployed browsers already carry them and no migration was
+ * written, D-F29.18), but no longer read or written anywhere in this file. Builder42 can
+ * now run several tours, each disambiguated by the `tourId` every method already receives.
+ *
+ * TRAP this bridge exists to avoid: every method below re-reads `readConfig("tours")`
+ * at the moment it writes, and writes back the WHOLE record with only its own
+ * `tours[tourId]` entry replaced. `buildTour()` (below) creates a fresh bridge instance
+ * per tour, and the hook creates more than one bridge over a session — caching the
+ * record in a closure or module variable would let two tours clobber each other's
+ * entries on write. There is no cached state in this function at all; every method
+ * hits `readConfig`/`writeConfig` directly.
  *
  * Exported (not just module-private) so it can be unit-tested directly
  * against `readConfig`/`writeConfig` without mounting any React tree — this
@@ -71,44 +90,74 @@ const TOUR_VERSION = 1;
  * out of reach without adding a new dependency.
  */
 export function createConfigBackedTourPersistence(): TourPersistence {
-  function read(_tourId: string, currentVersion: number): TourPersistenceState {
-    const seen = readConfig("tourSeen");
-    const version = readConfig("tourVersion");
-    if (version !== currentVersion) {
+  function readEntry(tourId: string): TourPersistedState | undefined {
+    return readConfig("tours")[tourId];
+  }
+
+  /** Read-modify-write: always re-reads the full record, replaces only `tourId`'s entry. */
+  function writeEntry(tourId: string, entry: TourPersistedState): void {
+    const current = readConfig("tours");
+    writeConfig("tours", { ...current, [tourId]: entry });
+  }
+
+  function read(tourId: string, currentVersion: number): TourPersistenceState {
+    const entry = readEntry(tourId);
+    if (!entry || entry.version !== currentVersion) {
       return { seen: false, completed: false, version: currentVersion };
     }
-    const completed = readConfig("tourCompleted");
-    const lastStepIndex = readConfig("tourLastStepIndex");
     return {
-      seen,
-      completed,
-      version,
-      ...(lastStepIndex >= 0 ? { lastStepIndex } : {}),
+      seen: entry.seen,
+      completed: entry.completed,
+      version: entry.version,
+      ...(entry.lastStepIndex !== undefined ? { lastStepIndex: entry.lastStepIndex } : {}),
     };
   }
+
   return {
     read,
-    markSeen(_tourId, currentVersion) {
-      writeConfig("tourSeen", true);
-      writeConfig("tourVersion", currentVersion);
+    markSeen(tourId, currentVersion) {
+      const entry = readEntry(tourId);
+      // H125 correction (chain F29, T4): construct the written entry EXPLICITLY
+      // instead of opening with `...entry` — spreading the old entry carried a stale
+      // `lastStepIndex`/`completed` from a previous tour VERSION forward into the
+      // freshly written one, because the conditional spread below only ever ADDED
+      // those fields back, it never removed what the unconditional spread already
+      // placed. Pre-existing, currently harmless (`TOUR_VERSION` is 1 and `pb:tours`
+      // is a new key with no deployed data) — a correctness fix, not a bug fix.
+      const carryForward = entry?.version === currentVersion;
+      writeEntry(tourId, {
+        seen: true,
+        completed: carryForward ? (entry?.completed ?? false) : false,
+        version: currentVersion,
+        ...(carryForward && entry?.lastStepIndex !== undefined ? { lastStepIndex: entry.lastStepIndex } : {}),
+      });
     },
-    markCompleted(_tourId, currentVersion) {
-      writeConfig("tourSeen", true);
-      writeConfig("tourVersion", currentVersion);
-      writeConfig("tourCompleted", true);
+    markCompleted(tourId, currentVersion) {
       // Un tour completado no tiene "progreso a medias" que reanudar — mismo criterio que
-      // `createLocalStoragePersistence`'s `markCompleted` (`persistence.ts`).
-      writeConfig("tourLastStepIndex", -1);
+      // `createLocalStoragePersistence`'s `markCompleted` (`persistence.ts`): `lastStepIndex`
+      // se omite del todo en vez de persistir un sentinel.
+      writeEntry(tourId, {
+        seen: true,
+        completed: true,
+        version: currentVersion,
+      });
     },
-    saveProgress(_tourId, stepIndex, currentVersion) {
-      writeConfig("tourSeen", true);
-      writeConfig("tourVersion", currentVersion);
-      writeConfig("tourLastStepIndex", stepIndex);
+    saveProgress(tourId, stepIndex, currentVersion) {
+      const entry = readEntry(tourId);
+      // Same H125 correction as `markSeen()` above — explicit construction, no
+      // `...entry` spread of a possibly stale previous-version entry.
+      const carryForward = entry?.version === currentVersion;
+      writeEntry(tourId, {
+        seen: true,
+        completed: carryForward ? (entry?.completed ?? false) : false,
+        version: currentVersion,
+        lastStepIndex: stepIndex,
+      });
     },
-    reset() {
-      writeConfig("tourSeen", false);
-      writeConfig("tourCompleted", false);
-      writeConfig("tourLastStepIndex", -1);
+    reset(tourId) {
+      const current = readConfig("tours");
+      const { [tourId]: _removed, ...rest } = current;
+      writeConfig("tours", rest);
     },
   };
 }
@@ -207,19 +256,59 @@ export interface UseBuilder42TourOptions {
   i18nInstance: I18nInstance;
 }
 
-/** Module-scoped so `requestBuilder42TourRestart()` can reach the mounted controller without prop-drilling a store through `ProfileMenu`. */
-let activeRestart: (() => void) | null = null;
-
-/** Relaunches the tour on demand — wired to the `ProfileMenu` entry. No-op if no `useBuilder42Tour` instance is currently mounted. */
+/**
+ * Relaunches the tour on demand — wired to the `ProfileMenu`/`HostToolbar` "tour
+ * again" control. No-op if no `useBuilder42Tour` instance is currently mounted.
+ *
+ * chain F29, T3, D-F29.27: this function KEEPS its exact exported name and signature,
+ * but its behaviour changed — it used to restart the overview tour directly; it now
+ * OPENS the tour chooser (`useTourChooserStore.getState().openChooser()`) so the
+ * visitor can pick any of the four tours, same as completing the overview tour does
+ * (below). The name still reads true: the visitor is requesting the tour again, and
+ * the chooser is how they now pick which one. A rename was deliberately deferred
+ * (D-F29.27) because `tests/hostToolbar.tourRestart.test.ts` asserts on the literal
+ * source text of `HostToolbar.tsx`, which this task does not touch.
+ */
 export function requestBuilder42TourRestart(): void {
-  activeRestart?.();
+  useTourChooserStore.getState().openChooser();
+}
+
+/**
+ * chain F29, T3, D-F29.28 — starts the requested tour on the mounted controller,
+ * built on the same module-scoped bridge pattern the old `activeRestart` used (a
+ * module-level `let`, set in an effect, cleared on unmount) so `TourChooserModal` can
+ * reach the mounted controller without prop-drilling. Stops any tour currently
+ * running, builds the requested tour fresh (`buildTour`, which also updates
+ * `activeTourIdRef` so a later language change rebuilds the right tour) and starts it.
+ * No-op if no `useBuilder42Tour` instance is currently mounted.
+ */
+let activeStartTour: ((tourId: Builder42TourId) => void) | null = null;
+
+export function startBuilder42Tour(tourId: Builder42TourId): void {
+  activeStartTour?.(tourId);
+}
+
+/**
+ * chain F29, T4, D-F29.32(d) — the smallest possible "is a tour running right now"
+ * flag, added because `zoneTourTriggers.ts` needs to read it and nothing in this
+ * module exposed it yet. Module-scoped like `activeStartTour` above (same bridge
+ * pattern): set to `true` on the `tour_started` analytics event and cleared on
+ * `tour_completed`/`tour_dismissed` (both forwarded through the existing `onEvent`
+ * handler in `buildTour`, below) and on unmount, so it never gets stuck `true`
+ * after a tour ends for any reason.
+ */
+let tourIsRunning = false;
+
+export function isBuilder42TourRunning(): boolean {
+  return tourIsRunning;
 }
 
 /**
  * Mounted once from `App.tsx` (standalone) or `Builder42Editor.tsx` (embedded).
  * Owns the `Tour` instance lifecycle: builds it from the current config/locale,
- * auto-starts it once when eligible, and restarts it on
- * `requestBuilder42TourRestart()`. Purely an effect-runner — renders nothing.
+ * auto-starts it once when eligible, and starts any of the four tours on demand via
+ * `startBuilder42Tour()` (chain F29, T3, D-F29.28) — which is what
+ * `TourChooserModal` calls. Purely an effect-runner — renders nothing.
  */
 export function useBuilder42Tour({
   config,
@@ -233,34 +322,57 @@ export function useBuilder42Tour({
   configRef.current = config;
   const onTourEventRef = useRef(onTourEvent);
   onTourEventRef.current = onTourEvent;
+  /** chain F29, T2a — tracks whichever tour is currently mounted, so `languageChanged`
+   * rebuilds THAT tour rather than hardcoding the overview. Starts on the overview
+   * because that is also what the auto-start effect runs. */
+  const activeTourIdRef = useRef<Builder42TourId>(BUILDER42_TOUR_IDS.overview);
 
-  function buildTour(): Tour {
+  function buildTour(tourId: Builder42TourId): Tour {
+    activeTourIdRef.current = tourId;
     return createTour({
-      tourId: TOUR_ID,
+      tourId,
       version: TOUR_VERSION,
-      steps: buildBuilder42TourSteps(configRef.current, i18nInstance),
+      steps: buildBuilder42TourStepsFor(tourId, configRef.current, i18nInstance),
       persistence: createConfigBackedTourPersistence(),
-      onEvent: (event) => onTourEventRef.current?.(event),
+      onEvent: (event) => {
+        // chain F29, T4, D-F29.32(d) — tracks whether a tour is currently running so
+        // `zoneTourTriggers.ts` can read it via `isBuilder42TourRunning()` without a
+        // second source of truth. `tour_started` sets it; both terminal events clear
+        // it — a tour must never leave this flag stuck `true`.
+        if (event.event === "tour_started") {
+          tourIsRunning = true;
+        } else if (event.event === "tour_completed" || event.event === "tour_dismissed") {
+          tourIsRunning = false;
+        }
+        // chain F29, T3, D-F29.26 — the chooser opens ONLY on `tour_completed` of the
+        // OVERVIEW tour, never on `tour_dismissed`, and never for tours 1-3. This runs
+        // in ADDITION to the forwarding below, never instead of it.
+        if (event.event === "tour_completed" && event.tourId === BUILDER42_TOUR_IDS.overview) {
+          useTourChooserStore.getState().openChooser();
+        }
+        onTourEventRef.current?.(event);
+      },
       labels: getBuilder42TourLabels(i18nInstance),
       popoverClass: "md-tour",
       ...resolveTourOverlayColor(),
     });
   }
 
-  function restart(): void {
+  function startTour(tourId: Builder42TourId): void {
     tourRef.current?.stop();
-    const tour = buildTour();
+    tourIsRunning = false;
+    const tour = buildTour(tourId);
     tourRef.current = tour;
     ensureTourThemeCss();
     void tour.start();
   }
 
   useEffect(() => {
-    activeRestart = restart;
+    activeStartTour = startTour;
     return () => {
-      if (activeRestart === restart) activeRestart = null;
+      if (activeStartTour === startTour) activeStartTour = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `restart` reads current config/callback via refs
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `startTour` reads current config/callback via refs
   }, []);
 
   useEffect(() => {
@@ -268,11 +380,11 @@ export function useBuilder42Tour({
     if (autoStartedRef.current) return;
 
     const persistence = createConfigBackedTourPersistence();
-    const state = persistence.read(TOUR_ID, TOUR_VERSION);
+    const state = persistence.read(BUILDER42_TOUR_IDS.overview, TOUR_VERSION);
     if (!shouldAutoStartTour(onboardingResolved, autoStartedRef.current, state.seen, state.completed)) return;
 
     autoStartedRef.current = true;
-    const tour = buildTour();
+    const tour = buildTour(BUILDER42_TOUR_IDS.overview);
     tourRef.current = tour;
     ensureTourThemeCss();
     void tour.start();
@@ -282,7 +394,7 @@ export function useBuilder42Tour({
   useEffect(() => {
     const handleLanguageChanged = () => {
       tourRef.current?.stop();
-      tourRef.current = buildTour();
+      tourRef.current = buildTour(activeTourIdRef.current);
     };
     i18nInstance.on("languageChanged", handleLanguageChanged);
     return () => {
@@ -294,6 +406,7 @@ export function useBuilder42Tour({
   useEffect(() => {
     return () => {
       tourRef.current?.stop();
+      tourIsRunning = false;
     };
   }, []);
 }

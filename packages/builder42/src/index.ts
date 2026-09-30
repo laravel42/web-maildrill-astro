@@ -25,6 +25,16 @@ export type {
   FetchHealthFn,
 } from "./services/apiAdapters";
 export type { BuilderSite } from "./builder/model/types";
+/**
+ * First-run seed for a host with nothing saved and no requested template
+ * (chain F29, W2, D-F29.10): a real runtime export, not a type, so a host
+ * can construct a starter `BuilderSite` — root → one deletable container →
+ * [text, image] — without inventing its own node shapes. Ships INERT: no
+ * surface in this package calls it, and this host does not seed with it
+ * today (its landings come from the backend). See VENDOR #29's invariant —
+ * the first-run CONDITION is always the host's to evaluate.
+ */
+export { createBaseSite } from "./builder/baseSite";
 
 // ---------------------------------------------------------------------------
 // Product tour (F4, docs/product-tour-driverjs-plan.md §4) — re-exported so

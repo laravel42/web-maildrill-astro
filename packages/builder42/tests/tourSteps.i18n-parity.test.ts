@@ -114,6 +114,12 @@ describe("builder42 tour i18n — paridad de claves", () => {
       [BUILDER42_TOUR_ANCHORS.pagesBreadcrumb]: "pagesBreadcrumb",
       [BUILDER42_TOUR_ANCHORS.publish]: "publish",
       [BUILDER42_TOUR_ANCHORS.profileMenu]: "profileMenu",
+      // chain F29, T2b (D-F29.20). `headerDownload` no está: no existe en este
+      // host (VENDOR #12).
+      [BUILDER42_TOUR_ANCHORS.sidebarDragHint]: "sidebarDragHint",
+      [BUILDER42_TOUR_ANCHORS.canvasInlineText]: "canvasInlineText",
+      [BUILDER42_TOUR_ANCHORS.canvasDragNode]: "canvasDragNode",
+      [BUILDER42_TOUR_ANCHORS.settingsTheme]: "settingsTheme",
     };
     const missing: string[] = [];
     for (const anchorKey of Object.values(BUILDER42_TOUR_ANCHORS)) {

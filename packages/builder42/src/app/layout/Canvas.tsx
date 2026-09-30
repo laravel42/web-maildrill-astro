@@ -35,6 +35,7 @@ import { ExportWarningsBanner } from "@/components/ExportWarningsBanner";
 import type { ExportWarning } from "@/builder/export/warnings";
 import { CanvasEmptyStart } from "./CanvasEmptyStart";
 import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
+import { notifyTourZoneClick } from "@/app/tour/zoneTourTriggers";
 import {
   simpleIconsCatalog,
   subscribeSimpleIcons,
@@ -180,6 +181,7 @@ export function Canvas() {
     <main
       className="pbx-canvas"
       ref={canvasRef}
+      onClickCapture={() => notifyTourZoneClick("canvas")}
       onClick={() => {
         if (interactive) select(null);
       }}

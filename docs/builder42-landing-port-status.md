@@ -20,14 +20,15 @@ fixes that never made it back here. This file tracks replaying them.
 | --- | --- | --- |
 | A (23 files, VENDOR #2,#4-#8,#13,#14) | Defect fixes, no host coupling | **Done.** Commit `e8ecfb4`. |
 | B (partial, VENDOR #10,#11,#15) | Embed seams + tour i18n fix | **Done, partial.** Commit `7aa894d`. #9/#12 excluded on purpose (this host persists through its own backend — no `.zip`-download flow to anchor a tour step to). |
-| C (18 entries, VENDOR #16-#20,#22-#26,#36-#41,#43,#44) | Structural bugs + additive model/UI, no host decision | **Done — 18/18.** See below. Uncommitted. |
-| D (7 entries, VENDOR #29-#34,#45) | Tour rework + first-run seed + theme seam — needs host decisions | **Not started.** Decisions already made (see below); no code written. |
+| C (18 entries, VENDOR #16-#20,#22-#26,#36-#41,#43,#44) | Structural bugs + additive model/UI, no host decision | **Done — 18/18.** Commit `fb259c1`. See below. |
+| D (7 entries, VENDOR #29-#34,#45) | Tour rework + first-run seed + theme seam — needs host decisions | **Done — 7/7.** Uncommitted. See below. |
 | Excluded | VENDOR #21 (JSON preview) | **Explicit user decision — do not port.** |
 | Reference only | VENDOR #35 (header dropdown width), #42 (canvas padding) | **Do not port** — host-specific visual preferences on that repo's own header/canvas, not structural. |
 
-No commit has been made in this repo for bundle C or D yet — everything below is **uncommitted in
-the working tree**. Run `git status` before anything else in a new session to confirm what's
-actually there; do not trust this file's file list over the real diff if they disagree.
+No commit has been made in this repo for bundle D yet. Bundle C landed as `fb259c1`; everything
+below about bundle D is still unwritten. Run `git status` before anything else in a new session to
+confirm what's actually there; do not trust this file's file list over the real diff if they
+disagree.
 
 ## Bundle C — done (18 of 18)
 
@@ -167,10 +168,139 @@ Still **not** verified, and the next thing to do:
   green tests do not prove a React change renders (caveat 21 in
   `../builder42-landing/docs/HANDOFF.md`).
 
-## Bundle D — decisions made, nothing implemented
+## Bundle D — done (7 of 7)
 
 The user confirmed (2026-09-30) adopting the **full** tour rework, not a partial cut — all four
-tours, the chooser, the zone-based auto-start, and the theme seam. Nothing has been coded yet.
+tours, the chooser, the zone-based auto-start, and the theme seam. All of it is now in the working
+tree, uncommitted. What landed, in the order it was applied (each step depends on the one before):
+
+- **#30 — per-tour persistence.** `hooks/useLocalConfig.ts` gains `tours: Record<string,
+  TourPersistedState>` (default `{}`) and exports `TourPersistedState`; the four flat keys
+  (`tourSeen`/`tourVersion`/`tourCompleted`/`tourLastStepIndex`) stay **declared** but are no
+  longer read or written anywhere — documented as legacy in place. No migration: every visitor is
+  re-offered the new per-tour tours. `app/tour/useBuilder42Tour.ts`'s
+  `createConfigBackedTourPersistence()` now keys all five methods off the `tourId` they already
+  received, read-modify-writing the whole `tours` record each time (no cached copy — two bridge
+  instances must not clobber each other).
+- **#31 — the tour split into four.** `app/tour/tourSteps.ts` gains four additive exports
+  (`BUILDER42_TOUR_IDS`/`Builder42TourId`/`BUILDER42_TOUR_ORDER`, `BUILDER42_TOUR_ANCHOR_MAP`,
+  `buildBuilder42TourStepsFor`); `buildBuilder42TourSteps` itself was **not** touched (D-F29.24).
+  `useBuilder42Tour.ts` drops `const TOUR_ID`, builds per tour id, tracks the active tour in a ref
+  so `languageChanged` rebuilds the right one, and exports `TOUR_VERSION`.
+- **#34 — the four new anchors.** `sidebarDragHint`, `canvasInlineText`, `canvasDragNode`,
+  `settingsTheme` in `tourAnchors.ts`, one step each in the flat list (6b/9b/9c/15b) and one entry
+  each in the anchor map. Call sites: `Sidebar.tsx` (`SidebarItem` gained an optional `tourAnchor`
+  prop, passed `true` **only** for `idx === 0 && defIdx === 0` of the open-mode palette),
+  `NodeRenderer.tsx` (conditional on `selectedId === id`), `SelectionHandle.tsx` (unconditional on
+  `.pbx-drag-handle`), `ThemesEditor.tsx` (unconditional on its root `<section>`). The two
+  conditional spreads are the part a file-diff replay gets wrong.
+- **#32 — the chooser.** `app/tour/tourChooserStore.ts` and `app/tour/TourChooserModal.tsx` copied
+  verbatim (the modal reuses `SimpleModal` + the `pbx-modal*`/`pbx-onboarding-modal*` classes, all
+  of which already exist here — no CSS added). `requestBuilder42TourRestart()` keeps its exact name
+  and signature but now opens the chooser (D-F29.27); `buildTour`'s `onEvent` opens it on
+  `tour_completed` of the **overview** tour only. `<TourChooserModal />` is mounted unconditionally
+  in both shells (`app/App.tsx`, `Builder42Editor.tsx`).
+- **#33 — zone tours + the H125 fix.** `app/tour/zoneTourTriggers.ts` copied verbatim (all gating
+  lives there, including the `library`-only `sidebarTab === "components"` precondition from
+  D-F29.36). `onClickCapture` added to exactly three elements: `Sidebar.tsx`'s
+  `.pbx-side-tabs__panel` (**not** the panel-slot root — that would let a tab click start the
+  tour), `Canvas.tsx`'s edit-mode `<main className="pbx-canvas">`, and `Inspector.tsx`'s
+  `.pbx-panel-slot--right`. `useBuilder42Tour.ts` also gained `isBuilder42TourRunning()` backed by
+  a module flag set on `tour_started` and cleared on both terminal events plus unmount, and the
+  H125 explicit-construction fix inside `markSeen`/`saveProgress`.
+- **#45 — the theme seam, wired per the decision recorded below.** `Builder42EditorProps` gains
+  `hostThemeControl?: { effective: "light" | "dark"; onToggle: () => void }`, threaded through
+  `Builder42EditorInner` to `HostCanvasToolbar`, which renders a new `HostThemeToggle` (a single
+  `Sun`/`Moon` icon button in the `__right` group, reusing `.pbx-history`/`.pbx-history__btn` — no
+  CSS added; renders `null` when the prop is absent). `header.json` gains `theme.toggleTo`
+  (interpolated) × en/es/it. **Host side** (`src/components/react/LandingPageBuilder.tsx`):
+  `useHostTheme()` for the effective value and a local `toggleHostTheme` writing
+  `<html data-theme>` + `localStorage['md-theme']`, the same pair `AppShell.tsx` owns.
+- **#29 — the first-run seed helper.** `builder/baseSite.ts` copied verbatim and re-exported from
+  the barrel. **Ships inert here**: no surface in the package calls it and this host does not seed
+  with it — its landings come from the backend. The entry's own invariant makes that correct (the
+  first-run *condition* is always the host's to evaluate); if this host ever wants a seeded blank
+  landing, the decision belongs in `LandingPageBuilder.tsx`, not in the package.
+
+**Excluded from bundle D on purpose, same as in bundle B:** VENDOR #12's `headerDownload` anchor
+(`pbx.header.download`) and its `downloadAvailable` config flag. This host persists landings
+through its own backend and mounts no `.zip`-download button, so there is nothing to highlight.
+Consequences a future replay must not "fix" by copying upstream: the `overview` tour has **4**
+anchors here, not 5; `BUILDER42_TOUR_ANCHOR_MAP` has no `headerDownload` entry;
+`Builder42TourStepsConfig` has no `downloadAvailable`; and `tour.json` has no
+`steps.headerDownload` copy.
+
+i18n for bundle D: `tour.json` × en/es/it gained the `chooser` section (title, subtitle,
+closeLabel, and title+description for each of the four tours) and the four new
+`steps.{sidebarDragHint,canvasInlineText,canvasDragNode,settingsTheme}` entries — 22 steps per
+locale, identical key sets across the three (verified by script), `headerDownload` absent.
+
+### Tests touched for bundle D (ported, not run)
+
+- `tests/tour-anchors-coverage.test.ts` — the four new anchors added to `filesByAnchor` so the
+  "exactly one call-site per registered anchor" invariant still holds. The host-header path and the
+  `!channel && identity` assertion stay as they are here (VENDOR #1); no `headerDownload` case.
+- `tests/tourSteps.i18n-parity.test.ts` — the four new anchor→step-id mappings.
+- `tests/useBuilder42Tour.persistence.test.ts` — the two assertions that read the flat keys now
+  read `tours[tourId]`, same as upstream. Upstream's own `reset()` case still asserts
+  `readConfig("tourSeen") === false`, which now passes on the declared default; left identical.
+- Not ported: upstream's edits to `tourSteps.i18nInstance.test.ts` and
+  `tourSteps.standaloneChrome.test.ts` (both only add `downloadAvailable` to a config literal —
+  excluded here), and `tests/tourThemeCss.test.ts` (guards VENDOR #3, which this repo has not
+  ported — see the gap list below).
+
+## Gaps found while porting — divergences NOT in any bundle
+
+Three things upstream carries that no numbered VENDOR entry covers, and that this log had not
+recorded either. Two were **required** by bundle C and are now ported; the rest are still open.
+
+**Ported, because bundle C did not compile/render without them:**
+
+1. `TypographyStyle.letterSpacing` + `.textTransform` (model, style fields, two `advanced` rows,
+   i18n in `inspector.json` + `common.json`) — `stylePresetRegistry.ts` writes both. Details under
+   #22 above. Upstream's `tests/typographyTracking.test.ts` (141 lines) was copied with them.
+2. The **`sticker` component and the `sticker-drag` behaviour.** `pizzeriaPage.ts` (#16) creates 6
+   nodes of type `"sticker"` and attaches the `sticker-drag` behaviour — neither existed here, so
+   the layout would have rendered "type not registered" six times with a dead behaviour. Ported:
+   `registry/components/Sticker.tsx`, `registry/behaviors/stickerDrag.ts`,
+   `runtime/behaviors/stickerDrag.ts`, the prebuilt `runtime/dist/stickerDrag.js`, both registry
+   entries (`componentRegistry.ts`, `behaviorRegistry.ts`), the palette icon
+   (`ComponentTypeIcon.tsx` + a `Sticker` re-export in `Icon.tsx`), i18n
+   (`common.json`'s `components.sticker` + `props.sticker.*`, `inspector.json`'s
+   `behaviors.fields["sticker-drag"].*` × en/es/it), and `tests/sticker.test.ts`.
+
+   **One step beyond upstream, deliberately:** upstream has no `behaviors.name["sticker-drag"]` or
+   `behaviors.desc["sticker-drag"]` entry, so `BehaviorsSection.tsx` — which renders
+   `t("behaviors.name.<type>", { defaultValue: def.label })` — falls back to the definition's
+   hardcoded Spanish label ("Pegatina arrastrable") in English and Italian too. Both keys were
+   added here in all three locales, placed right after `sticky`'s (the reference entry, and the
+   behaviour `stickerDrag.ts`'s own docblock keeps comparing itself to). Every other behaviour in
+   the catalogue has both keys; now this one does as well.
+
+   **Lesson for the next bundle:** a layout is not "copy one file" — audit the node types and
+   behaviour ids it references against this repo's registries before calling it done.
+
+**Still open, deliberately not touched in this session** (each needs its own decision; none blocks
+bundles C or D):
+
+- **VENDOR #3** — the tour theme stylesheet as a top-level static import instead of
+  `ensureTourThemeCss()`'s dynamic one. Not in bundle A's list and never ported; this repo still
+  has the helper and both its call sites, and `useBuilder42Tour.ts` was hand-edited for bundle D
+  precisely to preserve that. Upstream's `tourThemeCss.test.ts` guards the opposite shape, so it
+  was not copied. The upstream rationale (a stale Vite CSS preload warning) is host-specific and
+  unverified here.
+- **VENDOR #27** — the host's API adapters registered in a `useMemo` (render phase) instead of a
+  `useEffect`, so `fetchHealth()` calls from child mount effects don't fall through to the network
+  fallback. Also unaccounted for in any bundle. Worth evaluating: the defect it fixes would show up
+  here too (`app/App.tsx` and `Header.tsx` call `fetchHealth()` on mount).
+- Upstream-only i18n keys outside every bundle, left absent on purpose: `canvas.json`'s `json.*`
+  (VENDOR #21, excluded), `header.json`'s `onboarding.chooseLanguage`, `inspector.json`'s
+  `numericUnitInput.*` and `seoSettings.*Placeholder` (their components — `NumericUnitInput.tsx`,
+  `SeoSettings.tsx` — also differ upstream), and `tour.json`'s `steps.headerDownload` (#12).
+- Chrome CSS still differing: `styles/chrome/{canvas,header,inspector,inspector-controls}.css`
+  (#35 and #42 are "do not port"; the rest was not audited this session).
+
+## Bundle D — the wiring decision behind #45 (kept for the record)
 
 **#45 (theme seam) has a concrete wiring decision already made, described here so it isn't
 re-derived:** maildrill has no `EditorHeader.tsx` of its own the way builder42-landing does — the
@@ -190,9 +320,9 @@ it in. Read/write plan:
   `LandingPageBuilder.tsx` and pass `hostThemeControl={{ effective: hostTheme, onToggle }}` to
   `<Builder>`.
 
-**#34's tour anchors have call-sites beyond `tourAnchors.ts` itself** — when adding
-`sidebarDragHint`/`canvasInlineText`/`canvasDragNode`/`settingsTheme` to
-`app/tour/tourAnchors.ts`, remember every file that stamps one:
+**#34's tour anchors have call-sites beyond `tourAnchors.ts` itself** — all four are now stamped
+(see the bundle D section above); this list stays as the record of where, because none of it is
+visible from `tourAnchors.ts`:
 - `SelectionHandle.tsx` needs `{...dataTourAttr(BUILDER42_TOUR_ANCHORS.canvasDragNode)}` added back
   onto its root element (deliberately left out when #41 was ported earlier this session — see the
   note under #41 above).
@@ -227,22 +357,39 @@ npm run build
 
 No baseline numbers are recorded here on purpose — the last known-good baseline for this package
 was captured **before** this session's bundle C changes (post-bundle-B: `pnpm --filter builder42
-test` 212 passed / 20 files, per the `7aa894d` commit message). Re-run and record the new numbers
-in the commit message when bundle C (or D) is committed; do not assume the count only went up by
-exactly "one test per file added" — `BehaviorsSection.tsx` and `LayersTree.tsx` were rewritten, not
-just extended, and any tests that assert their previous shape will need updating too if any exist
-(none were found referencing either file directly as of this session, but this was not exhaustively
-searched for test files that snapshot rendered output).
+test` 212 passed / 20 files, per the `7aa894d` commit message). Bundle C then measured 234 passed /
+22 files at 13/18 + the `cssSerializer` repair. **Nothing has been test-run since**, on the user's
+instruction to skip test runs for the rest of the session, so bundle D's state is:
+
+- `pnpm --filter builder42 exec tsc --noEmit -p tsconfig.json` → **clean**, re-run after every step
+  of bundle D (persistence, split, anchors, chooser, zone triggers, theme seam, `baseSite`, and the
+  sticker/typography gap fixes).
+- The host side (`LandingPageBuilder.tsx`) reports **no** errors under the repo-root `tsc`. Note
+  that the repo-root `tsc -p tsconfig.json` is **not** a usable gate for `packages/builder42`: its
+  `@/*` alias points at the host's `src/`, so the vendored package's own `@/…` imports all resolve
+  to `TS2307` there. The package's own `tsconfig.json` is the gate; `npm run check` (astro check) is
+  the authoritative one for the host and has **not** been run.
+- Test files added/edited but **never executed**: bundle C's `stylePresetRegistry.test.ts` (28) and
+  `applyStylePreset.undo.test.ts` (5), the gap fixes' `typographyTracking.test.ts` and
+  `sticker.test.ts`, and bundle D's three edited tour tests. Expect the suite count to move well
+  past 267; treat any number in this file as a prediction, not a baseline.
+- Nothing has been opened in a browser. For bundle D that matters more than usual: the chooser
+  modal, the four tours' step ordering, and the zone triggers are behaviour this package's
+  jsdom-less vitest cannot exercise at all.
 
 ## Bookkeeping when bundle C or D lands (commit + housekeeping)
 
 1. Commit bundle C (and/or D) separately from any further work, one `fix(builder42): …` commit per
-   bundle, same convention as `e8ecfb4`/`7aa894d`.
+   bundle, same convention as `e8ecfb4`/`7aa894d`. (Bundle C landed as `fb259c1`.)
 2. Update `../builder42-landing/packages/VENDOR.md`'s intro sentence (currently "Forty-four
    divergences") and `../builder42-landing/docs/HANDOFF.md`'s caveat 13 and
    `../builder42-landing/AGENTS.md`'s caveat 7 to note which numbers have been replayed here —
    **do not delete the divergence entries over there**; they document that repo's own history and
    stay valid regardless of what this repo has caught up on. This file (not VENDOR.md) is the
-   source of truth for *this repo's* porting status.
+   source of truth for *this repo's* porting status. **Still pending** as of bundle D.
 3. Update this file's "Status at a glance" table and move completed items from "remaining" to
    "done" in the same commit as the code that ports them.
+4. Consider adding the two unaccounted divergences found this session (#3, #27) to VENDOR.md's own
+   numbering over there, or at least noting in that file that `letterSpacing`/`textTransform` and
+   the `sticker` component/`sticker-drag` behaviour are undocumented divergences — this repo hit all
+   four the hard way (a type error and a would-be broken template).
