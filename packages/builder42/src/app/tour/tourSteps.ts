@@ -687,6 +687,47 @@ export function buildBuilder42TourSteps(
     })(),
   );
 
+  // 15c. pbx.settings.prefs — SiteSettingsPanel.tsx (la `<section>` de la tab
+  // "settings"). Habla de las PREFERENCIAS del editor y, sobre todo, del nivel
+  // de experiencia (simple/avanzado) — el switch que revela superficies
+  // técnicas, entre ellas la pestaña Tokens del sidebar, que es donde se editan
+  // tipografías y espaciado (`Sidebar.tsx` filtra esa tab con
+  // `embedded && isSimple`). Existe porque el paso del tema (15b) solo habla de
+  // color: el usuario reportó que prometer "tipografías" ahí era falso, y que
+  // el camino a cambiarlas —pasar a Avanzado— no se explicaba en ningún sitio.
+  //
+  // Solo en modo EMBEBIDO (`standaloneChrome: false`): ahí esa sección monta
+  // `EditorPreferences`, que es lo que el copy describe. En standalone la misma
+  // sección muestra `SiteFileActions` y las preferencias viven en el menú de
+  // perfil, cubierto por el paso `profileMenu` — push condicional + `when()`
+  // como garantía redundante en runtime, exactamente el patrón inverso al de
+  // ese paso.
+  if (!config.standaloneChrome) {
+    steps.push(
+      (() => {
+        let restoreInspectorPanel: (() => void) | null = null;
+        return {
+          anchorKey: BUILDER42_TOUR_ANCHORS.settingsPrefs,
+          popover: {
+            title: t("steps.settingsPrefs.title"),
+            description: t("steps.settingsPrefs.description"),
+            side: "left",
+          },
+          when: () => !config.standaloneChrome,
+          before: () => {
+            restoreInspectorPanel = expandInspectorPanel();
+            useDocumentStore.getState().openSiteSettings("settings");
+          },
+          after: () => {
+            restoreInspectorPanel?.();
+            restoreInspectorPanel = null;
+          },
+          skipMissingElement: true,
+        } satisfies TourStep;
+      })(),
+    );
+  }
+
   // 16. pbx.pages.breadcrumb — PageBreadcrumb.tsx. Existe en el DOM en standalone
   // (dentro de su propio Header) o en el embed cuando el host prestó un slot de
   // página y el breadcrumb quedó portado dentro de SU header (D-F19.1; ver el doc
@@ -856,6 +897,14 @@ export const BUILDER42_TOUR_ANCHOR_MAP: Record<Builder42TourId, readonly Builder
     // them adjacent means the tour switches tabs once in a run instead of
     // leaving the panel's tab strip and coming back to it later.
     BUILDER42_TOUR_ANCHORS.settingsTheme,
+    // El paso de preferencias va inmediatamente después del de tema por el
+    // mismo argumento de adyacencia: son dos tabs del MISMO panel, así que el
+    // recorrido cambia de tab una vez y sigue. Además el orden importa para el
+    // relato: 15b dice "el tema es solo color", y 15c explica dónde está el
+    // resto (Tokens) y cómo revelarlo (nivel Avanzado). Solo se emite en modo
+    // embebido; en standalone esta entrada simplemente no encuentra su paso y
+    // se omite, igual que `pagesBreadcrumb`/`publish` cuando su flag es falso.
+    BUILDER42_TOUR_ANCHORS.settingsPrefs,
     BUILDER42_TOUR_ANCHORS.pagesBreadcrumb,
   ],
 };
@@ -870,8 +919,8 @@ export const BUILDER42_TOUR_ANCHOR_MAP: Record<Builder42TourId, readonly Builder
  * one instance across two tours would let one tour's run leak state into the other's.
  *
  * A mapped anchor whose step is absent from the flat list (filtered off by a flag —
- * `publish`/`profileMenu`/`pagesBreadcrumb` are the only anchors in this registry that
- * can be absent) is simply skipped: never a hole, never a thrown error.
+ * `publish`/`profileMenu`/`pagesBreadcrumb`/`settingsPrefs` are the only anchors in this
+ * registry that can be absent) is simply skipped: never a hole, never a thrown error.
  *
  * THE TRAP: in the flat list, `toolbarViews` is the step that forces
  * `useDocumentStore`'s `view` to `"edit"` before anything else runs, because in preview

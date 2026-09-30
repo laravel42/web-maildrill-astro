@@ -42,8 +42,12 @@
       "description": "Trascina questa maniglia per spostare l'elemento selezionato altrove. Sui dispositivi touch, le freccette qui a fianco fanno lo stesso."
     },
     "settingsTheme": {
-      "title": "Il tema del sito",
-      "description": "Il tema fissa i colori, i font e gli spazi che eredita tutto il sito — cambiarlo restila tutte le pagine in un colpo."
+      "title": "Il tema di colore del sito",
+      "description": "Un tema rimappa i colori che eredita tutto il sito: cambiandolo, tutte le pagine si ricolorano in un colpo."
+    },
+    "settingsPrefs": {
+      "title": "Le tue preferenze dell'editor",
+      "description": "Lingua dell'editor, chiaro o scuro, e il tuo livello di esperienza. Impostalo su Avanzato per rivelare le superfici tecniche — tra cui la scheda Token a sinistra, dove si modificano font, dimensioni e spazi."
     },
     "headerIdentity": {
       "title": "Nome e salvataggio automatico",

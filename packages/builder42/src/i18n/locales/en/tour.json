@@ -42,8 +42,12 @@
       "description": "Drag this grip to move the selected element to a new spot. On touch devices, the arrow buttons next to it do the same thing."
     },
     "settingsTheme": {
-      "title": "The site's theme",
-      "description": "The theme sets the colors, fonts and spacing the whole site inherits — changing it restyles every page at once."
+      "title": "The site's color theme",
+      "description": "A theme remaps the colors the whole site inherits — change it and every page restyles at once."
+    },
+    "settingsPrefs": {
+      "title": "Your editor preferences",
+      "description": "Editor language, light or dark, and your experience level. Switch it to Advanced to reveal the technical surfaces — including the Tokens tab on the left, where fonts, sizes and spacing are edited."
     },
     "headerIdentity": {
       "title": "Name and autosave",

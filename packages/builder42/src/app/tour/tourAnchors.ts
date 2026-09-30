@@ -93,6 +93,18 @@ export const BUILDER42_TOUR_ANCHORS = {
    * `settingsPages`/`settingsLanguages` (chain F29, T2b, D-F29.20).
    */
   settingsTheme: 'pbx.settings.theme',
+  /**
+   * `builder/inspector/SiteSettingsPanel.tsx` (la `<section>` de la tab
+   * "settings") — precondición: esa tab activa, mismo seam D39 que las anclas
+   * de arriba. Se estampa SIN condición, pero el paso que la usa solo se emite
+   * en modo EMBEBIDO (`standaloneChrome: false`): ahí esa sección renderiza
+   * `EditorPreferences` (idioma del editor, tema, controles de reorden y
+   * NIVEL DE EXPERIENCIA), que es de lo que habla el paso. En standalone la
+   * misma sección muestra `SiteFileActions` y las preferencias viven en el
+   * menú de perfil, ya cubierto por `profileMenu` — los dos pasos son
+   * simétricos y mutuamente excluyentes por `standaloneChrome`.
+   */
+  settingsPrefs: 'pbx.settings.prefs',
 } as const;
 
 /** Unión de todas las claves de ancla válidas del tour de Builder42. */

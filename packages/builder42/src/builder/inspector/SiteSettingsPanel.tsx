@@ -225,7 +225,10 @@ export function SiteSettingsPanel({ element }: { element?: ReactNode }) {
               {tab === "themes" && <ThemesEditor />}
               {tab === "seo" && <SeoSettings />}
               {tab === "settings" && (
-                <section className="pbx-site-settings__section">
+                <section
+                  className="pbx-site-settings__section"
+                  {...dataTourAttr(BUILDER42_TOUR_ANCHORS.settingsPrefs)}
+                >
                   {embedded ? <EditorPreferences panel /> : <SiteFileActions />}
                 </section>
               )}

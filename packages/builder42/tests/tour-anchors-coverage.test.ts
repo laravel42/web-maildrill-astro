@@ -142,6 +142,12 @@ describe("Builder42 tour anchors — coverage (F2b, static source scan)", () => 
     [BUILDER42_TOUR_ANCHORS.settingsTheme]: [
       { path: "src/builder/inspector/ThemesEditor.tsx", read: () => read("src/builder/inspector/ThemesEditor.tsx") },
     ],
+    [BUILDER42_TOUR_ANCHORS.settingsPrefs]: [
+      {
+        path: "src/builder/inspector/SiteSettingsPanel.tsx",
+        read: () => read("src/builder/inspector/SiteSettingsPanel.tsx"),
+      },
+    ],
   };
 
   it("registers every anchor key exactly once (§3.2 table)", () => {

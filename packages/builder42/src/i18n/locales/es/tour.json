@@ -42,8 +42,12 @@
       "description": "Arrastra esta asa para mover el elemento seleccionado a otro lugar. En pantallas táctiles, las flechas de al lado hacen lo mismo."
     },
     "settingsTheme": {
-      "title": "El tema del sitio",
-      "description": "El tema fija los colores, las tipografías y el espaciado que hereda todo el sitio — cambiarlo restyla todas las páginas a la vez."
+      "title": "El tema de color del sitio",
+      "description": "Un tema remapea los colores que hereda todo el sitio: al cambiarlo, todas las páginas se recolorean a la vez."
+    },
+    "settingsPrefs": {
+      "title": "Tus preferencias del editor",
+      "description": "Idioma del editor, claro u oscuro, y tu nivel de experiencia. Ponlo en Avanzado para revelar las superficies técnicas — entre ellas la pestaña Tokens de la izquierda, donde se editan las tipografías, los tamaños y el espaciado."
     },
     "headerIdentity": {
       "title": "Nombre y autoguardado",

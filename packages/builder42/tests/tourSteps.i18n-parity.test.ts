@@ -120,6 +120,9 @@ describe("builder42 tour i18n — paridad de claves", () => {
       [BUILDER42_TOUR_ANCHORS.canvasInlineText]: "canvasInlineText",
       [BUILDER42_TOUR_ANCHORS.canvasDragNode]: "canvasDragNode",
       [BUILDER42_TOUR_ANCHORS.settingsTheme]: "settingsTheme",
+      // Paso solo del modo embebido (ver `tourAnchors.ts`): explica las
+      // preferencias del editor y el nivel simple/avanzado.
+      [BUILDER42_TOUR_ANCHORS.settingsPrefs]: "settingsPrefs",
     };
     const missing: string[] = [];
     for (const anchorKey of Object.values(BUILDER42_TOUR_ANCHORS)) {
