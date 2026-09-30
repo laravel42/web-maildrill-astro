@@ -127,6 +127,27 @@ describe("Builder42 tour anchors — coverage (F2b, static source scan)", () => 
     [BUILDER42_TOUR_ANCHORS.profileMenu]: [
       { path: "src/app/layout/ProfileMenu.tsx", read: () => read("src/app/layout/ProfileMenu.tsx") },
     ],
+    // chain F29, T2b (D-F29.20) — las cuatro anclas nuevas del split de tours.
+    // `pbx.header.download` NO existe en este host (VENDOR #12): la landing se
+    // persiste contra el backend y el chrome no monta ningún botón `.zip`.
+    [BUILDER42_TOUR_ANCHORS.sidebarDragHint]: [
+      { path: "src/app/layout/Sidebar.tsx", read: () => read("src/app/layout/Sidebar.tsx") },
+    ],
+    [BUILDER42_TOUR_ANCHORS.canvasInlineText]: [
+      { path: "src/builder/canvas/NodeRenderer.tsx", read: () => read("src/builder/canvas/NodeRenderer.tsx") },
+    ],
+    [BUILDER42_TOUR_ANCHORS.canvasDragNode]: [
+      { path: "src/builder/dnd/SelectionHandle.tsx", read: () => read("src/builder/dnd/SelectionHandle.tsx") },
+    ],
+    [BUILDER42_TOUR_ANCHORS.settingsTheme]: [
+      { path: "src/builder/inspector/ThemesEditor.tsx", read: () => read("src/builder/inspector/ThemesEditor.tsx") },
+    ],
+    [BUILDER42_TOUR_ANCHORS.settingsPrefs]: [
+      {
+        path: "src/builder/inspector/SiteSettingsPanel.tsx",
+        read: () => read("src/builder/inspector/SiteSettingsPanel.tsx"),
+      },
+    ],
   };
 
   it("registers every anchor key exactly once (§3.2 table)", () => {

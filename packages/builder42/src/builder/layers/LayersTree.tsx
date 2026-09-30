@@ -26,12 +26,22 @@ function LayersNode({
   doc,
   breakpoint,
   cfg,
+  rootId,
 }: {
   id: NodeId;
   depth: number;
   doc: BuilderDocument;
   breakpoint: Breakpoint;
   cfg: BreakpointConfig;
+  /** Raíz REAL del documento (`doc.rootId`): intocable por diseño (D-F29.9) —
+   * `removeNode`/`SelectionHandle`/`NodeActionsRail` la excluyen en todo el
+   * resto del editor. Esta fila la marca como tal (fila atenuada, sin botón
+   * de selección ni de ojo) para que no parezca un nodo normal: antes nada
+   * distinguía "seleccionar la raíz" de seleccionar cualquier otro nodo, así
+   * que un click aquí dejaba `selectedId` apuntando a un nodo que el
+   * Inspector sí refleja pero que el canvas nunca resalta y no se puede
+   * borrar — el síntoma reportado por el usuario. */
+  rootId: NodeId;
 }) {
   const { t } = useTranslation("header");
   const { t: tc } = useTranslation("common");
@@ -42,11 +52,14 @@ function LayersNode({
   const node = doc.nodes[id];
   if (!node) return null;
 
+  const isRoot = id === rootId;
   const def = getDefinition(node.type);
-  const label = tc(`components.${node.type}`, { defaultValue: def?.label ?? node.type });
+  const label = isRoot
+    ? t("layers.rootLabel")
+    : tc(`components.${node.type}`, { defaultValue: def?.label ?? node.type });
   const children = node.children ?? [];
   const hasChildren = children.length > 0;
-  const hidden = isHiddenAt(node.style, breakpoint, cfg);
+  const hidden = !isRoot && isHiddenAt(node.style, breakpoint, cfg);
   const selected = selectedId === id;
 
   return (
@@ -56,7 +69,8 @@ function LayersNode({
         className={
           "pbx-layers__row" +
           (selected ? " pbx-layers__row--selected" : "") +
-          (hidden ? " pbx-layers__row--hidden" : "")
+          (hidden ? " pbx-layers__row--hidden" : "") +
+          (isRoot ? " pbx-layers__row--root" : "")
         }
         style={{ paddingInlineStart: `${depth * 14 + 6}px` }}
       >
@@ -70,15 +84,24 @@ function LayersNode({
 
         <ComponentTypeIcon type={node.type} className="pbx-layers__icon" />
 
-        <button
-          type="button"
-          className="pbx-layers__label"
-          onClick={() => select(id)}
-          aria-current={selected ? "true" : undefined}
-          title={label}
-        >
-          {label}
-        </button>
+        {isRoot ? (
+          <span
+            className="pbx-layers__label pbx-layers__label--root"
+            title={t("layers.rootLocked")}
+          >
+            {label}
+          </span>
+        ) : (
+          <button
+            type="button"
+            className="pbx-layers__label"
+            onClick={() => select(id)}
+            aria-current={selected ? "true" : undefined}
+            title={label}
+          >
+            {label}
+          </button>
+        )}
 
         {hidden ? (
           <span className="pbx-layers__badge" title={t("layers.hiddenAt", { breakpoint })}>
@@ -86,15 +109,17 @@ function LayersNode({
           </span>
         ) : null}
 
-        <IconButton
-          className="pbx-layers__eye"
-          intent="ghost"
-          active={hidden}
-          onClick={() => toggleNodeVisibility(id)}
-          label={hidden ? t("layers.show") : t("layers.hide")}
-        >
-          {hidden ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}
-        </IconButton>
+        {isRoot ? null : (
+          <IconButton
+            className="pbx-layers__eye"
+            intent="ghost"
+            active={hidden}
+            onClick={() => toggleNodeVisibility(id)}
+            label={hidden ? t("layers.show") : t("layers.hide")}
+          >
+            {hidden ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}
+          </IconButton>
+        )}
       </div>
 
       {hasChildren ? (
@@ -107,6 +132,7 @@ function LayersNode({
               doc={doc}
               breakpoint={breakpoint}
               cfg={cfg}
+              rootId={rootId}
             />
           ))}
         </ul>
@@ -127,7 +153,7 @@ export function LayersTree() {
   return (
     <Tree as="ul" expandAll className="pbx-layers__tree" aria-label={t("layers.treeLabel")}>
       <Fragment>
-        <LayersNode id={doc.rootId} depth={0} doc={doc} breakpoint={breakpoint} cfg={cfg} />
+        <LayersNode id={doc.rootId} depth={0} doc={doc} breakpoint={breakpoint} cfg={cfg} rootId={doc.rootId} />
       </Fragment>
     </Tree>
   );

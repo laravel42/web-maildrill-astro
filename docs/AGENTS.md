@@ -100,7 +100,13 @@ touching `packages/builder42/`, `src/components/react/{AppLandings,LandingPageBu
 inlines images as data URLs, so a row can be megabytes — `page_count`/`document_bytes`
 exist for that), and every editor capability (AI, Unsplash, publish, translate) is
 gated by the `fetchHealth` adapter — an unset adapter is a 404 against this host, not
-"feature off".
+"feature off". **A sibling repo, `../builder42-landing`, forked `packages/builder42` at a
+past commit and has since accumulated 44 documented improvements that have not all been
+replayed here** — read
+[`builder42-landing-port-status.md`](builder42-landing-port-status.md) before assuming a
+bug or a missing feature in this package is new; it may already be fixed over there and
+just not ported yet, and that file tracks exactly what's done, what's in progress, and
+where to pick up.
 
 **Backend lives in [`../workers/`](../workers/)** and is part of the **root**
 `pnpm-workspace.yaml` (`workers`, `workers/packages/*`, `workers/apps/*`). One

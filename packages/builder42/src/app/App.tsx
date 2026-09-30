@@ -19,6 +19,7 @@ import { useLocalConfig } from "@/hooks/useLocalConfig";
 import { fetchHealth } from "@/services/apiClient";
 import i18n from "@/i18n";
 import { useBuilder42Tour } from "./tour/useBuilder42Tour";
+import { TourChooserModal } from "./tour/TourChooserModal";
 
 export function App() {
   useUndoRedoShortcuts();
@@ -40,7 +41,12 @@ export function App() {
   }, []);
 
   useBuilder42Tour({
-    config: { experienceLevel, publishAvailable, standaloneChrome: true },
+    config: {
+      experienceLevel,
+      publishAvailable,
+      standaloneChrome: true,
+      pagesBreadcrumbAvailable: true,
+    },
     onboardingResolved: experienceLevelChosen,
     i18nInstance: i18n,
   });
@@ -71,6 +77,7 @@ export function App() {
           {isPreview ? null : <Inspector />}
         </div>
         {experienceLevelChosen ? null : <OnboardingExperienceModal />}
+        <TourChooserModal />
       </div>
     </MotionConfig>
   );

@@ -45,6 +45,7 @@
     "@md/product-tour": "workspace:*",
     "@tiptap/core": "3.27.2",
     "@tiptap/extension-link": "3.27.2",
+    "@tiptap/extension-text-style": "3.27.2",
     "@tiptap/html": "3.27.2",
     "@tiptap/pm": "3.27.2",
     "@tiptap/react": "3.27.2",

@@ -17,6 +17,12 @@ import {
 import { BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { readConfig, writeConfig, subscribeConfig } from "@/hooks/useLocalConfig";
+import { createEditorI18n } from "@/i18n";
+
+/** Instancia i18next fija para este archivo — F19.2: las dos funciones ya no leen el
+ * singleton global, así que todo caller de test necesita pasar una. El idioma en sí
+ * es irrelevante para las aserciones de este archivo (filtrado por flags, no copy). */
+const TEST_I18N = createEditorI18n("en");
 
 /** Anclas de superficies apagadas en el embed simple (§3.2 "Excluidos") — ninguna
  * existe en `BUILDER42_TOUR_ANCHORS`, así que la garantía real es que el registro
@@ -38,12 +44,14 @@ const ADVANCED_CONFIG: Builder42TourStepsConfig = {
   experienceLevel: "advanced",
   publishAvailable: true,
   standaloneChrome: true,
+  pagesBreadcrumbAvailable: true,
 };
 
 const SIMPLE_CONFIG: Builder42TourStepsConfig = {
   experienceLevel: "simple",
   publishAvailable: true,
   standaloneChrome: true,
+  pagesBreadcrumbAvailable: true,
 };
 
 function resetDocumentState() {
@@ -80,21 +88,21 @@ describe("buildBuilder42TourSteps — registro de anclas no incluye superficies 
 
 describe("buildBuilder42TourSteps — filtrado por experienceLevel (§1.4.6)", () => {
   it("emite el mismo conjunto de anclas base en simple y advanced (sin paso hoy gateado por nivel)", () => {
-    const simpleAnchors = buildBuilder42TourSteps(SIMPLE_CONFIG).map((s) => s.anchorKey);
-    const advancedAnchors = buildBuilder42TourSteps(ADVANCED_CONFIG).map((s) => s.anchorKey);
+    const simpleAnchors = buildBuilder42TourSteps(SIMPLE_CONFIG, TEST_I18N).map((s) => s.anchorKey);
+    const advancedAnchors = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N).map((s) => s.anchorKey);
     expect(simpleAnchors).toEqual(advancedAnchors);
   });
 });
 
 describe("buildBuilder42TourSteps — pbx.publish depende del adapter de publicación (§3.2)", () => {
   it("se omite por completo cuando publishAvailable es false", () => {
-    const steps = buildBuilder42TourSteps({ ...ADVANCED_CONFIG, publishAvailable: false });
+    const steps = buildBuilder42TourSteps({ ...ADVANCED_CONFIG, publishAvailable: false }, TEST_I18N);
     const anchors = steps.map((s) => s.anchorKey);
     expect(anchors).not.toContain(BUILDER42_TOUR_ANCHORS.publish);
   });
 
   it("se incluye cuando publishAvailable es true", () => {
-    const steps = buildBuilder42TourSteps({ ...ADVANCED_CONFIG, publishAvailable: true });
+    const steps = buildBuilder42TourSteps({ ...ADVANCED_CONFIG, publishAvailable: true }, TEST_I18N);
     const anchors = steps.map((s) => s.anchorKey);
     expect(anchors).toContain(BUILDER42_TOUR_ANCHORS.publish);
   });
@@ -103,7 +111,7 @@ describe("buildBuilder42TourSteps — pbx.publish depende del adapter de publica
 describe("buildBuilder42TourSteps — pasos dependientes de nodo seleccionado (§1.4.5)", () => {
   it("con el lienzo vacío, before() inserta un nodo de ejemplo y lo selecciona (ya no se omiten por when())", () => {
     resetDocumentState();
-    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N);
     for (const anchorKey of [
       BUILDER42_TOUR_ANCHORS.canvasNodeActions,
       BUILDER42_TOUR_ANCHORS.inspectorTabs,
@@ -131,7 +139,7 @@ describe("buildBuilder42TourSteps — pasos dependientes de nodo seleccionado (�
   it("cuando el documento tiene un nodo hijo del root, before() lo selecciona y after() no lo borra", () => {
     insertChildUnderRoot("child-1");
 
-    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N);
     const nodeActionsStep = steps.find((s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.canvasNodeActions);
     expect(nodeActionsStep).toBeDefined();
 
@@ -151,7 +159,7 @@ describe("buildBuilder42TourSteps — pbx.inspector.breakpoints abre la tab 'sty
       insertChildUnderRoot("child-1");
       useDocumentStore.getState().setInspectorTab(previousTab);
 
-      const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+      const steps = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N);
       const breakpointsStep = steps.find(
         (s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.inspectorBreakpoints,
       );
@@ -169,7 +177,7 @@ describe("buildBuilder42TourSteps — pbx.inspector.breakpoints abre la tab 'sty
     insertChildUnderRoot("child-1");
     useDocumentStore.getState().select(null);
 
-    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N);
     const breakpointsStep = steps.find(
       (s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.inspectorBreakpoints,
     );
@@ -183,7 +191,7 @@ describe("buildBuilder42TourSteps — pbx.inspector.breakpoints abre la tab 'sty
 describe("buildBuilder42TourSteps — pbx.toolbar.views fuerza view === 'edit' (§1.4.2)", () => {
   it("before() cambia a 'edit' si el editor estaba en preview", () => {
     useDocumentStore.getState().setView("preview");
-    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N);
     const viewsStep = steps.find((s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.toolbarViews);
     expect(viewsStep).toBeDefined();
     viewsStep!.before?.();
@@ -193,7 +201,7 @@ describe("buildBuilder42TourSteps — pbx.toolbar.views fuerza view === 'edit' (
 
 describe("buildBuilder42TourSteps — siempre emite las anclas sin precondición", () => {
   it("incluye header identity, toolbar views/history, sidebar tabs/palette, canvas frame, breadcrumb, profile menu", () => {
-    const anchors = buildBuilder42TourSteps(ADVANCED_CONFIG).map((s) => s.anchorKey);
+    const anchors = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N).map((s) => s.anchorKey);
     expect(anchors).toEqual(
       expect.arrayContaining([
         BUILDER42_TOUR_ANCHORS.headerIdentity,
@@ -211,12 +219,12 @@ describe("buildBuilder42TourSteps — siempre emite las anclas sin precondición
   it("emite exactamente las 18 anclas del registro cuando todo está disponible y hay un nodo seleccionable", () => {
     insertChildUnderRoot("child-1");
 
-    const anchors = buildBuilder42TourSteps(ADVANCED_CONFIG).map((s) => s.anchorKey);
+    const anchors = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N).map((s) => s.anchorKey);
     expect(anchors.sort()).toEqual([...Object.values(BUILDER42_TOUR_ANCHORS)].sort());
   });
 
   it("pbx.toolbar.views y pbx.toolbar.viewport son anclas distintas y consecutivas, en ese orden (D37)", () => {
-    const anchors = buildBuilder42TourSteps(ADVANCED_CONFIG).map((s) => s.anchorKey);
+    const anchors = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N).map((s) => s.anchorKey);
     const viewsIndex = anchors.indexOf(BUILDER42_TOUR_ANCHORS.toolbarViews);
     const viewportIndex = anchors.indexOf(BUILDER42_TOUR_ANCHORS.toolbarViewport);
     expect(viewsIndex).toBeGreaterThanOrEqual(0);
@@ -226,7 +234,7 @@ describe("buildBuilder42TourSteps — siempre emite las anclas sin precondición
 
 describe("getBuilder42TourLabels", () => {
   it("devuelve los 4 textos de botones/progreso, no vacíos", () => {
-    const labels = getBuilder42TourLabels();
+    const labels = getBuilder42TourLabels(TEST_I18N);
     expect(labels.nextBtnText).toBeTruthy();
     expect(labels.prevBtnText).toBeTruthy();
     expect(labels.doneBtnText).toBeTruthy();
@@ -237,7 +245,7 @@ describe("getBuilder42TourLabels", () => {
 describe("buildBuilder42TourSteps — pbx.sidebar.palette pins the components tab (D38)", () => {
   it("before() leaves sidebarTab === 'components' even if templates was active", () => {
     useDocumentStore.getState().setSidebarTab("templates");
-    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N);
     const paletteStep = steps.find((s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.sidebarPalette);
     expect(paletteStep).toBeDefined();
     paletteStep!.before?.();
@@ -251,7 +259,7 @@ describe("buildBuilder42TourSteps — pbx.sidebar.templates opens the Templates 
     (previousTab) => {
       useDocumentStore.getState().setSidebarTab(previousTab);
 
-      const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+      const steps = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N);
       const templatesStep = steps.find((s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.sidebarTemplates);
       expect(templatesStep).toBeDefined();
 
@@ -277,7 +285,7 @@ describe("buildBuilder42TourSteps — pbx.settings.* section steps open their ow
       useDocumentStore.getState().select("child-1");
       expect(useDocumentStore.getState().selectedId).toBe("child-1");
 
-      const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+      const steps = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N);
       const step = steps.find((s) => s.anchorKey === anchorKey);
       expect(step).toBeDefined();
 
@@ -291,7 +299,7 @@ describe("buildBuilder42TourSteps — pbx.settings.* section steps open their ow
     insertChildUnderRoot("child-1");
     useDocumentStore.getState().select("child-1");
 
-    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N);
     const publishStep = steps.find((s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.publish);
     expect(publishStep).toBeDefined();
 
@@ -341,7 +349,7 @@ describe("buildBuilder42TourSteps — D40 correction: inspector expansion notifi
     const unsubscribe = subscribeConfig("inspectorCollapsed", listener);
 
     insertChildUnderRoot("child-1");
-    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N);
     const inspectorTabsStep = steps.find((s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.inspectorTabs);
     expect(inspectorTabsStep).toBeDefined();
 
@@ -361,7 +369,7 @@ describe("buildBuilder42TourSteps — D40 correction: inspector expansion notifi
     const listener = vi.fn();
     const unsubscribe = subscribeConfig("inspectorCollapsed", listener);
 
-    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG);
+    const steps = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N);
     const layersStep = steps.find((s) => s.anchorKey === BUILDER42_TOUR_ANCHORS.settingsLayers);
     expect(layersStep).toBeDefined();
 

@@ -41,8 +41,10 @@ import { TokensStyle } from "@/app/layout/TokensStyle";
 import { BehaviorsStyle } from "@/app/layout/BehaviorsStyle";
 import { ComponentsStyle } from "@/app/layout/ComponentsStyle";
 import { HostCanvasToolbar } from "@/app/layout/HostToolbar";
+import { HostPagesPortal } from "@/app/layout/HostPagesPortal";
 import { EmbeddedChromeContext } from "@/app/EmbeddedChrome";
 import { useBuilder42Tour } from "@/app/tour/useBuilder42Tour";
+import { TourChooserModal } from "@/app/tour/TourChooserModal";
 import { useUndoRedoShortcuts } from "@/builder/store/useTemporalStore";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { readConfig, useLocalConfig, writeConfig } from "@/hooks/useLocalConfig";
@@ -91,6 +93,50 @@ export interface Builder42EditorProps {
    * `window.posthog?.capture(...)`.
    */
   onTourEvent?: (event: import("@md/product-tour").TourAnalyticsEvent) => void;
+  /**
+   * Id de un elemento que el HOST renderiza en su propio header para recibir el
+   * selector de página (y el de locale de contenido, si el sitio es
+   * multilingüe). Ver `HostPagesPortal` para por qué esto es un portal desde el
+   * paquete y no un control del host, y por qué el id viaja como prop en vez de
+   * como constante exportada del paquete.
+   *
+   * Omitirlo YA NO deja el editor sin cambio de página (D-F22.1): sin slot,
+   * `HostCanvasToolbar` — el header del propio builder en modo embebido —
+   * pinta `PageBreadcrumb` ella misma. El seam del portal sigue existiendo
+   * para el host que sí prefiera este slot (D-F22.2); nunca coexisten los
+   * dos: `Builder42EditorInner` decide `showPageBreadcrumb = !pagesSlotId`.
+   */
+  pagesSlotId?: string;
+  /**
+   * Lends a visible theme switch in the embedded canvas toolbar (next to
+   * undo/redo), for a host running with `themeMode="host"`.
+   *
+   * **Why this is a callback+value pair, not a boolean like the other host
+   * seams.** This control renders *inside* `HostCanvasToolbar`
+   * (`app/layout/HostToolbar.tsx`), but with `themeMode="host"` the package
+   * never writes `data-theme` and has no local notion of which theme is
+   * active (`useThemeMode`'s `hostControlled` flag is exactly what makes the
+   * PACKAGE'S OWN `ThemeToggle` render nothing in `EditorPreferences` — see
+   * that file) — so the chrome needs the host to hand it both the current
+   * effective theme (to pick which icon to show) and an action to flip it
+   * (to hand back to the host, which owns the storage key and the DOM
+   * attribute). Omit this prop and the toolbar renders no theme control at
+   * all, same as before this feature existed.
+   *
+   * The Settings/Preferences theme control (`EditorPreferences`'s
+   * `ThemeToggle`) is untouched and stays hidden under `themeMode="host"`
+   * for the same reason it always was: a 3-state system/light/dark control
+   * would contradict a 2-state host toggle that already resolved "system"
+   * once at load. Both controls end up reading the same `data-theme`
+   * attribute, so they can never disagree — this prop is additive, and a
+   * host that never passes it sees no behavioural change.
+   */
+  hostThemeControl?: {
+    /** The theme currently in effect, so the toolbar shows the correct icon. */
+    effective: "light" | "dark";
+    /** Invoked on click; the host flips its own stored theme and re-renders. */
+    onToggle: () => void;
+  };
 }
 
 /**
@@ -127,7 +173,7 @@ function resolveInitialSite(input: Builder42EditorProps["site"]): BuilderSite {
 
 export const Builder42Editor = forwardRef<Builder42EditorHandle, Builder42EditorProps>(
   function Builder42Editor(
-    { site, onSave, onClose, themeMode = "host", locale, adapters, onDirty, tourEnabled, onTourEvent },
+    { site, onSave, onClose, themeMode = "host", locale, adapters, onDirty, tourEnabled, onTourEvent, pagesSlotId, hostThemeControl },
     ref,
   ) {
     const i18nInstance = useMemo(() => createEditorI18n(locale), [locale]);
@@ -208,6 +254,8 @@ export const Builder42Editor = forwardRef<Builder42EditorHandle, Builder42Editor
         onClose={onClose}
         tourEnabled={tourEnabled}
         onTourEvent={onTourEvent}
+        pagesSlotId={pagesSlotId}
+        hostThemeControl={hostThemeControl}
       />
     );
   },
@@ -218,6 +266,8 @@ interface Builder42EditorInnerProps {
   onClose?: () => void;
   tourEnabled?: boolean;
   onTourEvent?: (event: import("@md/product-tour").TourAnalyticsEvent) => void;
+  pagesSlotId?: string;
+  hostThemeControl?: { effective: "light" | "dark"; onToggle: () => void };
 }
 
 /**
@@ -235,6 +285,8 @@ function Builder42EditorInner({
   i18nInstance,
   tourEnabled = true,
   onTourEvent,
+  pagesSlotId,
+  hostThemeControl,
 }: Builder42EditorInnerProps) {
   useUndoRedoShortcuts();
   const isPreview = useDocumentStore((s) => s.view === "preview");
@@ -263,7 +315,17 @@ function Builder42EditorInner({
   }, []);
 
   useBuilder42Tour({
-    config: { experienceLevel, publishAvailable, standaloneChrome: false },
+    config: {
+      experienceLevel,
+      publishAvailable,
+      standaloneChrome: false,
+      // D-F22.4: con este cambio el breadcrumb SIEMPRE existe en modo
+      // embebido — portado al slot del host cuando `pagesSlotId` está
+      // presente (D-F22.2, como antes), o pintado dentro de
+      // `HostCanvasToolbar` cuando no lo está (D-F22.1). Por eso el flag ya
+      // no depende de `pagesSlotId`.
+      pagesBreadcrumbAvailable: true,
+    },
     onboardingResolved: tourEnabled && experienceLevelChosen,
     onTourEvent,
     i18nInstance,
@@ -287,10 +349,19 @@ function Builder42EditorInner({
             <TokensStyle />
             <BehaviorsStyle />
             <ComponentsStyle />
+            {/* Fuera de `pbx-body` a propósito: su DOM final es el header del
+                host, no este árbol. Aquí solo necesita estar dentro del
+                `I18nextProvider` de arriba. */}
+            <HostPagesPortal slotId={pagesSlotId} />
+            <TourChooserModal />
             <div className={bodyClasses.join(" ")}>
               {isPreview ? null : <Sidebar />}
               <div className="pbx-canvas-col">
-                <HostCanvasToolbar />
+                {/* D-F22.2: nunca las dos ubicaciones a la vez — si el host
+                    prestó su slot (`pagesSlotId`), el portal de arriba ya
+                    puso el breadcrumb en SU header; si no, esta barra (el
+                    header del propio builder, D-F22.1) lo pinta ella misma. */}
+                <HostCanvasToolbar showPageBreadcrumb={!pagesSlotId} hostThemeControl={hostThemeControl} />
                 <Canvas />
               </div>
               {isPreview ? null : <Inspector />}

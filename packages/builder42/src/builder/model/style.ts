@@ -26,7 +26,14 @@ const STYLE_GROUPS: StyleGroup[] = ["layout", "spacing", "size", "appearance", "
  * por grupo: un override de `layout.flexDirection` no borra `layout.gap` de base
  * (docs/01 §2). `undefined` = "no declarado" (hereda); no se copia.
  */
-function mergeLayer(
+/**
+ * Exportada (además de consumida internamente por `resolveStyle`/
+ * `resolveStateStyle`) para que `registry/stylePresetRegistry.ts` (F27) pueda
+ * fusionar un `NodeStyle` de preset sobre el `NodeStyle` de un nodo capa por
+ * capa (`base`, cada breakpoint de `overrides`, cada estado de `states`) sin
+ * reimplementar el mismo algoritmo de merge por grupo/campo en dos sitios.
+ */
+export function mergeLayer(
   acc: StyleProperties,
   layer: Partial<StyleProperties>,
 ): StyleProperties {

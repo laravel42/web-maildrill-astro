@@ -75,11 +75,18 @@
     "italic": "Cursiva",
     "strike": "Tachado",
     "link": "Enlace",
-    "linkPrompt": "URL del enlace (vacío para quitarlo)",
+    "linkFieldLabel": "URL del enlace",
+    "linkFieldPlaceholder": "https://ejemplo.com",
+    "linkApply": "Aplicar",
+    "linkRemove": "Quitar enlace",
+    "linkInvalid": "Escribe una dirección web, un correo, un teléfono o un enlace relativo que empiece por / o #.",
     "heading1": "Título 1",
     "heading2": "Título 2",
     "heading3": "Título 3",
     "bulletList": "Lista con viñetas",
-    "orderedList": "Lista numerada"
+    "orderedList": "Lista numerada",
+    "textColor": "Color del texto",
+    "backgroundColor": "Color de fondo",
+    "clearColors": "Quitar colores"
   }
 }

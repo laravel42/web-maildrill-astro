@@ -56,12 +56,11 @@ describe("createConfigBackedTourPersistence — F4 acceptance", () => {
     });
   });
 
-  it("markSeen() persists tourSeen=true and tourVersion under useLocalConfig's own keys", () => {
+  it("markSeen() persists seen=true and the version under this tour's `tours` record entry", () => {
     const persistence = createConfigBackedTourPersistence();
     persistence.markSeen("builder42", 1);
 
-    expect(readConfig("tourSeen")).toBe(true);
-    expect(readConfig("tourVersion")).toBe(1);
+    expect(readConfig("tours")["builder42"]).toMatchObject({ seen: true, version: 1 });
     expect(persistence.read("builder42", 1).seen).toBe(true);
   });
 
@@ -87,8 +86,7 @@ describe("createConfigBackedTourPersistence — F4 acceptance", () => {
   it("markCompleted() also marks seen + persists the version", () => {
     const persistence = createConfigBackedTourPersistence();
     persistence.markCompleted("builder42", 3);
-    expect(readConfig("tourSeen")).toBe(true);
-    expect(readConfig("tourVersion")).toBe(3);
+    expect(readConfig("tours")["builder42"]).toMatchObject({ seen: true, version: 3 });
     const state = persistence.read("builder42", 3);
     expect(state.seen).toBe(true);
     expect(state.completed).toBe(true);

@@ -70,7 +70,7 @@
   width: 22px;
   height: 22px;
   border: 0;
-  border-radius: calc(var(--pb-chrome-radius-sm) - 2px);
+  border-radius: max(0px, calc(var(--pb-chrome-radius-sm) - 2px));
   background: transparent;
   /* JUSTIFICACIÓN (docs/52 F5): mismo criterio que `.pbx-reorder-arrows`
      arriba — blanco translúcido sobre el accent sólido del handle, no un
@@ -185,6 +185,184 @@
      mismo criterio que `.pbx-reorder-arrows` (blanco sobre superficie
      sólida de un solo color, no un rol semántico propio). */
   background: rgba(255, 255, 255, 0.18);
+}
+
+/* Popover de enlace (D-F21.1…D-F21.6, reemplaza el `window.prompt` de esta
+ * toolbar). El disparador reutiliza `.pbx-text-toolbar__btn` sin cambios
+ * (mismo tamaño/estado activo que Bold/Italic/Strike); este bloque solo
+ * estiliza el panel del `Dropdown` de c42 y sus controles internos. El panel
+ * se renderiza EN LÍNEA (sin portal, ver `TextToolbar.tsx`) sobre la MISMA
+ * toolbar siempre oscura — por eso usa los tokens `-on-dark`/`-muted-on-dark`
+ * de esta hoja en vez de los tokens de superficie clara que usa el popover
+ * de `ColorPicker` (`chrome/color-picker.css`), pensado para el panel claro
+ * del Inspector. Radios: SIEMPRE por el puente `--pb-chrome-radius-*` (regla
+ * de forma de la cadena F18) — nunca un `border-radius` literal que
+ * re-redondee lo que F18 puso a escuadra. */
+.pbx-text-toolbar__link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.pbx-text-toolbar__link-popover {
+  position: absolute;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  width: 220px;
+  background: var(--pb-chrome-bg);
+  border: 1px solid var(--pb-chrome-bg-hover);
+  border-radius: var(--pb-chrome-radius-md);
+  /* JUSTIFICACIÓN (docs/52 F5): misma sombra de elevación decorativa que
+     `.pbx-text-toolbar` arriba en este archivo — no es un par texto/fondo,
+     WCAG 1.4.11 no aplica. */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.pbx-text-toolbar__link-popover[hidden] {
+  display: none;
+}
+
+.pbx-text-toolbar__link-field-label {
+  font: 600 11px/1.2 var(--pb-chrome-font);
+  color: var(--pb-chrome-muted-on-dark);
+}
+
+.pbx-text-toolbar__link-field {
+  width: 100%;
+  box-sizing: border-box;
+  height: 28px;
+  padding: 0 8px;
+  font: 400 12px/1 var(--pb-chrome-font);
+  color: var(--pb-chrome-text-on-dark);
+  background: var(--pb-chrome-bg-alt);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--pb-chrome-radius-xs);
+}
+
+.pbx-text-toolbar__link-field::placeholder {
+  color: var(--pb-chrome-muted-on-dark);
+}
+
+.pbx-text-toolbar__link-field:focus-visible {
+  outline: 2px solid var(--pb-chrome-accent);
+  outline-offset: 1px;
+}
+
+/* Mensaje de validación (D-F21.4): texto sobre la MISMA superficie oscura
+ * siempre-oscura de la toolbar — `--pb-chrome-danger-on-dark` es el tono ya
+ * verificado por contraste para esa combinación (ver `chrome/tokens.css`,
+ * mismo criterio que usan el visor de código/JSON y el panel de publicación
+ * para su texto de error sobre fondo siempre oscuro), no
+ * `--pb-chrome-danger` (pensado para superficies claras). */
+.pbx-text-toolbar__link-error {
+  margin: 0;
+  font: 500 11px/1.3 var(--pb-chrome-font);
+  color: var(--pb-chrome-danger-on-dark);
+}
+
+.pbx-text-toolbar__link-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.pbx-text-toolbar__link-apply,
+.pbx-text-toolbar__link-remove {
+  flex: 1;
+  height: 26px;
+  padding: 0 8px;
+  font: 600 11px/1 var(--pb-chrome-font);
+  border: none;
+  border-radius: var(--pb-chrome-radius-xs);
+  cursor: pointer;
+  transition: background var(--pb-chrome-transition), color var(--pb-chrome-transition);
+}
+
+/* Acento como RELLENO (no como texto): es la acción primaria del popover,
+ * mismo rol que el estado `--btn--active` de esta misma toolbar más arriba
+ * (fondo `--pb-chrome-accent` + texto `--pb-chrome-text-on-accent`). */
+.pbx-text-toolbar__link-apply {
+  color: var(--pb-chrome-text-on-accent);
+  background: var(--pb-chrome-accent);
+}
+
+.pbx-text-toolbar__link-apply:hover {
+  background: var(--pb-chrome-accent-light);
+}
+
+/* Botón secundario: superficie neutra de la toolbar, mismo tratamiento que
+ * `.pbx-text-toolbar__btn:hover` (fondo `-bg-hover`, texto `-on-dark`). */
+.pbx-text-toolbar__link-remove {
+  color: var(--pb-chrome-muted-on-dark);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.pbx-text-toolbar__link-remove:hover {
+  background: var(--pb-chrome-bg-hover);
+  color: var(--pb-chrome-text-on-dark);
+}
+
+/* Colores de tipografía y de fondo dentro de la toolbar oscura. Mismo criterio
+ * que el bloque de `__locale` de abajo: el componente reutilizado
+ * (`ColorPicker`) no cambia, solo se le da a su swatch disparador el tamaño de
+ * los demás botones de esta toolbar y un borde claro para que un color oscuro
+ * (o blanco) siga leyéndose como control sobre el fondo oscuro. El popover del
+ * picker se renderiza EN LÍNEA (el `Dropdown` de c42 no usa portal), así que
+ * queda dentro de `[data-text-toolbar]` y los dos guards de la toolbar lo
+ * cubren — ver el comentario en `TextToolbar.tsx`. */
+.pbx-text-toolbar__color {
+  display: inline-flex;
+  align-items: center;
+}
+
+.pbx-text-toolbar__color-swatch {
+  width: 22px;
+  height: 22px;
+  /* JUSTIFICACIÓN (docs/52 F5): hairline blanco translúcido sobre la toolbar
+     SIEMPRE oscura (`--pb-chrome-bg`), mismo criterio que
+     `.pbx-text-toolbar__sep` — no es un par texto/fondo, WCAG 1.4.11 no
+     aplica; su función es delimitar la muestra de color, que puede ser de
+     cualquier tono incluido el del propio fondo. */
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--pb-chrome-radius-xs);
+  cursor: pointer;
+  transition: transform var(--pb-chrome-transition), border-color var(--pb-chrome-transition);
+}
+
+.pbx-text-toolbar__color-swatch:hover {
+  border-color: rgba(255, 255, 255, 0.7);
+  transform: scale(1.08);
+}
+
+.pbx-text-toolbar__color-swatch:active {
+  transform: scale(0.92);
+}
+
+/* El swatch de fondo se distingue del de texto por una `A` superpuesta, no por
+ * un icono aparte: el valor que el control edita ES el color, así que la
+ * muestra tiene que seguir siendo el color entero. */
+.pbx-text-toolbar__color-swatch--bg {
+  position: relative;
+}
+
+.pbx-text-toolbar__color-swatch--bg::after {
+  content: "A";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 11px/1 var(--pb-chrome-font);
+  /* Mismo criterio de justificación que el borde de arriba: la letra va sobre
+     una muestra de color arbitrario, así que se pinta en el texto "on-dark" de
+     la toolbar con una sombra de 1px que la mantiene legible sobre cualquier
+     tono, claro u oscuro. */
+  color: var(--pb-chrome-text-on-dark);
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
 }
 
 /* Botón de idioma flotante (docs/12 §B, Fase 19.g/19.j): envoltorio del
@@ -421,7 +599,7 @@
   align-items: center;
   gap: 3px;
   padding: 1px 6px;
-  font: 600 10px/1.5 system-ui, -apple-system, sans-serif;
+  font: 600 10px/1.5 var(--pb-chrome-font); /* T8: was a literal system-ui stack, wrong on any host */
   color: var(--pb-chrome-text-on-accent);
   /* JUSTIFICACIÓN (docs/52 F5): violeta fijo, DISTINTO a propósito del
      `--pb-chrome-accent` (índigo) — distingue de un vistazo el badge
@@ -446,7 +624,7 @@
   align-items: center;
   gap: 6px;
   padding: 5px 10px;
-  font: 500 12px/1.4 system-ui, -apple-system, sans-serif;
+  font: 500 12px/1.4 var(--pb-chrome-font); /* T8: was a literal system-ui stack, wrong on any host */
   color: var(--pb-chrome-text-muted, #6b7280);
   background: var(--pb-chrome-surface-raised, #f3f4f6);
   border: 1px dashed var(--pb-chrome-border-strong, #d1d5db);
@@ -503,7 +681,7 @@
 .pbx-triggers__toggle {
   display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;
   padding: 4px 8px; font-size: 11px; cursor: pointer;
-  border: 1px solid var(--pb-chrome-border-strong); border-radius: var(--pb-chrome-radius-pill);
+  border: 1px solid var(--pb-chrome-border-strong); border-radius: var(--pb-chrome-radius-chip);
   background: var(--pb-chrome-surface-raised); color: inherit;
 }
 .pbx-triggers__toggle--on {
@@ -892,8 +1070,8 @@
 .pbx-modal-editor__toolbar {
   position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 2;
   display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px 4px 12px;
-  background: rgba(17, 24, 39, 0.82); color: var(--pb-chrome-text-on-accent); border-radius: var(--pb-chrome-radius-pill);
-  font: 600 12px/1.4 system-ui, -apple-system, sans-serif; backdrop-filter: blur(4px);
+  background: rgba(17, 24, 39, 0.82); color: var(--pb-chrome-text-on-accent); border-radius: var(--pb-chrome-radius-chip);
+  font: 600 12px/1.4 var(--pb-chrome-font); backdrop-filter: blur(4px); /* T8: was a literal system-ui stack, wrong on any host */
 }
 .pbx-modal-editor__title { white-space: nowrap; }
 /* Escenario: centra el modal, SIN fondo propio (el fondo real es el del modal).
@@ -987,8 +1165,8 @@
      encima, verificado, opaco por diseño en ambos temas del chrome). */
   background: rgba(17, 24, 39, 0.88);
   color: var(--pb-chrome-text-on-accent);
-  border-radius: var(--pb-chrome-radius-pill);
-  font: 600 13px/1.4 "Inter", system-ui, -apple-system, sans-serif;
+  border-radius: var(--pb-chrome-radius-chip);
+  font: 600 13px/1.4 var(--pb-chrome-font); /* T8: was a literal "Inter", system-ui stack, wrong on any host */
   /* JUSTIFICACIÓN (docs/52 F5): sombra de elevación decorativa, mismo
      criterio que el resto de box-shadow de este archivo. */
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
@@ -1005,7 +1183,7 @@
   gap: 4px;
   padding: 6px 12px;
   border: 0;
-  border-radius: var(--pb-chrome-radius-pill);
+  border-radius: var(--pb-chrome-radius-chip);
   /* JUSTIFICACIÓN (docs/52 F5): blanco translúcido sobre el pill SIEMPRE
      oscuro `.pbx-pick-insert-bar` (`rgba(17,24,39,X)`, ver arriba) — mismo
      criterio que `.pbx-reorder-arrows`/`.pbx-text-toolbar__sep`: decora un
@@ -1041,7 +1219,7 @@
   width: 28px;
   height: 28px;
   border: 0;
-  border-radius: var(--pb-chrome-radius-pill);
+  border-radius: var(--pb-chrome-radius-chip);
   /* JUSTIFICACIÓN (docs/52 F5): mismo criterio que `.pbx-pick-insert-bar__cancel`
      arriba — blanco translúcido sobre el mismo pill siempre oscuro. */
   background: rgba(255, 255, 255, 0.14);
@@ -1065,7 +1243,7 @@
   gap: 4px;
   padding: 6px 12px;
   border: 0;
-  border-radius: var(--pb-chrome-radius-pill);
+  border-radius: var(--pb-chrome-radius-chip);
   background: var(--pb-chrome-drop-solid);
   color: var(--pb-chrome-text-on-accent);
   font: inherit;

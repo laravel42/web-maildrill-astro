@@ -5,7 +5,50 @@
     "doneBtnText": "Done",
     "progressText": "{{current}} of {{total}}"
   },
+  "chooser": {
+    "title": "Pick a tour",
+    "subtitle": "Each one walks through a different part of the editor — choose the one you want.",
+    "closeLabel": "Not now",
+    "tours": {
+      "overview": {
+        "title": "Overview",
+        "description": "A quick pass across the header, the library, the canvas and the settings panel."
+      },
+      "library": {
+        "title": "Library and page templates",
+        "description": "The palette of elements and sections, plus whole page templates you can start from."
+      },
+      "canvas": {
+        "title": "Editing on the canvas",
+        "description": "Selecting, moving, duplicating and deleting elements directly on the page."
+      },
+      "rightPanel": {
+        "title": "Element and site settings",
+        "description": "An element's content and style, its breakpoints, and the site's pages, languages and settings."
+      }
+    }
+  },
   "steps": {
+    "sidebarDragHint": {
+      "title": "Grab and drop a block",
+      "description": "That handle on the left is what you drag — pick up any block and drop it on the canvas to add it. A click works too."
+    },
+    "canvasInlineText": {
+      "title": "Edit text in place",
+      "description": "Double-click any text on the page to edit it right there. A small toolbar appears for bold, italic, links, headings and lists."
+    },
+    "canvasDragNode": {
+      "title": "Move it by dragging",
+      "description": "Drag this grip to move the selected element to a new spot. On touch devices, the arrow buttons next to it do the same thing."
+    },
+    "settingsTheme": {
+      "title": "The site's color theme",
+      "description": "A theme remaps the colors the whole site inherits — change it and every page restyles at once."
+    },
+    "settingsPrefs": {
+      "title": "Your editor preferences",
+      "description": "Editor language, light or dark, and your experience level. Switch it to Advanced to reveal the technical surfaces — including the Tokens tab on the left, where fonts, sizes and spacing are edited."
+    },
     "headerIdentity": {
       "title": "Name and autosave",
       "description": "Set the page name here. Changes save automatically as you work."

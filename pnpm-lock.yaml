@@ -347,6 +347,9 @@ importers:
       '@tiptap/extension-link':
         specifier: 3.27.2
         version: 3.27.2(@tiptap/core@3.27.2(@tiptap/pm@3.27.2))(@tiptap/pm@3.27.2)
+      '@tiptap/extension-text-style':
+        specifier: 3.27.2
+        version: 3.27.2(@tiptap/core@3.27.2(@tiptap/pm@3.27.2))
       '@tiptap/html':
         specifier: 3.27.2
         version: 3.27.2(@tiptap/core@3.27.2(@tiptap/pm@3.27.2))(@tiptap/pm@3.27.2)(happy-dom@20.11.12)
@@ -422,7 +425,7 @@ importers:
         version: 8.0.13(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0)
       vitest:
         specifier: ^4.1.10
-        version: 4.1.10(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(happy-dom@20.11.12)(vite@8.0.13(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
+        version: 4.1.10(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11(vitest@4.1.11))(happy-dom@20.11.12)(vite@8.0.13(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
 
   packages/document-core:
     dependencies:
@@ -4881,6 +4884,11 @@ packages:
     resolution: {integrity: sha512-Y88BonXKxX6CJu0NRaNGF5v1kd/C0V0GmFVF98AHI4Q5h1E3uekIIuKLTn3WPXvTW2wmYWDYFNk4GUrNHcuUNw==}
     peerDependencies:
       '@tiptap/core': 3.30.6
+
+  '@tiptap/extension-text-style@3.27.2':
+    resolution: {integrity: sha512-kgGg3LXYnEEttqM6CsiSLxRVU5055vON1T5xipskmbdDtV/xXTykzbISiX3ND5zYw+BG7hF8COEKLt1iLo6LbA==}
+    peerDependencies:
+      '@tiptap/core': 3.27.2
 
   '@tiptap/extension-text-style@3.30.6':
     resolution: {integrity: sha512-33YzqCf58cg57Rgr9GNe0gw4Ne2tes7AamgHDEgNoEy849pYMEI+B4zgdUOGe6OnCSOeKjsyjgaSr/IawXGzqw==}
@@ -12491,6 +12499,10 @@ snapshots:
     dependencies:
       '@tiptap/core': 3.30.6(@tiptap/pm@3.30.6)
 
+  '@tiptap/extension-text-style@3.27.2(@tiptap/core@3.27.2(@tiptap/pm@3.27.2))':
+    dependencies:
+      '@tiptap/core': 3.27.2(@tiptap/pm@3.27.2)
+
   '@tiptap/extension-text-style@3.30.6(@tiptap/core@3.30.6(@tiptap/pm@3.30.6))':
     dependencies:
       '@tiptap/core': 3.30.6(@tiptap/pm@3.30.6)
@@ -16846,7 +16858,7 @@ snapshots:
       - tsx
       - yaml
 
-  vitest@4.1.10(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(happy-dom@20.11.12)(vite@8.0.13(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0)):
+  vitest@4.1.10(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11(vitest@4.1.11))(happy-dom@20.11.12)(vite@8.0.13(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.10
       '@vitest/mocker': 4.1.10(vite@8.0.13(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))

@@ -97,6 +97,7 @@ export {
   MoveVertical,
   Frame,
   Badge,
+  Sticker,
   Shapes,
   Quote,
   TrendingUp,

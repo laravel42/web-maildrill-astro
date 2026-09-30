@@ -8,6 +8,21 @@
  * seleccionado. También aplica al `text`, que pasará a edición en línea (Fase 3)
  * y perdería su zona de agarre directa.
  *
+ * Nodo alto que no cabe en el viewport de `.pbx-canvas` (fix, feedback de
+ * usuario, mismo caso que `NodeActionsRail.tsx`): esta pestaña se ancla al
+ * borde superior REAL del nodo, así que sin más lógica un nodo alto — el
+ * wrapper que agrupa todas las bandas de una plantilla (D-F29.9) es el caso
+ * típico — perdía la pestaña de la vista en cuanto el usuario scrolleaba lo
+ * bastante para que ese borde saliera por arriba del viewport visible,
+ * incluso con el nodo todavía parcialmente seleccionado y visible. El clamp
+ * (dentro de `measure()`, más abajo) es de UN SOLO BORDE, no un centrado en
+ * la porción visible como el rail: mientras el borde superior real esté
+ * dentro de lo visible, el comportamiento es idéntico al de siempre; si sale
+ * por arriba pero el nodo aún tiene alguna porción visible, la pestaña se
+ * "pega" al borde superior visible del canvas; si el nodo pierde TODA
+ * visibilidad, la pestaña se oculta (mismo mecanismo — `visibility: hidden`
+ * cuando `box` es `null` — que ya cubre cualquier otro caso sin rect).
+ *
  * ¿Por qué a nivel de frame y no dentro del nodo? Un `<img>` es un elemento VOID
  * (no admite hijos) y las hojas no son `position:relative`, así que inyectar la
  * pestaña como hijo del nodo no cubre todos los tipos. Como sólo hay UN nodo
@@ -86,6 +101,7 @@ import { useDraggable } from "./useDraggable";
 import { useReorderControlsVisible } from "@/hooks/usePointerCoarse";
 import { announceReorder } from "../canvas/reorderAnnouncer";
 import type { DragData } from "./contract";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 interface SelectionHandleProps {
   /** Frame del canvas: sistema de coordenadas y `offsetParent` de la pestaña. */
@@ -208,6 +224,11 @@ export function SelectionHandle({ frameRef }: SelectionHandleProps) {
       setBox(null);
       return;
     }
+    // Contenedor con scroll real (`.pbx-canvas`, `overflow: auto` en
+    // `canvas.css`) — mismo acceso por DOM que `NodeActionsRail.tsx` usa
+    // para el mismo fix, en vez de una prop nueva desde `Canvas.tsx`.
+    const scrollContainer = frame.closest<HTMLElement>(".pbx-canvas");
+
     const measure = () => {
       const el = frame.querySelector<HTMLElement>(`[data-node-id="${selectedId}"]`);
       if (!el) {
@@ -229,8 +250,73 @@ export function SelectionHandle({ frameRef }: SelectionHandleProps) {
       const handleEl = handleRef.current;
       const handleWidth = handleEl?.offsetWidth ?? 0;
       const handleHeight = handleEl?.offsetHeight ?? HANDLE_HEIGHT_FALLBACK;
+      // Nodo alto que no cabe en el viewport (fix, feedback de usuario, mismo
+      // caso que `NodeActionsRail.tsx`): esta pestaña se ancla JUSTO ARRIBA
+      // del borde superior REAL del nodo (`nr.top`), así que si el usuario
+      // scrollea `.pbx-canvas` hacia abajo dentro de un nodo alto — el
+      // wrapper que agrupa todas las bandas de una plantilla (D-F29.9) es el
+      // caso típico — ese borde sale por ARRIBA del viewport visible y la
+      // pestaña desaparece de la vista aunque el nodo siga seleccionado y
+      // parcialmente visible.
+      //
+      // El clamp aquí NO es un centrado en la porción visible (a diferencia
+      // del rail): la pestaña vive pegada a UN borde, así que se recorta a
+      // un solo límite. Mientras el borde superior real sea >= el borde
+      // visible del canvas, `anchorTop` es simplemente `nr.top` (idéntico al
+      // comportamiento de siempre — el común, nodo que cabe en el
+      // viewport). Si el borde real ya se scrolleó por encima del viewport
+      // pero el nodo TODAVÍA tiene parte visible (`nr.bottom > visibleTop`),
+      // la pestaña se "pega" al borde superior VISIBLE del canvas en vez de
+      // seguir subiendo fuera de pantalla. Si el nodo ya no tiene ninguna
+      // porción visible, `visible` es `false` y el efecto de más abajo la
+      // oculta (mismo mecanismo de salida que deseleccionar).
+      let anchorTop = nr.top;
+      let visible = true;
+      let stuck = false;
+      if (scrollContainer) {
+        const cr = scrollContainer.getBoundingClientRect();
+        // Límite CONTENT-BOX, no border-box (fix, feedback de usuario):
+        // `.pbx-canvas` tiene `padding: 32px 24px` (`canvas.css`), y
+        // `getBoundingClientRect()` da el borde EXTERIOR de la caja, que
+        // incluye ese padding. Clampear contra `cr.top` tal cual dejaba la
+        // pestaña — que además se eleva su propio alto hacia arriba,
+        // `anchorTop - handleHeight` más abajo — posicionada dentro de esa
+        // franja de padding o pegada al límite exacto del canvas, muy cerca
+        // del header (geométricamente "correcto", pero se veía tapada o
+        // perdida). Se lee el `padding-top` COMPUTADO (nunca un literal
+        // `32px`: si el valor de `canvas.css` cambia, este cálculo debe
+        // seguirlo solo) y se suma al límite, para que el clamp respete el
+        // mismo espacio "limpio" que ya se ve cuando el nodo cabe entero.
+        const canvasPaddingTop = parseFloat(getComputedStyle(scrollContainer).paddingTop) || 0;
+        const visibleTop = cr.top + canvasPaddingTop;
+        visible = nr.bottom > visibleTop && nr.top < cr.bottom;
+        if (visible) {
+          // `stuck` distingue los dos casos, porque cada uno posiciona la
+          // pestaña de forma distinta respecto a `anchorTop`:
+          //  - Caso normal (`anchorTop === nr.top`, el borde real es
+          //    visible): la pestaña se eleva POR FUERA del nodo, hacia
+          //    arriba — de ahí el `- handleHeight` en `setBox` más abajo.
+          //  - Caso "pegado" (`anchorTop === visibleTop`, el borde real ya
+          //    no es visible): no hay ningún borde ahí del que "salir" — la
+          //    pestaña debe quedar DENTRO del área visible, con su propio
+          //    borde superior en `visibleTop`, no seguir subiendo otros
+          //    `handleHeight` px más arriba (eso la devolvía a la franja de
+          //    padding/fuera de vista que este fix corrige).
+          anchorTop = Math.max(nr.top, visibleTop);
+          stuck = anchorTop > nr.top;
+        }
+      }
+      if (!visible) {
+        setBox(null);
+        return;
+      }
       setBox({
-        top: nr.top - fr.top - handleHeight,
+        // `stuck`: la pestaña queda DENTRO del área visible, con su propio
+        // borde superior en `anchorTop` (sin restar `handleHeight`, que la
+        // devolvería a la franja de padding fuera de vista — ver el
+        // comentario en el cálculo de `anchorTop` arriba). Caso normal: se
+        // eleva por fuera del borde superior del nodo, como siempre.
+        top: stuck ? anchorTop - fr.top : anchorTop - fr.top - handleHeight,
         left: nr.left - fr.left + nr.width / 2 - handleWidth / 2,
       });
     };
@@ -245,9 +331,14 @@ export function SelectionHandle({ frameRef }: SelectionHandleProps) {
     // del label (nombre del componente) y hacen falta para centrar/elevar.
     if (handleRef.current) ro?.observe(handleRef.current);
     window.addEventListener("resize", measure);
+    // Recalcular EN VIVO durante el scroll (fix, mismo patrón que
+    // `NodeActionsRail.tsx`): sin esto, la pestaña no seguía al borde
+    // visible mientras el usuario scrolleaba `.pbx-canvas`.
+    scrollContainer?.addEventListener("scroll", measure, { passive: true });
     return () => {
       ro?.disconnect();
       window.removeEventListener("resize", measure);
+      scrollContainer?.removeEventListener("scroll", measure);
     };
   }, [enabled, selectedId, activeBreakpoint, documentState, frameRef]);
 
@@ -309,6 +400,11 @@ export function SelectionHandle({ frameRef }: SelectionHandleProps) {
         left: box?.left ?? 0,
         visibility: box ? undefined : "hidden",
       }}
+      // chain F29, T2b (D-F29.20): `pbx.canvas.dragNode` — this grip is
+      // deliberately HIDDEN in the merged/coarse-pointer mode (see the file
+      // header comment), so the tour step that anchors here must carry
+      // `skipMissingElement: true`.
+      {...dataTourAttr(BUILDER42_TOUR_ANCHORS.canvasDragNode)}
     >
       {reorderControlsVisible ? null : (
         <span className="pbx-drag-handle__grip" aria-hidden="true">

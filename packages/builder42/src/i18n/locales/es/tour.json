@@ -5,7 +5,50 @@
     "doneBtnText": "Listo",
     "progressText": "{{current}} de {{total}}"
   },
+  "chooser": {
+    "title": "Elige un recorrido",
+    "subtitle": "Cada uno recorre una parte distinta del editor — elige el que quieras ver.",
+    "closeLabel": "Ahora no",
+    "tours": {
+      "overview": {
+        "title": "Panorama general",
+        "description": "Un repaso rápido por el encabezado, la biblioteca, el lienzo y el panel de configuración."
+      },
+      "library": {
+        "title": "Biblioteca y plantillas de página",
+        "description": "La paleta de elementos y secciones, más páginas completas listas para usar como punto de partida."
+      },
+      "canvas": {
+        "title": "Editar en el lienzo",
+        "description": "Seleccionar, mover, duplicar y eliminar elementos directamente sobre la página."
+      },
+      "rightPanel": {
+        "title": "Configuración del elemento y del sitio",
+        "description": "El contenido y el estilo de un elemento, sus breakpoints, y las páginas, idiomas y ajustes del sitio."
+      }
+    }
+  },
   "steps": {
+    "sidebarDragHint": {
+      "title": "Agarra y suelta un bloque",
+      "description": "Ese asa de la izquierda es lo que arrastras: toma cualquier bloque y suéltalo en el lienzo para añadirlo. Un clic también funciona."
+    },
+    "canvasInlineText": {
+      "title": "Edita el texto donde está",
+      "description": "Haz doble clic en cualquier texto de la página para editarlo ahí mismo. Aparece una pequeña barra para negrita, cursiva, enlaces, encabezados y listas."
+    },
+    "canvasDragNode": {
+      "title": "Muévelo arrastrando",
+      "description": "Arrastra esta asa para mover el elemento seleccionado a otro lugar. En pantallas táctiles, las flechas de al lado hacen lo mismo."
+    },
+    "settingsTheme": {
+      "title": "El tema de color del sitio",
+      "description": "Un tema remapea los colores que hereda todo el sitio: al cambiarlo, todas las páginas se recolorean a la vez."
+    },
+    "settingsPrefs": {
+      "title": "Tus preferencias del editor",
+      "description": "Idioma del editor, claro u oscuro, y tu nivel de experiencia. Ponlo en Avanzado para revelar las superficies técnicas — entre ellas la pestaña Tokens de la izquierda, donde se editan las tipografías, los tamaños y el espaciado."
+    },
     "headerIdentity": {
       "title": "Nombre y autoguardado",
       "description": "Define aquí el nombre de la página. Los cambios se guardan solos mientras trabajas."
