@@ -116,6 +116,8 @@
     "notAvailable": "This element does not support animations or effects.",
     "remove": "Remove behavior",
     "add": "Add",
+    "none": "None",
+    "hasMoreWarning": "This element also has other behaviors applied that this control doesn't show. Choosing one here replaces all of them.",
     "categories": {
       "content": "Content",
       "motion": "Scroll animation",
@@ -263,6 +265,20 @@
       "configureThemes": "Configure themes",
       "storageKeyHelp": "Name the published site uses to remember the theme each visitor chose and reapply it on their next visit (it takes priority over the system theme, and is stored in the browser via localStorage). Change it only if you need this toggle to remember its preference separately from another one on the same domain. Default: “pb-theme”."
     }
+  },
+  "stylePresets": {
+    "title": "Style presets",
+    "hint": "Apply a ready-made combination and then edit every property by hand.",
+    "chipOutline": "Chip (outline)",
+    "chipSolid": "Chip (solid)",
+    "eyebrowOnLight": "Eyebrow (on light)",
+    "eyebrowOnDark": "Eyebrow (on dark)",
+    "sectionTitleOnLight": "Section title (on light)",
+    "sectionTitleOnDark": "Section title (on dark)",
+    "bodyText": "Body text",
+    "stickerBadge": "Sticker (round badge)",
+    "stickerRibbonOutline": "Sticker ribbon (outline)",
+    "stickerRibbonSolid": "Sticker ribbon (solid)"
   },
   "fieldHelp": {
     "label": "More information"
@@ -603,13 +619,18 @@
       "fontWeight": "Weight",
       "fontFamily": "Font",
       "lineHeight": "Line height",
+      "letterSpacing": "Tracking",
+      "textTransform": "Letter case",
       "textDecoration": "Decoration",
       "background": "Background",
       "borderRadius": "Radius",
       "border": "Border",
       "boxShadow": "Shadow",
       "cursor": "Cursor",
-      "outline": "Outline"
+      "outline": "Outline",
+      "rotate": "Rotation",
+      "scale": "Scale",
+      "transition": "Transition"
     },
     "custom": "Custom",
     "origin": {

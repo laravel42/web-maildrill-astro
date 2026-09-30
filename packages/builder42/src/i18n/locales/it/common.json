@@ -261,11 +261,16 @@
     "fontSize": "Dimensione",
     "fontWeight": "Peso",
     "lineHeight": "Interlinea",
+    "letterSpacing": "Tracking",
+    "textTransform": "Maiuscole",
     "textAlign": "Allineamento",
     "textDecoration": "Decorazione",
     "boxShadow": "Ombra",
     "cursor": "Cursore",
-    "outline": "Contorno"
+    "outline": "Contorno",
+    "rotate": "Rotazione",
+    "scale": "Scala",
+    "transition": "Transizione"
   },
   "errorBoundary": {
     "renderError": "Errore di rendering nodo",

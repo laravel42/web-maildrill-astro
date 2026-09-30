@@ -166,9 +166,13 @@ export const createUiSlice: SliceCreator<UiSlice> = (set) => ({
   activeTiptapEditor: null,
   editingModalId: null,
   previewStateBySelectedId: {},
-  // Canvas frame starts at Desktop (xl / 1280). Style cascade stays mobile-first;
-  // this is only which viewport the editor opens on.
-  activeBreakpoint: "xl",
+  // D-F29.7: arranca en `base`, el breakpoint cuyas ediciones se aplican a
+  // todos los tamaños — es el objetivo honesto por defecto. Arrancar en `xl`
+  // escribía en silencio las ediciones de un primer visitante bajo
+  // `@media (min-width:1280px)`, sin efecto visible en el preview de
+  // teléfono. Style cascade stays mobile-first; this is only which viewport
+  // the editor opens on.
+  activeBreakpoint: "base",
   view: "edit",
   editingLocale: initialSite.meta.defaultLang,
   requestedSiteTab: null,

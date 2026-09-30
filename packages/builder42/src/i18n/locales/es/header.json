@@ -94,7 +94,9 @@
     "hiddenBadge": "oculto",
     "hiddenAt": "Oculto en {{breakpoint}}",
     "show": "Mostrar en este tamaño",
-    "hide": "Ocultar en este tamaño"
+    "hide": "Ocultar en este tamaño",
+    "rootLabel": "Raíz de la página",
+    "rootLocked": "La raíz de la página no se puede seleccionar ni eliminar. Usa su hijo de abajo para seleccionar o eliminar todo el ejemplo."
   },
   "publish": {
     "button": "Publicar",

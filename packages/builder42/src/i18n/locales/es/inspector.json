@@ -116,6 +116,8 @@
     "notAvailable": "Este elemento no admite animaciones ni efectos.",
     "remove": "Quitar comportamiento",
     "add": "Añadir",
+    "none": "Ninguno",
+    "hasMoreWarning": "Este elemento también tiene otros comportamientos aplicados que este control no muestra. Elegir uno aquí los reemplaza a todos.",
     "categories": {
       "content": "Contenido",
       "motion": "Animación al hacer scroll",
@@ -263,6 +265,20 @@
       "configureThemes": "Configurar temas",
       "storageKeyHelp": "Nombre con el que el sitio publicado recuerda el tema que eligió cada visitante y lo reaplica en su próxima visita (tiene prioridad sobre el tema del sistema, y se guarda en el navegador vía localStorage). Cámbialo solo si necesitas que este interruptor recuerde su preferencia por separado de otro del mismo dominio. Por defecto: «pb-theme»."
     }
+  },
+  "stylePresets": {
+    "title": "Presets de estilo",
+    "hint": "Aplica una combinación lista y luego edita cada propiedad a mano.",
+    "chipOutline": "Chip (contorno)",
+    "chipSolid": "Chip (sólido)",
+    "eyebrowOnLight": "Etiqueta superior (sobre claro)",
+    "eyebrowOnDark": "Etiqueta superior (sobre oscuro)",
+    "sectionTitleOnLight": "Título de sección (sobre claro)",
+    "sectionTitleOnDark": "Título de sección (sobre oscuro)",
+    "bodyText": "Texto de cuerpo",
+    "stickerBadge": "Pegatina (insignia redonda)",
+    "stickerRibbonOutline": "Cinta pegatina (contorno)",
+    "stickerRibbonSolid": "Cinta pegatina (sólida)"
   },
   "fieldHelp": {
     "label": "Más información"
@@ -603,13 +619,18 @@
       "fontWeight": "Peso",
       "fontFamily": "Fuente",
       "lineHeight": "Interlineado",
+      "letterSpacing": "Tracking",
+      "textTransform": "Mayúsculas",
       "textDecoration": "Decoración",
       "background": "Fondo",
       "borderRadius": "Radio",
       "border": "Borde",
       "boxShadow": "Sombra",
       "cursor": "Cursor",
-      "outline": "Outline"
+      "outline": "Outline",
+      "rotate": "Rotación",
+      "scale": "Escala",
+      "transition": "Transición"
     },
     "custom": "Personalizado",
     "origin": {

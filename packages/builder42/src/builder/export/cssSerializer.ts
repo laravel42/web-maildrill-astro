@@ -103,6 +103,45 @@ function hasAnySlider(style: NodeStyle): boolean {
 }
 
 /**
+ * ¿El nodo declara `appearance.transition` en alguna capa que NO es un
+ * estado (base o algún override de breakpoint)? Determina si hace falta
+ * emitir la neutralización de `prefers-reduced-motion` anclada a la clase
+ * base del nodo (`.n-id`) — un nodo que nunca anima fuera de un estado no
+ * necesita esa regla ahí (docs T1: "solo para los nodos que declararon
+ * una", nunca una regla general para todos). Las transiciones declaradas
+ * DENTRO de `style.states` se detectan por separado (T1b): cada una
+ * necesita su propia regla anclada al selector del estado, porque la del
+ * nodo base no la neutraliza — ver `statesWithTransition`.
+ */
+function hasAnyTransition(style: NodeStyle): boolean {
+  if (style.base.appearance?.transition !== undefined) return true;
+  const overrides = style.overrides;
+  if (overrides && Object.values(overrides).some((o) => o?.appearance?.transition !== undefined)) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Estados (T9) que declaran `appearance.transition` — T1b. La regla base
+ * (`hasAnyTransition`) neutraliza `.n-id { transition: none; }`, pero esa
+ * regla tiene especificidad 0,1,0 mientras que `.n-id:hover` (o cualquier
+ * otro selector de estado) tiene 0,2,0: bajo `prefers-reduced-motion`, la
+ * transición del estado seguía ganando por especificidad aunque la del guard
+ * ganara por orden en la capa base. Cada estado con transición propia
+ * necesita su propia regla de neutralización, anclada al MISMO selector que
+ * ya usa su regla normal (`stateClass` + `STATE_SELECTORS[state]`), para
+ * que el guard sea al menos tan específico como lo que neutraliza.
+ */
+function statesWithTransition(style: NodeStyle): StyleState[] {
+  const states = style.states;
+  if (!states) return [];
+  return (Object.entries(states) as [StyleState, Partial<StyleProperties> | undefined][])
+    .filter(([, decls]) => decls?.appearance?.transition !== undefined)
+    .map(([state]) => state);
+}
+
+/**
  * CSS de un nodo: regla base + un `@media` por override (orden ascendente) +
  * reglas de estado (T9). Devuelve "" si el nodo no tiene ninguna declaración.
  *
@@ -172,6 +211,40 @@ export function serializeNodeCss(
         blocks.push(`.${stateClass}${STATE_SELECTORS[state]} { ${declParts} }`);
       }
     }
+  }
+
+  // Movimiento reducido (T1, extendido en T1b): un nodo que declaró
+  // `appearance.transition` en base o en un override anima algo — típicamente
+  // `rotate`/`scale`. Un visitante con `prefers-reduced-motion: reduce` no
+  // debe recibir esa animación, así que se neutraliza la transición del nodo
+  // dentro de ese media query. Se emite SOLO para nodos que declararon una
+  // (nunca una regla general para todos los nodos del documento) y sin
+  // `!important`: `transition: none` en una regla con el mismo selector
+  // (`.n-id`) que la capa base ya gana por orden de cascada, sin necesitar
+  // mayor especificidad.
+  //
+  // T1b: eso NO alcanza cuando la transición está declarada dentro de un
+  // ESTADO (p. ej. `states.hover`) — su regla normal usa un selector con
+  // especificidad 0,2,0 (`.n-id:hover`), mientras que el guard anclado a
+  // `.n-id` es 0,1,0; bajo reduced-motion, la transición del estado seguía
+  // ganando por especificidad aunque el guard estuviera después en la hoja.
+  // Por eso cada estado con transición propia recibe SU PROPIA regla de
+  // neutralización, anclada al mismo selector (`stateClass` +
+  // `STATE_SELECTORS[state]`) que ya usa su regla normal más arriba, así el
+  // guard es al menos tan específico como lo que neutraliza. Un nodo puede
+  // declarar transición en ambos sitios a la vez; en ese caso se emiten las
+  // dos neutralizaciones, ambas dentro del mismo bloque de media query.
+  const transitionStates = statesWithTransition(style);
+  if (hasAnyTransition(style) || transitionStates.length > 0) {
+    const stateClass = statesClassName ?? className;
+    const guardRules: string[] = [];
+    if (hasAnyTransition(style)) {
+      guardRules.push(`.${className} { transition: none; }`);
+    }
+    for (const state of transitionStates) {
+      guardRules.push(`.${stateClass}${STATE_SELECTORS[state]} { transition: none; }`);
+    }
+    blocks.push(`@media (prefers-reduced-motion: reduce) { ${guardRules.join(" ")} }`);
   }
 
   return blocks.join("\n");

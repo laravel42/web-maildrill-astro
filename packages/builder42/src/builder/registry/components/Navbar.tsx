@@ -19,7 +19,7 @@
  * **Logo como slot de contenido puro (rework, feedback de usuario):**
  * `acceptsChildren: true` — el usuario arrastra dentro `image`/`text`/`icon`
  * (o cualquier combinación); NO hay ningún fallback de texto propio del
- * componente ("Mi Marca"/"Marca"). Mismo patrón que `modal` (`ModalChrome` +
+ * componente ("Your Logo"/"Brand"). Mismo patrón que `modal` (`ModalChrome` +
  * `children`, docs/20): la raíz combina chrome fijo (toggle + menú,
  * generados) con un slot libre (`children`, pintado en `.pb-navbar__brand`).
  * Sin contenido, el slot queda vacío (solo el hint de canvas, nunca en export).
@@ -107,7 +107,7 @@ export const NAVBAR_DEFAULT_CHILDREN: DefaultChildSpec[] = [
   {
     type: "container",
     style: NAVBAR_BRAND_STYLE,
-    children: [{ type: "text", props: { content: "<strong>Mi Marca</strong>" } }],
+    children: [{ type: "text", props: { content: "<strong>Your Logo</strong>" } }],
   },
 ];
 
@@ -246,7 +246,19 @@ const NAVBAR_CSS = [
   // `gap`/`alignItems` editable — esta regla SOLO aporta la estructura mínima
   // (flex + min-width para que el `<nav>` no lo empuje fuera), sin gap fijo.
   ".pb-navbar__brand { display: flex; align-items: center; min-width: 0; }",
-  ".pb-navbar__brand a { font-weight: 700; font-size: 1.125rem; text-decoration: none; color: inherit; }",
+  // `:where(a)` en vez de `a` (fix, mismo motivo que el rework del wrapper del
+  // brand de arriba): estos tres valores son un DEFAULT razonable para un logo
+  // de texto enlazado, no una decisión del componente. Con el selector
+  // `.pb-navbar__brand a` (especificidad 0,1,1) ningún nodo dentro del slot
+  // puede cambiarlos — su clase propia es 0,1,0 y pierde siempre, en cualquier
+  // orden de hoja. Eso convierte cualquier `button` con link dentro del brand
+  // en un chip de 18px/700 con `color: inherit`: sobre un chip de fondo
+  // `colors.primary.default` el texto hereda el rojo del navbar y queda
+  // invisible (rojo sobre rojo, medido en la plantilla `pizzeria-page`).
+  // `:where()` deja la especificidad en 0,1,0, así que el default sigue
+  // aplicando cuando nadie declara nada y el estilo del nodo — que se emite
+  // después, en `page-*.css` — gana cuando sí lo declara.
+  ".pb-navbar__brand :where(a) { font-weight: 700; font-size: 1.125rem; text-decoration: none; color: inherit; }",
   ".pb-navbar__menu { display: flex; align-items: center; gap: 20px; list-style: none; margin: 0; padding: 0; overflow: hidden; }",
   ".pb-navbar__menu a { text-decoration: none; color: inherit; padding: 6px 0; display: inline-block; }",
   ".pb-navbar__menu a:hover { color: var(--colors-primary-default, #2563eb); }",

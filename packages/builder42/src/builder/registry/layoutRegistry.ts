@@ -204,6 +204,49 @@ const DEFINITIONS: LayoutDefinition[] = [
     },
   },
   {
+    id: "pizzeria-page",
+    category: "page",
+    labelKey: "templates.layouts.pizzeriaPage",
+    descriptionKey: "templates.layouts.pizzeriaPageDesc",
+    // English only (deliberate scope: visual/UI showcase, not a 3-language
+    // business template like the others in this list) — no `siteLocales`.
+    // A9 — Carousel-centric (docs/48 §2, same archetype as hotel-boutique):
+    // TWO independent `carousel` sections (process + specials) are the
+    // structural axis, plus `lightbox` on the process gallery and a
+    // `logo-cloud` + `marquee` loop for the social feed.
+    archetype: "A9",
+    theme: {
+      slug: "forno",
+      name: "Forno",
+      colorScheme: "light",
+      tokens: {
+        "colors.text": "#241208",
+        "colors.surface.default": "#fff8ef",
+        "colors.surface.alt": "#f4e4c8",
+        "colors.border": "#e6d0a8",
+        "colors.primary.default": "#b3311c",
+        "colors.primary.on": "#fff8ef",
+        "colors.muted": "#6b5540",
+        "colors.band.dark": "#2c1108",
+        "colors.band.on": "#f4e4c8",
+      },
+      fontFamilies: {
+        display: {
+          stack: "'Instrument Serif', Georgia, serif",
+          webFont: { provider: "google", family: "Instrument Serif", weights: ["400"] },
+        },
+        sans: {
+          stack: "Inter, system-ui, sans-serif",
+          webFont: { provider: "google", family: "Inter", weights: ["400", "600", "700"] },
+        },
+      },
+    },
+    load: async () => {
+      const m = await import("./layouts/pages/pizzeriaPage");
+      return { build: m.buildPizzeriaPageFragment, pageMeta: m.pizzeriaPageMeta };
+    },
+  },
+  {
     id: "clothing-store-page",
     category: "page",
     labelKey: "templates.layouts.clothingStorePage",
@@ -977,10 +1020,100 @@ export function getPageLayout(id: string): PageLayoutDefinition | undefined {
 }
 
 /**
+ * Envuelve las bandas del root de una plantilla de página en UN contenedor
+ * intermedio deletable (D-F29.9): así el visitante puede borrar el ejemplo
+ * entero con un solo delete sobre ese nodo, y el tour de onboarding siempre
+ * tiene el mismo nodo al que apuntar sea cual sea la plantilla cargada.
+ *
+ * Deliberadamente NO se hace moviendo el `rootId` al wrapper: `removeNode`
+ * rehúsa borrar `doc.rootId` (`model/tree.ts`) y tanto `SelectionHandle` como
+ * `NodeActionsRail` ocultan delete/duplicate/drag para la raíz — un wrapper
+ * que FUERA la raíz nunca podría cumplir el propósito de la decisión. El
+ * `rootId` de cada plantilla se conserva tal cual (`dental-root`,
+ * `photographer-root`, …); tras envolver, ese root tiene EXACTAMENTE un hijo
+ * — el wrapper — y el wrapper hereda la lista de bandas original, en el mismo
+ * orden.
+ *
+ * Idempotente por construcción (evita doble envoltura si la plantilla ya
+ * cumple, o si esta función se corre dos veces sobre el mismo fragmento): NO
+ * envuelve cuando el root ya tiene un único hijo de tipo `container`.
+ *
+ * El wrapper es un `container` con estilo EXPLÍCITO para no verse: los campos
+ * de `defaultStyle` de `container` (`gap: 12px`, `padding: 16px`,
+ * `minHeight: 48px`, `background: colors.surface.alt`, `borderRadius:
+ * radii.md`) solo se aplican cuando se CREA un nodo nuevo desde el registry
+ * (`componentRegistry.ts#createNodeForType`) — una vez que un nodo vive en el
+ * árbol, `resolveStyle`/`stylePropertiesToCSSObject` renderizan únicamente lo
+ * que su propio `style.base` declara (`model/style.ts`, `registry/styleToCss.ts`);
+ * un campo ausente no cae de vuelta al `defaultStyle` del componente, sencillamente
+ * no emite esa propiedad CSS. Por eso alcanza con declarar `display: flex`,
+ * `flexDirection: column`, `alignItems: stretch` y `gap: "0"` (igual que ya
+ * hace cada `<prefix>-root` existente) y NO declarar `spacing`/`size`/
+ * `appearance.borderRadius`: al no declararlos, no se emiten — el mismo patrón
+ * que los 18 roots actuales ya usan para no heredar el padding/radius/fondo de
+ * `defaultStyle`. `appearance.background` se fija a `"transparent"` en vez de
+ * dejarlo sin declarar porque el propio root de cada plantilla SÍ declara su
+ * `background` (p. ej. `colors.surface.default`) y ese fondo debe seguir
+ * viéndose a través del wrapper.
+ */
+function wrapPageRootBands(fragment: NodeFragment): NodeFragment {
+  const rootNode = fragment.nodes[fragment.rootId];
+  if (!rootNode) return fragment;
+
+  const bandIds = rootNode.children ?? [];
+  const alreadyWrapped =
+    bandIds.length === 1 &&
+    (() => {
+      const onlyChild = fragment.nodes[bandIds[0]!];
+      return onlyChild?.type === "container";
+    })();
+  if (alreadyWrapped) return fragment;
+
+  const wrapId = `${fragment.rootId}-wrap`;
+  if (fragment.nodes[wrapId]) {
+    if (import.meta.env.DEV) {
+      console.warn(
+        `[wrapPageRootBands] "${wrapId}" already exists in "${fragment.rootId}"'s fragment — leaving it unwrapped.`,
+      );
+    }
+    return fragment;
+  }
+
+  const wrapperNode: NodeFragment["nodes"][string] = {
+    id: wrapId,
+    type: "container",
+    props: {},
+    style: {
+      base: {
+        layout: { display: "flex", flexDirection: "column", alignItems: "stretch", gap: "0" },
+        appearance: { background: "transparent" },
+      },
+    },
+    children: bandIds,
+  };
+
+  return {
+    ...fragment,
+    nodes: {
+      ...fragment.nodes,
+      [fragment.rootId]: { ...rootNode, children: [wrapId] },
+      [wrapId]: wrapperNode,
+    },
+  };
+}
+
+/**
  * Carga el módulo de una plantilla de página y devuelve su fragmento ya
  * construido junto con la metadata SEO que traiga. `null` si el id no es una
  * plantilla de página o si el módulo/`build()` falla (no lanza: el llamador es
  * UI y debe degradar, no romperse).
+ *
+ * El fragmento pasa por `wrapPageRootBands` antes de devolverse (D-F29.9):
+ * este es el único punto por el que entran tanto el editor en vivo
+ * (`store/slices/layouts.ts#applyPageLayout`, vía `loadPageLayout`) como
+ * `scripts/dump-template-catalog.mjs` (vía `registry.loadPageLayout`), así
+ * que envolver aquí cubre las dos rutas sin duplicar la transformación ni
+ * tocar los 18 archivos de layout.
  */
 export async function loadPageLayout(
   id: string,
@@ -990,7 +1123,7 @@ export async function loadPageLayout(
   try {
     const mod = await layout.load();
     const result: { fragment: NodeFragment; pageMeta?: LayoutPageMeta } = {
-      fragment: mod.build(),
+      fragment: wrapPageRootBands(mod.build()),
     };
     if (mod.pageMeta !== undefined) result.pageMeta = mod.pageMeta;
     return result;

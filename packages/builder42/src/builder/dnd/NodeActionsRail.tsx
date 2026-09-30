@@ -23,7 +23,11 @@
  *
  * Mismo sistema de coordenadas que `SelectionHandle` (mide contra el mismo
  * `frameRef`), pero se posiciona a la DERECHA del nodo (verticalmente
- * centrado en su alto), no arriba — no compite por el mismo espacio que la
+ * centrado en la porción VISIBLE de su alto dentro de `.pbx-canvas`, no en
+ * su alto completo — fix, feedback de usuario: un nodo más alto que el
+ * viewport del canvas, como el wrapper que agrupa todas las bandas de una
+ * plantilla (D-F29.9), dejaba el centro geométrico fuera de pantalla tras
+ * hacer scroll), no arriba — no compite por el mismo espacio que la
  * pestaña de arrastre ni con las flechas de reorder (que siguen ahí, sin
  * cambios, docs/24 §2/§3).
  *
@@ -162,6 +166,13 @@ export function NodeActionsRail({ frameRef }: NodeActionsRailProps) {
       setBox(null);
       return;
     }
+    // Contenedor con scroll real (`.pbx-canvas`, `overflow: auto` en
+    // `canvas.css`) — `frame` (`.pbx-canvas__frame`) es su contenido, así
+    // que sube por el DOM real en vez de depender de una prop nueva desde
+    // `Canvas.tsx` (mismo patrón que el resto de este archivo: medir contra
+    // el DOM, no contra estado adicional).
+    const scrollContainer = frame.closest<HTMLElement>(".pbx-canvas");
+
     const measure = () => {
       const el = frame.querySelector<HTMLElement>(`[data-node-id="${selectedId}"]`);
       if (!el) {
@@ -172,10 +183,35 @@ export function NodeActionsRail({ frameRef }: NodeActionsRailProps) {
       const fr = frame.getBoundingClientRect();
       const railEl = railRef.current;
       const railHeight = railEl?.offsetHeight ?? 0;
+      // Nodo alto que no cabe en el viewport (fix, feedback de usuario): un
+      // nodo más alto que la porción visible de `.pbx-canvas` — el wrapper
+      // que agrupa todas las bandas de una plantilla es el caso típico
+      // (D-F29.9) — deja el centro de SU RECT COMPLETO fuera de pantalla
+      // tras hacer scroll, así que el rail quedaba flotando en una
+      // coordenada que el usuario nunca veía sin scrollear a un punto
+      // exacto. Se centra en cambio en la INTERSECCIÓN entre el rect del
+      // nodo y el rect visible del scroll container — la porción del nodo
+      // que efectivamente se ve — y se recorta además contra el propio
+      // alto del rail para que nunca sobresalga por arriba/abajo de esa
+      // porción visible. Sin `scrollContainer` (no debería pasar: el rail
+      // solo se monta dentro de `.pbx-canvas`), cae al centro del rect
+      // completo, el comportamiento de siempre.
+      let centerY = nr.top + nr.height / 2;
+      if (scrollContainer) {
+        const cr = scrollContainer.getBoundingClientRect();
+        const visibleTop = Math.max(nr.top, cr.top);
+        const visibleBottom = Math.min(nr.bottom, cr.bottom);
+        if (visibleBottom > visibleTop) {
+          centerY = (visibleTop + visibleBottom) / 2;
+          const minCenter = visibleTop + railHeight / 2;
+          const maxCenter = visibleBottom - railHeight / 2;
+          if (minCenter <= maxCenter) {
+            centerY = Math.min(Math.max(centerY, minCenter), maxCenter);
+          }
+        }
+      }
       setBox({
-        // Verticalmente centrada en el alto del nodo (igual que TuneMenu de
-        // email-builder cuando se ancla al lado, no arriba/abajo).
-        top: nr.top - fr.top + nr.height / 2 - railHeight / 2,
+        top: centerY - fr.top - railHeight / 2,
         // Pegada AL BORDE del nodo, sin espacio (petición del usuario, este
         // commit — antes +8px de separación): se ve como una pestaña que
         // sale del propio elemento, no como un menú flotante aparte. El
@@ -192,9 +228,15 @@ export function NodeActionsRail({ frameRef }: NodeActionsRailProps) {
     if (el) ro?.observe(el);
     if (railRef.current) ro?.observe(railRef.current);
     window.addEventListener("resize", measure);
+    // Recalcular EN VIVO durante el scroll (fix): sin esto, `measure()` solo
+    // corría una vez por selección/resize y el rail no seguía al nodo
+    // mientras el usuario scrolleaba `.pbx-canvas`. `passive: true` (solo
+    // lectura, nunca `preventDefault`) para no penalizar el scroll nativo.
+    scrollContainer?.addEventListener("scroll", measure, { passive: true });
     return () => {
       ro?.disconnect();
       window.removeEventListener("resize", measure);
+      scrollContainer?.removeEventListener("scroll", measure);
     };
   }, [enabled, selectedId, frameRef]);
 

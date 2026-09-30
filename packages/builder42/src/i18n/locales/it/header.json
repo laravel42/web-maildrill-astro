@@ -94,7 +94,9 @@
     "hiddenBadge": "nascosto",
     "hiddenAt": "Nascosto a {{breakpoint}}",
     "show": "Mostra a questa dimensione",
-    "hide": "Nascondi a questa dimensione"
+    "hide": "Nascondi a questa dimensione",
+    "rootLabel": "Radice della pagina",
+    "rootLocked": "La radice della pagina non può essere selezionata né eliminata. Usa il suo figlio qui sotto per selezionare o eliminare l'intero esempio."
   },
   "publish": {
     "button": "Pubblica",

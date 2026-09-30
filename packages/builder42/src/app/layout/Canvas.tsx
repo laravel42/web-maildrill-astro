@@ -78,6 +78,51 @@ export function Canvas() {
   const frameRef = useRef<HTMLDivElement>(null);
   useAutoScroll(canvasRef);
 
+  // Guarda de navegación en Edit (chain L1): los componentes del registry
+  // pintan anchors REALES en el documento vivo (`Button.tsx`, `Navbar`,
+  // `NavMenu`, `Breadcrumb`, `LanguageNav`, `SocialLinks` renderizan
+  // `<a href>`), y nada los cancelaba en modo Edit — un click activaba la
+  // navegación del navegador y se llevaba el documento TOP-LEVEL entero
+  // fuera del editor (a diferencia de `PreviewFrame.tsx`, que ya intercepta
+  // TODA navegación de su iframe porque corre el export real dentro de un
+  // sandbox — ver la cabecera de ese archivo). Este listener es el
+  // equivalente para el canvas de Edit: un único handler en CAPTURE phase
+  // sobre la raíz del canvas, activo solo en modo Edit (`view === "edit"`,
+  // comprobado dentro del efecto porque `interactive` se calcula más abajo
+  // en esta función, después de los `return` tempranos), que cancela la
+  // activación de cualquier `<a href>` o el `submit` de un formulario ANTES
+  // de que el navegador actúe — pero sin `stopPropagation()`, para que el
+  // `onClick` de `rootProps` en `NodeRenderer` (que hace la selección) siga
+  // corriendo con normalidad. Capture phase es lo que permite ganarle a la
+  // acción por defecto del navegador Y al propio handler del componente
+  // (que no la cancela).
+  // NO borrar este `preventDefault`: no es un descuido de Preview, es la
+  // pieza que faltaba en Edit — ver `PreviewFrame.tsx` líneas ~45-60 para el
+  // guard equivalente del lado de Preview.
+  useEffect(() => {
+    const root = canvasRef.current;
+    const editModeActive = view === "edit";
+    if (!editModeActive || !root) return;
+
+    const cancelLinkActivation = (e: Event) => {
+      const target = e.target as Element | null;
+      const anchor = target?.closest?.("a[href]") ?? null;
+      if (anchor) {
+        e.preventDefault();
+      }
+    };
+    const cancelSubmit = (e: Event) => {
+      e.preventDefault();
+    };
+
+    root.addEventListener("click", cancelLinkActivation, true);
+    root.addEventListener("submit", cancelSubmit, true);
+    return () => {
+      root.removeEventListener("click", cancelLinkActivation, true);
+      root.removeEventListener("submit", cancelSubmit, true);
+    };
+  }, [view]);
+
   // Suscripción al catálogo lazy de simple-icons (docs/34 §F11a): fuerza un
   // re-render cuando el barrel termina de cargar, para que el canvas y la
   // preview del picker (que leen `simpleIconsCatalog.get()` de forma

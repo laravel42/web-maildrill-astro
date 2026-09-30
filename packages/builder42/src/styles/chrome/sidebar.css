@@ -13,7 +13,20 @@
  * mientras está a 0 su contenido tiene que quedar recortado o se derramaría
  * sobre el canvas. */
 .pbx-body--inspector-collapsed .pbx-inspector {
-  overflow: hidden;
+  /* Con el inspector cerrado la pista del grid mide 0, pero el `<aside>`
+   * (ítem flex del slot, estirado por `align-items: stretch`) redondea a ~1px
+   * en el borde derecho del viewport, y ese 1px basta para abrir una barra de
+   * scroll horizontal en todo el builder; con scrollbars de SO visibles esa
+   * barra roba alto y arrastra una vertical detrás (peor aún con el shell a
+   * `99vh`). `overflow: hidden` + `width/min-width: 0` no lo evitan porque el
+   * estiramiento del eje transversal gana al `width` y el redondeo del track
+   * a 0 deja 1px residual. Sacar el `<aside>` del flujo con `display: none`
+   * elimina ese 1px por completo. NO afecta al `.pbx-panel-handle`: vive como
+   * HERMANO del `<aside>` dentro del slot (no como hijo), así que la pestaña
+   * para reabrir sigue visible. El deslizamiento del panel lo anima
+   * `grid-template-columns` en `.pbx-body`; el contenido interno ya quedaba
+   * recortado durante ese colapso, así que ocultarlo no cambia lo percibido. */
+  display: none;
 }
 
 /* El sidebar en "compact" NO colapsa: desde la homologación fase B su modo

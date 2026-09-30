@@ -75,6 +75,14 @@
 
   .pbx-panel-slot--left .pbx-panel-handle {
     position: fixed;
+    /* Must stay above .pbx-sidebar's z-index: 40 in this block — the
+     * handle is the only control that reopens it, and its base rule
+     * (chrome/sidebar.css) only carries z-index: 10, which the fixed
+     * panel above it would otherwise bury (measured: a hit test at the
+     * handle's centre at 980px returned the panel's own content, never
+     * .pbx-panel-handle). 41 rather than a round 50, to keep the
+     * relationship to the panel's 40 legible. */
+    z-index: 41;
     top: 50%;
     left: 280px;
     transform: translateY(-50%) translateX(-100%);
@@ -87,6 +95,10 @@
 
   .pbx-panel-slot--right .pbx-panel-handle {
     position: fixed;
+    /* Same reasoning as the left handle above: must stay above
+     * .pbx-inspector's z-index: 40 in this block, or the panel paints
+     * over its own toggle. */
+    z-index: 41;
     top: 50%;
     left: calc(100% - 310px);
     transform: translateY(-50%) translateX(100%);
@@ -94,7 +106,15 @@
   }
 
   .pbx-panel-slot--right.pbx-panel-slot--collapsed .pbx-panel-handle {
+    /* left: 100% combined with the inherited translateX(100%) above would
+     * push the handle a full width past the viewport's right edge
+     * (measured: rect.left 1002 at a 980px-wide viewport, inViewport:
+     * false) — there would be no visible way to reopen a collapsed
+     * inspector at a narrow width. Overriding the transform to
+     * translateX(-100%) instead mirrors the left handle: it puts this
+     * handle's right edge exactly on the viewport's right edge. */
     left: 100%;
+    transform: translateY(-50%) translateX(-100%);
   }
 }
 

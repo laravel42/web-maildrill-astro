@@ -416,6 +416,23 @@
 .pbx-layers__row--hidden .pbx-layers__icon {
   opacity: 0.4;
 }
+/* Fila de la raíz REAL del documento (D-F29.9): nunca es la banda deletable
+   de la plantilla — esa vive un nivel abajo, en su único hijo. Sin fondo de
+   selección (no aporta nada: el canvas nunca la resalta) y sin cursor de
+   click en el label (ya no es un <button>, ver LayersTree.tsx) para que se
+   perciba de entrada como "no interactiva", distinto del itálico gris que ya
+   usa `--row--hidden` para no mezclar los dos significados. */
+.pbx-layers__row--root {
+  opacity: 0.7;
+}
+.pbx-layers__row--root:hover {
+  background: transparent;
+}
+.pbx-layers__label--root {
+  cursor: default;
+  font-style: italic;
+  color: var(--pb-chrome-text-muted);
+}
 .pbx-layers__toggle {
   display: inline-flex;
   align-items: center;

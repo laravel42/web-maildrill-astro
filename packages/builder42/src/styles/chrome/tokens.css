@@ -160,6 +160,17 @@
   --pb-chrome-danger-strong-bg:      #2a1215;
   --pb-chrome-danger-strong-border:  #7f1d1d;
 
+  /* Acento sobre superficie SIEMPRE oscura (docs/hardcoded-content-audit.md
+     Parte 3, hallazgos #3/#4) — mismo criterio que --pb-chrome-danger-on-dark
+     arriba: `.pbx-code h3` (visor Código/JSON) y `.pbx-token-add__btn` (editor
+     de Design Tokens) viven sobre `--pb-chrome-bg`/`--pb-chrome-bg-alt`, la
+     banda que NO sigue `data-theme` (código/header, docs H7) — así que este
+     token tampoco se reasigna en dark.css, igual que su hermano danger.
+     blue-300, ya usado en ambos sitios antes de este token; verificado
+     9.90:1 sobre --pb-chrome-bg (#0f172a) y 8.11:1 sobre --pb-chrome-bg-alt
+     (#1e293b) — ambos ≥7:1, con más margen que el rojo equivalente. */
+  --pb-chrome-accent-on-dark:        #93c5fd;  /* blue-300 — 8.11–9.90:1 sobre la banda siempre oscura */
+
   /* Estados semánticos (badges/notices) — pares texto + fondo sutil (+ borde) */
   --pb-chrome-warning:         var(--warning-strong, #b45309);
   --pb-chrome-warning-subtle:  var(--warning-bg, #fef3c7);

@@ -59,8 +59,24 @@
   grid-template-columns: 168px 1fr 0;
 }
 
-/* Preview (docs/21 §3.5): sin Sidebar/Inspector → una sola columna full-width. */
-.pbx-body--preview {
+/* Preview (docs/21 §3.5): sin Sidebar/Inspector → una sola columna full-width.
+ *
+ * Los tres selectores compuestos NO son redundantes: `--preview` convive en
+ * el mismo `class` con los modificadores de colapso (los tres se empujan por
+ * separado en `Builder42Editor.tsx` / `app/App.tsx`, y el colapso persiste en
+ * preferencias, así que sobrevive al cambio de vista). Con un solo
+ * `.pbx-body--preview` (0,1,0) la combinación
+ * `.pbx-body--sidebar-compact.pbx-body--inspector-collapsed` (0,2,0) ganaba
+ * por especificidad y preview quedaba con `168px 1fr 0` mientras el árbol
+ * solo renderiza `.pbx-canvas-col`: el canvas caía en la primera pista de
+ * 168px, pegado a la izquierda — bug reportado (con un solo panel colapsado
+ * no se veía porque ahí empata a 0,1,0 y gana este bloque por orden de
+ * aparición). `narrow.css` ya resolvía el caso <1024px con esta misma forma
+ * explícita; no dependas del orden de las reglas para esto. */
+.pbx-body--preview,
+.pbx-body--preview.pbx-body--sidebar-compact,
+.pbx-body--preview.pbx-body--inspector-collapsed,
+.pbx-body--preview.pbx-body--sidebar-compact.pbx-body--inspector-collapsed {
   grid-template-columns: 1fr;
 }
 

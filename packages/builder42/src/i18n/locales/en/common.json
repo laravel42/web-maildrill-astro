@@ -261,11 +261,16 @@
     "fontSize": "Size",
     "fontWeight": "Weight",
     "lineHeight": "Line height",
+    "letterSpacing": "Tracking",
+    "textTransform": "Letter case",
     "textAlign": "Alignment",
     "textDecoration": "Decoration",
     "boxShadow": "Shadow",
     "cursor": "Cursor",
-    "outline": "Outline"
+    "outline": "Outline",
+    "rotate": "Rotation",
+    "scale": "Scale",
+    "transition": "Transition"
   },
   "errorBoundary": {
     "renderError": "Node render error",
