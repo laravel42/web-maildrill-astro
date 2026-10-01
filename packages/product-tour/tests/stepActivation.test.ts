@@ -58,6 +58,32 @@ function popoverTitle(): string | null | undefined {
   return document.querySelector('.driver-popover-title')?.textContent;
 }
 
+/**
+ * Espera a que el popover muestre `expected`, sondeando, en vez de dar por hecho que un sleep
+ * fijo ha bastado. Sustituye a `expect(popoverTitle()).toBe(...)` en este archivo.
+ *
+ * `flushMicrotasks()` de arriba es en realidad un `setTimeout` de 120ms, elegido para
+ * "sobrevivir con margen" al tick real de ~50ms que D50b metió en cada transición — y ese
+ * margen es justo el problema: en cuanto los 15 archivos del paquete corren en paralelo y hay
+ * contención real, 120ms no alcanzan y el archivo falla con cosas como
+ * "expected 'Step B' to be 'Step C'" aunque el motor esté perfecto (medido: aislado 3/3 verde,
+ * en suite completa rojo intermitente).
+ *
+ * Sondear es estrictamente mejor que dormir: si el título ya es el esperado vuelve en el primer
+ * intento, así que no ralentiza los casos que comprueban que algo NO cambió; si la transición
+ * tarda más de lo previsto, espera lo que haga falta; y si nunca llega, la aserción final falla
+ * mostrando el valor real.
+ */
+async function waitForTitle(expected: string | null | undefined, budgetMs = 3000): Promise<void> {
+  const deadline = Date.now() + budgetMs;
+  while (Date.now() < deadline) {
+    if (popoverTitle() === expected) return;
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  // Aserción directa a propósito (no `waitForTitle`): es el fallo final, con el valor real.
+  expect(popoverTitle()).toBe(expected);
+}
+
 function dispatchArrow(key: 'ArrowRight' | 'ArrowLeft') {
   const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
   window.dispatchEvent(event);
@@ -134,7 +160,7 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
     await waitForOverlay();
 
     expect(log).toEqual(['before(0)']);
-    expect(popoverTitle()).toBe('Step A');
+    await waitForTitle('Step A');
 
     tour.stop();
   });
@@ -152,7 +178,7 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
     await flushMicrotasks();
 
     expect(log).toEqual(['after(0)', 'before(1)']);
-    expect(popoverTitle()).toBe('Step B');
+    await waitForTitle('Step B');
 
     tour.stop();
   });
@@ -166,14 +192,14 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
     await waitForOverlay();
     dispatchArrow('ArrowRight');
     await flushMicrotasks();
-    expect(popoverTitle()).toBe('Step B');
+    await waitForTitle('Step B');
     log.length = 0;
 
     dispatchArrow('ArrowLeft');
     await flushMicrotasks();
 
     expect(log).toEqual(['after(1)', 'before(0)']);
-    expect(popoverTitle()).toBe('Step A');
+    await waitForTitle('Step A');
 
     tour.stop();
   });
@@ -191,7 +217,7 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
     await flushMicrotasks();
 
     expect(log).toEqual(['after(0)', 'before(1)']);
-    expect(popoverTitle()).toBe('Step B');
+    await waitForTitle('Step B');
 
     tour.stop();
   });
@@ -246,7 +272,7 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
     await flushMicrotasks();
     dispatchArrow('ArrowRight');
     await flushMicrotasks();
-    expect(popoverTitle()).toBe('Step C');
+    await waitForTitle('Step C');
 
     log.length = 0;
     onEvent.mockClear();
@@ -306,7 +332,7 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
 
     await tour.start();
     await waitForOverlay();
-    expect(popoverTitle()).toBe('First');
+    await waitForTitle('First');
     log.length = 0;
 
     dispatchArrow('ArrowRight');
@@ -315,7 +341,7 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
     await new Promise((resolve) => setTimeout(resolve, 150));
 
     // Landed on "Third" — the missing-anchor step was skipped by driver.js itself.
-    expect(popoverTitle()).toBe('Third');
+    await waitForTitle('Third');
     // The step the tour actually landed on (Third) had its before() run — via the
     // reconciliation path in transitionTo(): driver.js's getActiveIndex() didn't match the
     // intended index (1, the missing step) once the skip happened, so this package ran the
@@ -338,14 +364,14 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
     await waitForOverlay();
     clickNextButton();
     await flushMicrotasks();
-    expect(popoverTitle()).toBe('Step B');
+    await waitForTitle('Step B');
     log.length = 0;
 
     clickPrevButton();
     await flushMicrotasks();
 
     expect(log).toEqual(['after(1)', 'before(0)']);
-    expect(popoverTitle()).toBe('Step A');
+    await waitForTitle('Step A');
 
     tour.stop();
   });
@@ -363,7 +389,7 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
     await flushMicrotasks();
 
     expect(log).toEqual([]);
-    expect(popoverTitle()).toBe('Step A');
+    await waitForTitle('Step A');
 
     tour.stop();
   });
@@ -379,14 +405,14 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
     await flushMicrotasks();
     dispatchArrow('ArrowRight');
     await flushMicrotasks();
-    expect(popoverTitle()).toBe('Step C');
+    await waitForTitle('Step C');
     log.length = 0;
 
     dispatchArrow('ArrowRight');
     await flushMicrotasks();
 
     expect(log).toEqual([]);
-    expect(popoverTitle()).toBe('Step C');
+    await waitForTitle('Step C');
     expect(tour.isActive()).toBe(true);
 
     tour.stop();
@@ -406,7 +432,7 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
     await flushMicrotasks();
     dispatchArrow('ArrowRight');
     await flushMicrotasks();
-    expect(popoverTitle()).toBe('Step C');
+    await waitForTitle('Step C');
     expect(log).toEqual(['after(0)', 'before(1)', 'after(1)', 'before(2)']);
 
     log.length = 0;
@@ -414,7 +440,7 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
     await flushMicrotasks();
     dispatchArrow('ArrowLeft');
     await flushMicrotasks();
-    expect(popoverTitle()).toBe('Step A');
+    await waitForTitle('Step A');
     expect(log).toEqual(['after(2)', 'before(1)', 'after(1)', 'before(0)']);
 
     tour.stop();
@@ -446,7 +472,7 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
 
     await tour.start();
     await waitForOverlay();
-    expect(popoverTitle()).toBe('Lazy A');
+    await waitForTitle('Lazy A');
 
     dispatchArrow('ArrowRight');
     await flushMicrotasks();
@@ -455,7 +481,7 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
 
-    expect(popoverTitle()).toBe('Lazy B');
+    await waitForTitle('Lazy B');
     expect(tour.isActive()).toBe(true);
 
     tour.stop();
@@ -557,7 +583,7 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
     try {
       await tour.start();
       await waitForOverlay();
-      expect(popoverTitle()).toBe('Step A');
+      await waitForTitle('Step A');
 
       // Kick off the ArrowRight transition — it will suspend on the incoming step's before(),
       // which we do not resolve yet.
@@ -663,7 +689,7 @@ describe('createTour — before() runs at step activation, not at start() (D35, 
     try {
       await tour.start();
       await waitForOverlay();
-      expect(popoverTitle()).toBe('Only');
+      await waitForTitle('Only');
 
       // Kick off the transition towards the step whose anchor never appears — this lands
       // `transitionTo()` in its reconciliation poll loop.

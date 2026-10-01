@@ -41,27 +41,109 @@ export async function markEmailTourSeen(page: Page): Promise<void> {
 }
 
 /**
- * Clears Builder42's tour state (`pb:tourSeen` / `pb:tourVersion`, the
- * `useLocalConfig` keys `createConfigBackedTourPersistence` bridges onto —
- * see `packages/builder42/src/app/tour/useBuilder42Tour.ts`) and forces
- * `pb:experienceLevelChosen` to `true` so the tour is eligible to auto-start
- * without `OnboardingExperienceModal` competing for the same first paint
- * (§4 F4 acceptance: "must never overlap").
+ * Clears Builder42's tour state and forces `pb:experienceLevelChosen` to `true` so the
+ * tour is eligible to auto-start without `OnboardingExperienceModal` competing for the
+ * same first paint (§4 F4 acceptance: "must never overlap").
+ *
+ * Borra `pb:tours` (la fuente de verdad, ver `markLandingTourSeen`) y, por higiene, las
+ * cuatro claves planas legacy que algún navegador desplegado todavía puede llevar
+ * escritas (`useLocalConfig.ts`, D-F29.18) — no las lee nadie, pero dejarlas puestas
+ * mientras el test dice "primer uso" es engañoso.
  */
 export async function resetLandingTourState(page: Page): Promise<void> {
   await page.addInitScript(() => {
+    window.localStorage.removeItem('pb:tours');
     window.localStorage.removeItem('pb:tourSeen');
     window.localStorage.removeItem('pb:tourVersion');
+    window.localStorage.removeItem('pb:tourCompleted');
+    window.localStorage.removeItem('pb:tourLastStepIndex');
     window.localStorage.setItem('pb:experienceLevelChosen', JSON.stringify(true));
   });
 }
 
-/** Marks the landing tour as already seen, before any navigation. */
+/**
+ * Los cuatro tours de Builder42, en el MISMO orden que `BUILDER42_TOUR_ORDER`
+ * (`packages/builder42/src/app/tour/tourSteps.ts`, cadena F29 T2a) — que es el orden en
+ * el que `TourChooserModal` pinta sus botones. El índice es lo que usa
+ * `startLandingTour()` para elegir, en vez del texto del botón, que es i18n.
+ */
+export const LANDING_TOUR_ORDER = ['overview', 'library', 'canvas', 'rightPanel'] as const;
+
+export type LandingTourName = (typeof LANDING_TOUR_ORDER)[number];
+
+/** `TOUR_VERSION` en `useBuilder42Tour.ts`. Un valor distinto se lee como "no visto". */
+const LANDING_TOUR_VERSION = 1;
+
+/**
+ * Marca los cuatro tours como ya vistos Y COMPLETADOS, antes de cualquier navegación, de
+ * modo que nada auto-arranque en la ruta del editor.
+ *
+ * TRAMPA 1 — la clave. Hasta la cadena F29 esto se escribía en las claves planas
+ * `pb:tourSeen`/`pb:tourVersion`. Desde T1 (D-F29.17/.18) esas claves son LEGACY: siguen
+ * declaradas en `ConfigMap` porque hay navegadores con ellas escritas, pero
+ * `useBuilder42Tour.ts` ya no las lee ni las escribe — persiste en el record `tours`
+ * (`pb:tours` en `localStorage`), una entrada por `tourId`. Escribir las viejas no suprime
+ * nada y el tour arranca igual.
+ *
+ * TRAMPA 2 — `completed`, no solo `seen`. `shouldAutoStartTour()` suprime con
+ * `!(persistedSeen && persistedCompleted)`: un tour visto pero NO completado (cerrado a
+ * medias con Escape, click fuera, × o cierre de pestaña) **debe** volver a auto-arrancar en
+ * el siguiente mount, porque `start()` reanuda desde `lastStepIndex`. Así que "ya visto" en
+ * el sentido de este helper es "el visitante lo terminó con Listo" → `completed: true`.
+ * `lastStepIndex` se omite, igual que hace `markCompleted()` del bridge: un tour terminado
+ * no tiene progreso a medias que reanudar.
+ *
+ * TRAMPA 3 — por qué los CUATRO y no solo `builder42.overview` (el único que auto-arranca).
+ * `zoneTourTriggers.ts` arma los tours de zona justo cuando el overview está `completed` y
+ * el de esa zona no lo está (D-F29.11). Marcando los cuatro, ningún disparador de zona
+ * puede colarse en mitad de una aserción.
+ */
 export async function markLandingTourSeen(page: Page): Promise<void> {
-  await page.addInitScript(() => {
-    window.localStorage.setItem('pb:tourSeen', JSON.stringify(true));
-    window.localStorage.setItem('pb:tourVersion', JSON.stringify(1));
-    window.localStorage.setItem('pb:experienceLevelChosen', JSON.stringify(true));
+  await page.addInitScript(
+    ({ version, ids }) => {
+      const tours: Record<string, { seen: boolean; completed: boolean; version: number }> = {};
+      for (const id of ids) {
+        tours[id] = { seen: true, completed: true, version };
+      }
+      window.localStorage.setItem('pb:tours', JSON.stringify(tours));
+      window.localStorage.setItem('pb:experienceLevelChosen', JSON.stringify(true));
+    },
+    {
+      version: LANDING_TOUR_VERSION,
+      ids: LANDING_TOUR_ORDER.map((name) => `builder42.${name}`),
+    },
+  );
+}
+
+/** El selector de tours (`TourChooserModal`), con sus cuatro opciones. */
+export function landingTourChooserOptions(page: Page): Locator {
+  return page.locator('.pbx-onboarding-modal__options .pbx-onboarding-modal__option');
+}
+
+/**
+ * Abre el control "tour otra vez" de la toolbar del host y elige `tour` en el selector.
+ *
+ * Desde D-F29.27 ese botón ya NO relanza el overview directamente: abre
+ * `TourChooserModal` para que el visitante elija entre los cuatro tours. Es la única vía
+ * de arrancar un tour concreto desde un e2e — `startBuilder42Tour(tourId)` es un bridge
+ * de ámbito de módulo, no está expuesto en `window`.
+ *
+ * La opción se elige por ÍNDICE (`LANDING_TOUR_ORDER`), no por el texto del botón: la
+ * copy sale de `tour.json` vía i18next y esta ruta ha renderizado en más de un idioma
+ * (B33), así que fijar el texto volvería el test frágil sin ganar nada.
+ */
+export async function startLandingTour(page: Page, tour: LandingTourName): Promise<void> {
+  await page.getByRole('button', { name: 'View the guided tour' }).click();
+
+  const options = landingTourChooserOptions(page);
+  await expect(options, 'the tour chooser lists the four tours').toHaveCount(
+    LANDING_TOUR_ORDER.length,
+    { timeout: 10_000 },
+  );
+
+  await options.nth(LANDING_TOUR_ORDER.indexOf(tour)).click();
+  await expect(tourPopover(page), `the "${tour}" tour started`).toHaveCount(1, {
+    timeout: 10_000,
   });
 }
 

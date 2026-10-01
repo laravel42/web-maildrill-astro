@@ -3,10 +3,12 @@ import { gotoApp } from './helpers/app';
 import { blockOutbound } from './helpers/no-outbound';
 import {
   expectTourPopoverInsideViewport,
+  landingTourChooserOptions,
   markEmailTourSeen,
   markLandingTourSeen,
   resetEmailTourState,
   resetLandingTourState,
+  startLandingTour,
   tourNextButton,
   tourPopover,
 } from './helpers/tour';
@@ -294,20 +296,29 @@ test.describe('email editor tour (/dashboard/templates/email)', () => {
     const popover = tourPopover(page);
     await expect(popover, 'tour popover appears on first visit').toHaveCount(1, { timeout: 45_000 });
 
-    // Walk the real "Next" button until the tour's own popover is visible on the
-    // `eb.header.actions` step — the one that highlights the "Send test" button — instead
-    // of racing a fixed timeout against the lazily-imported popover's mount time (the
+    // Walk to the `eb.header.actions` step — the one that highlights the "Send test" button —
+    // instead of racing a fixed timeout against the lazily-imported popover's mount time (the
     // actual defect this test targets, per the task's measured 5–6.5s mount window).
-    const nextBtn = tourNextButton(page);
+    //
+    // Se avanza con `ArrowRight`, NO con el botón "Next" del popover, por lo que este archivo
+    // ya documenta más arriba para los tests del landing: el routing del propio botón de
+    // driver.js recalcula en el momento del click si cree que hay un paso siguiente alcanzable
+    // y puede acabar en `onDoneClick` en vez de `onNextClick` (B35/B36). Medido en esta ruta:
+    // `eb.header.actions` es el paso 15 DE 15 — el último, con el botón ya en "Done" — y
+    // recorrerlo a base de clicks cerraba el tour a mitad de camino, dejando el popover a 0 y
+    // esta prueba roja sin que D11 tuviera nada que ver. `ArrowRight` lo recorre entero sin
+    // destruirlo nunca (lo gestiona el listener propio de `@md/product-tour`, D18/D21).
+    //
+    // El presupuesto es holgado a propósito (medido: ~18 pulsaciones para 15 pasos) porque
+    // alguna transición en vuelo se come una pulsación y la repetición de flecha es una
+    // entrada normal y soportada, no un parche para un defecto.
     const sendTest = page.getByRole('button', { name: 'Send test' });
     const highlightedActions = page.locator('.driver-active-element').and(sendTest);
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 30; i++) {
       if (await highlightedActions.count().catch(() => 0) > 0) break;
       await expect(popover, `tour popover visible mid-walk (step ${i})`).toHaveCount(1);
-      await expect(nextBtn).toBeVisible();
-      const isDone = await nextBtn.evaluate((el) => el.classList.contains('driver-popover-done-btn'));
-      await nextBtn.click({ timeout: 60_000 });
-      if (isDone) break;
+      await page.keyboard.press('ArrowRight');
+      await page.waitForTimeout(250);
     }
 
     // The tour popover is now, deterministically, on the step that highlights "Send test" —
@@ -457,7 +468,7 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
     await expect(tourPopover(page)).toHaveCount(0);
   });
 
-  test('relaunches from the toolbar tour-restart button', async ({ page }) => {
+  test('the toolbar tour-restart button opens the tour chooser, and picking one starts it', async ({ page }) => {
     await markLandingTourSeen(page);
     await gotoApp(page, '/dashboard/landings/editor');
     await expect(page.locator('[data-tour="pbx.canvas.frame"]')).toBeVisible({ timeout: 45_000 });
@@ -467,10 +478,26 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
     // (`HostCanvasToolbar`). `title`/`aria-label` resolve to header.json's
     // `restartTour.label` ("View the guided tour"), the same copy ProfileMenu's
     // standalone-only entry uses, next to undo/redo in the canvas toolbar.
+    //
+    // Desde D-F29.27 este botón NO relanza el overview directamente: abre
+    // `TourChooserModal` (`app/tour/TourChooserModal.tsx`) para que el visitante elija
+    // entre los cuatro tours de la cadena F29. Así que el contrato tiene dos mitades —
+    // el botón abre el selector, y elegir una opción arranca ESE tour — y las dos se
+    // comprueban aquí.
     await page.getByRole('button', { name: 'View the guided tour' }).click();
+
+    const options = landingTourChooserOptions(page);
+    await expect(options, 'the button opens the chooser with the four tours').toHaveCount(4, {
+      timeout: 10_000,
+    });
+    // Abrir el selector por sí solo no arranca nada (D-F29.26: descartarlo no inicia tour).
+    await expect(tourPopover(page), 'opening the chooser starts no tour by itself').toHaveCount(0);
+
+    // Primera opción = `overview`, el orden de `BUILDER42_TOUR_ORDER`.
+    await options.first().click();
     await expect(
       tourPopover(page),
-      'toolbar button relaunches the tour',
+      'picking a tour in the chooser starts it',
     ).toHaveCount(1, { timeout: 10_000 });
   });
 
@@ -620,6 +647,19 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
   // --- T6 — e2e coverage for T1–T5 (D37–D43): the landing tour's view/screen-size split, ---
   // --- the Templates-tab step, and the site-section steps (layers/pages/languages). ------
   //
+  // CADENA F29: estos pasos ya NO están todos en el tour que auto-arranca. El tour plano
+  // único se partió en cuatro (`BUILDER42_TOUR_IDS`, D-F29.20) y el overview se quedó con
+  // cuatro pasos (headerIdentity, sidebarTabs, canvasFrame, inspectorTabs). El reparto que
+  // usan los tests de abajo:
+  //   · `library`    → sidebarPalette, sidebarDragHint, sidebarTemplates
+  //   · `canvas`     → canvasFrame, settingsLayers, canvasNodeActions, canvasInlineText,
+  //                    canvasDragNode, toolbarViewport, toolbarViews, toolbarHistory
+  //   · `rightPanel` → inspectorTabs, inspectorBreakpoints, settingsTabs, settingsPages,
+  //                    settingsLanguages, settingsTheme, pagesBreadcrumb
+  // Así que cada test suprime el auto-arranque (`markLandingTourSeen`) y abre el tour que
+  // contiene su ancla con `startLandingTour()`, en vez de dar por hecho que basta navegar
+  // hacia delante desde el primer paso.
+  //
   // Navigation in every test below uses `ArrowRight` (this package's own keyboard handler,
   // D18/D35/D43 in `createTour.ts`), never clicking the popover's own Next/Done button:
   // driver.js's built-in button-click routing recomputes, at click time, whether it believes
@@ -650,52 +690,96 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
    * that `anchor`'s own element is (still) actively highlighted, which the class also proves —
    * scoping the query to `anchor` avoids the accumulation making that unprovable.
    */
-  async function waitForActiveElement(page: import('@playwright/test').Page, anchor: string): Promise<void> {
-    await expect(page.locator(`.driver-active-element[data-tour="${anchor}"]`)).toHaveCount(1, {
+  async function waitForActiveElement(
+    page: import('@playwright/test').Page,
+    anchor: string,
+    message?: string,
+  ): Promise<void> {
+    await expect(
+      page.locator(`.driver-active-element[data-tour="${anchor}"]`),
+      message,
+    ).toHaveCount(1, {
       timeout: 8_000,
     });
   }
 
   /**
-   * Presses ArrowRight then waits for the tour to settle on `anchor`, RETRYING the keypress
-   * if the first press's transition does not land within a short window. Needed because these
-   * tests fire ArrowRight in rapid succession with no natural user pacing between presses —
-   * occasionally faster than a still-in-flight previous transition's own D43 anchor wait (or a
-   * React re-render it triggered) has settled, which this package's own `transitionTo()` design
-   * already tolerates for real users (each transition re-validates liveness after every
-   * `await`) but can occasionally leave a single ArrowRight without an observable effect if it
-   * arrives mid-transition. A second press once the first is idle is a normal, supported input
-   * (arrow-key repeat), not a workaround for a defect — this is not the B35/B36 click-routing
-   * bug (arrows never consult driver.js's `isLastStep()`/`L()`), just ordinary UI test timing.
+   * Avanza con `ArrowRight` hasta que `anchor` quede resaltado, probando como máximo
+   * `budget` pasos, y falla con la lista de anclas visitadas si no llega.
+   *
+   * Por qué esto y no una lista fija de anclas intermedias (que es lo que hacían estos
+   * tests antes): la cadena F29 partió el tour plano único en CUATRO tours
+   * (`BUILDER42_TOUR_IDS`) con un mapeo de anclas por tour (D-F29.20), y dentro de cada
+   * tour hay pasos con `when()` y `skipMissingElement: true` que pueden no existir según
+   * el estado del documento (p. ej. los de canvas necesitan nodo seleccionable). Fijar la
+   * secuencia exacta volvía a romper el test en cada reordenación aunque el
+   * comportamiento que se quiere probar siguiera correcto; lo que estas pruebas tienen que
+   * demostrar es "el paso de X resalta X y deja el panel/tab correcto abierto", no en qué
+   * posición cae X.
    */
-  /**
-   * Presses ArrowRight then waits for the tour to settle on `anchor`. Retries the keypress
-   * once if the first press's transition does not land within a short window — arrow-key
-   * repeat is a normal, supported input, not a workaround for a defect; this is not the
-   * B35/B36 click-routing bug (arrows never consult driver.js's `isLastStep()`/`L()`).
-   */
-  async function advanceTourTo(page: import('@playwright/test').Page, anchor: string): Promise<void> {
-    await page.keyboard.press('ArrowRight');
-    try {
-      await waitForActiveElement(page, anchor);
-    } catch {
+  async function advanceUntilAnchor(
+    page: import('@playwright/test').Page,
+    anchor: string,
+    budget = 12,
+  ): Promise<void> {
+    const visited: string[] = [];
+
+    for (let i = 0; i < budget; i++) {
+      const active = await page
+        .locator('.driver-popover.md-tour')
+        .count()
+        .then(async (count) =>
+          count > 0
+            ? await page.evaluate(
+                () =>
+                  document
+                    .querySelector('.driver-active-element[data-tour]')
+                    ?.getAttribute('data-tour') ?? null,
+              )
+            : null,
+        );
+
+      if (active) {
+        if (active === anchor) return;
+        if (visited[visited.length - 1] !== active) visited.push(active);
+      }
+
+      await expect(
+        tourPopover(page),
+        `the tour is still open while looking for "${anchor}" (visited ${JSON.stringify(visited)})`,
+      ).toHaveCount(1);
+
       await page.keyboard.press('ArrowRight');
-      await waitForActiveElement(page, anchor);
+      await page.waitForTimeout(250);
     }
+
+    // Último intento explícito, para que el mensaje de fallo sea el de la aserción de
+    // ancla (con su propio polling) y no un genérico "se acabó el presupuesto".
+    await waitForActiveElement(
+      page,
+      anchor,
+      `the tour reached "${anchor}" within ${budget} steps (visited ${JSON.stringify(visited)})`,
+    );
   }
 
   test('T6: the view-mode step highlights only Edit/Preview, and the screen-size step highlights only the viewport switch (D37)', async ({
     page,
   }) => {
-    await resetLandingTourState(page);
+    test.setTimeout(60_000);
+    // `pbx.toolbar.views` y `pbx.toolbar.viewport` viven en el tour CANVAS desde la cadena
+    // F29 (D-F29.20), no en el que auto-arranca: el overview son cuatro pasos
+    // (headerIdentity, sidebarTabs, canvasFrame, inspectorTabs). Así que se suprime el
+    // auto-arranque y se abre el tour que de verdad contiene estas dos anclas.
+    await markLandingTourSeen(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await gotoApp(page, '/dashboard/landings/editor');
+    await expect(page.locator('[data-tour="pbx.canvas.frame"]')).toBeVisible({ timeout: 45_000 });
 
-    const popover = tourPopover(page);
-    await expect(popover, 'tour popover appears on first visit').toHaveCount(1, { timeout: 45_000 });
+    await startLandingTour(page, 'canvas');
 
-    // Step 1 (header identity) → step 2 (view mode).
-    await advanceTourTo(page, 'pbx.toolbar.views');
+    // Dentro del tour canvas el orden es viewport ANTES que views (D-F29.20) — de ahí que
+    // este test no fije posiciones y use `advanceUntilAnchor`.
+    await advanceUntilAnchor(page, 'pbx.toolbar.views');
 
     const highlightedViews = page.locator('.driver-active-element[data-tour="pbx.toolbar.views"]');
     // The Edit/Preview group is inside the highlighted element (structural check — labels are
@@ -705,8 +789,13 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
     // exactly this: `pbx.toolbar.views` used to wrap both).
     await expect(highlightedViews.locator('[data-tour="pbx.toolbar.viewport"]')).toHaveCount(0);
 
-    // Step 2 (view mode) → step 3 (screen size).
-    await advanceTourTo(page, 'pbx.toolbar.viewport');
+    // Y el recíproco, sobre el paso del selector de tamaño. Se vuelve a arrancar el tour
+    // en vez de retroceder: `viewport` queda ANTES de `views` en este tour, así que
+    // avanzar no vuelve a pasar por él.
+    await page.keyboard.press('Escape');
+    await expect(tourPopover(page)).toHaveCount(0);
+    await startLandingTour(page, 'canvas');
+    await advanceUntilAnchor(page, 'pbx.toolbar.viewport');
 
     const highlightedViewport = page.locator('.driver-active-element[data-tour="pbx.toolbar.viewport"]');
     // The screen-size step's highlighted element must not be (or contain) the Edit/Preview
@@ -719,25 +808,15 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
 
   test('T6: the Templates step really opens the sidebar Templates tab (not just highlights it)', async ({ page }) => {
     test.setTimeout(60_000);
-    await resetLandingTourState(page);
+    // `pbx.sidebar.templates` vive en el tour LIBRARY (D-F29.20): sidebarPalette →
+    // sidebarDragHint → sidebarTemplates.
+    await markLandingTourSeen(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await gotoApp(page, '/dashboard/landings/editor');
+    await expect(page.locator('[data-tour="pbx.canvas.frame"]')).toBeVisible({ timeout: 45_000 });
 
-    const popover = tourPopover(page);
-    await expect(popover, 'tour popover appears on first visit').toHaveCount(1, { timeout: 45_000 });
-
-    // header identity → views → viewport → history → sidebar tabs → palette → templates
-    const anchorsInOrder = [
-      'pbx.toolbar.views',
-      'pbx.toolbar.viewport',
-      'pbx.toolbar.history',
-      'pbx.sidebar.tabs',
-      'pbx.sidebar.palette',
-      'pbx.sidebar.templates',
-    ];
-    for (const anchor of anchorsInOrder) {
-      await advanceTourTo(page, anchor);
-    }
+    await startLandingTour(page, 'library');
+    await advanceUntilAnchor(page, 'pbx.sidebar.templates');
 
     // The step's own `before()` (T3's store seam for the sidebar tab, D38) must have actually
     // switched the sidebar to its Templates tab, not merely pointed the tour at an anchor that
@@ -749,38 +828,25 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
   test('T6: each site-section step (layers/pages/languages) reaches its anchor with the matching settings tab active (D39/D41)', async ({
     page,
   }) => {
-    test.setTimeout(60_000);
-    await resetLandingTourState(page);
+    test.setTimeout(90_000);
+    // Las tres secciones ya NO están en el mismo tour (D-F29.20): `settingsLayers` cayó en
+    // CANVAS, mientras `settingsPages` y `settingsLanguages` están en RIGHT PANEL. El
+    // contrato que importa (el `before()` del paso abre la tab correcta, D39/D41) es el
+    // mismo en los dos, así que se recorre cada tour por su lado.
+    await markLandingTourSeen(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await gotoApp(page, '/dashboard/landings/editor');
+    await expect(page.locator('[data-tour="pbx.canvas.frame"]')).toBeVisible({ timeout: 45_000 });
 
-    const popover = tourPopover(page);
-    await expect(popover, 'tour popover appears on first visit').toHaveCount(1, { timeout: 45_000 });
-
-    // Walk forward to pbx.settings.tabs (the section strip itself) — the fixed anchor order
-    // recorded in the log, up to and including the canvas step just before it.
-    const anchorsBeforeSettings = [
-      'pbx.toolbar.views',
-      'pbx.toolbar.viewport',
-      'pbx.toolbar.history',
-      'pbx.sidebar.tabs',
-      'pbx.sidebar.palette',
-      'pbx.sidebar.templates',
-      'pbx.canvas.frame',
-      'pbx.settings.tabs',
-    ];
-    for (const anchor of anchorsBeforeSettings) {
-      await advanceTourTo(page, anchor);
-    }
-
-    const sections: { anchor: string; tabId: string }[] = [
-      { anchor: 'pbx.settings.layers', tabId: 'layers' },
-      { anchor: 'pbx.settings.pages', tabId: 'pages' },
-      { anchor: 'pbx.settings.languages', tabId: 'languages' },
+    const sections: { tour: 'canvas' | 'rightPanel'; anchor: string; tabId: string }[] = [
+      { tour: 'canvas', anchor: 'pbx.settings.layers', tabId: 'layers' },
+      { tour: 'rightPanel', anchor: 'pbx.settings.pages', tabId: 'pages' },
+      { tour: 'rightPanel', anchor: 'pbx.settings.languages', tabId: 'languages' },
     ];
 
-    for (const { anchor, tabId } of sections) {
-      await advanceTourTo(page, anchor);
+    for (const { tour, anchor, tabId } of sections) {
+      await startLandingTour(page, tour);
+      await advanceUntilAnchor(page, anchor);
 
       // The section's own tab button (`SiteSettingsPanel.tsx`, `role="tab"`,
       // `id="pbx-site-tab-<id>"`) must report `aria-selected="true"` — proving the step's
@@ -790,6 +856,9 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
       // leave this anchor absent from the DOM entirely — this assertion is the direct proof
       // the RIGHT tab is the one that is open).
       await expect(page.locator(`#pbx-site-tab-${tabId}`)).toHaveAttribute('aria-selected', 'true');
+
+      await page.keyboard.press('Escape');
+      await expect(tourPopover(page)).toHaveCount(0);
     }
   });
 
@@ -810,18 +879,15 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
   test('T12: the overlay cut-out lines up with the highlighted element at every step, with content on the canvas (B46/D50)', async ({
     page,
   }) => {
-    test.setTimeout(120_000);
-    await resetLandingTourState(page);
+    test.setTimeout(180_000);
+    // Se suprime el auto-arranque en vez de descartarlo con Escape: el canvas hay que
+    // sembrarlo ANTES de medir (3 de los 4 pasos que B46 rompía solo existen con
+    // contenido), y los pasos que se miden viven en los tours CANVAS y RIGHT PANEL, no en
+    // el overview que auto-arranca (D-F29.20).
+    await markLandingTourSeen(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await gotoApp(page, '/dashboard/landings/editor');
-
-    const popover = tourPopover(page);
-    await expect(popover, 'tour popover appears on first visit').toHaveCount(1, { timeout: 45_000 });
-
-    // Dismiss the auto-started tour so the canvas can be seeded first — the reported step
-    // (and two others) only exist once the canvas has content.
-    await page.keyboard.press('Escape');
-    await expect(popover, 'Escape dismisses the auto-started tour').toHaveCount(0);
+    await expect(page.locator('[data-tour="pbx.canvas.frame"]')).toBeVisible({ timeout: 45_000 });
 
     const seedButton = page.locator('.pbx-canvas-empty__primary');
     if (await seedButton.count() > 0) {
@@ -831,91 +897,112 @@ test.describe('landing editor tour (/dashboard/landings/editor)', () => {
       });
     }
 
-    // Relaunch from the toolbar's restart control — same locator the existing
-    // "relaunches from the toolbar tour-restart button" test above uses.
-    await page.getByRole('button', { name: 'View the guided tour' }).click();
-    await expect(popover, 'toolbar button relaunches the tour').toHaveCount(1, { timeout: 10_000 });
-
-    const nextBtn = tourNextButton(page);
-    const progressText = popover.locator('.driver-popover-progress-text');
-    const initialProgress = (await progressText.textContent())?.trim() ?? '';
-    const totalSteps = Number(initialProgress.match(/of\s+(\d+)/)?.[1] ?? 20);
-    const maxIterations = totalSteps + 5;
-
     const visitedAnchors: string[] = [];
 
-    for (let i = 0; i < maxIterations; i++) {
-      await expect(popover, `exactly one popover mid-walk (step ${i})`).toHaveCount(1);
-      await expect(nextBtn).toBeVisible();
+    /**
+     * Recorre `tour` entero comprobando, en CADA paso, que el hueco del overlay encuadra
+     * al elemento resaltado. Antes esto era un único recorrido del tour plano; con el
+     * reparto de F29 las anclas que B46 rompía quedaron en dos tours distintos, así que se
+     * recorren los dos y se acumulan las anclas visitadas.
+     */
+    async function walkTourMeasuringStage(tour: 'canvas' | 'rightPanel'): Promise<void> {
+      await startLandingTour(page, tour);
 
-      // Let the step settle (matches this file's own convention of a short pause after a
-      // transition before measuring — see the D36 popover-position tests above) before
-      // reading either rect: B46 was specifically a stale-measurement-at-mount defect, so
-      // reading too early would risk masking exactly the regression this test exists to
-      // catch instead of exercising the engine's own settle path.
-      await page.waitForTimeout(150);
+      const popover = tourPopover(page);
+      const nextBtn = tourNextButton(page);
+      const progressText = popover.locator('.driver-popover-progress-text');
+      const initialProgress = (await progressText.textContent())?.trim() ?? '';
+      const totalSteps = Number(initialProgress.match(/of\s+(\d+)/)?.[1] ?? 20);
+      const maxIterations = totalSteps + 5;
 
-      const active = page.locator('.driver-active-element');
-      await expect(active, `exactly one highlighted element mid-walk (step ${i})`).toHaveCount(1);
+      for (let i = 0; i < maxIterations; i++) {
+        await expect(popover, `exactly one popover mid-walk (${tour} step ${i})`).toHaveCount(1);
+        await expect(nextBtn).toBeVisible();
 
-      const measured = await page.evaluate(() => {
-        const el = document.querySelector('.driver-active-element');
-        const overlay = document.querySelector('.driver-overlay path');
-        if (!el || !overlay) return null;
-        const rect = el.getBoundingClientRect();
-        const d = overlay.getAttribute('d') ?? '';
-        // `d` holds TWO subpaths — the full-viewport rect first, then the cut-out — so the
-        // cut-out is the SECOND `M` command, not the first. `M<x>,<y> h<w> a5,5 0 0 1 5,5
-        // v<h> …` on that second subpath gives the stage's own x/y/w/h directly (the
-        // `a5,5 0 0 1 5,5` corner arcs are the rounding, not additional size). Coordinates
-        // can be negative (an element flush against the viewport edge draws a stage with a
-        // negative x/y), hence `-?` on every captured number.
-        const subpaths = d.split(/(?=M)/).filter((s) => s.trim().length > 0);
-        const cutout = subpaths[1] ?? '';
-        const match = cutout.match(/M\s*(-?[\d.]+)[,\s]+(-?[\d.]+)\s*h\s*(-?[\d.]+)[^v]*v\s*(-?[\d.]+)/);
-        return {
-          anchor: el.getAttribute('data-tour'),
-          el: { x: rect.x, y: rect.y, w: rect.width, h: rect.height },
-          stage: match
-            ? { x: Number(match[1]), y: Number(match[2]), w: Number(match[3]), h: Number(match[4]) }
-            : null,
-          pathD: d,
-        };
-      });
+        // Let the step settle (matches this file's own convention of a short pause after a
+        // transition before measuring — see the D36 popover-position tests above) before
+        // reading either rect: B46 was specifically a stale-measurement-at-mount defect, so
+        // reading too early would risk masking exactly the regression this test exists to
+        // catch instead of exercising the engine's own settle path.
+        await page.waitForTimeout(150);
 
-      expect(measured, `stage + element rects readable mid-walk (step ${i})`).not.toBeNull();
-      const { anchor, el, stage, pathD } = measured!;
-      expect(stage, `overlay path parsed to a stage rect (step ${i}, anchor ${anchor}) — d="${pathD}"`).not.toBeNull();
+        const active = page.locator('.driver-active-element');
+        await expect(
+          active,
+          `exactly one highlighted element mid-walk (${tour} step ${i})`,
+        ).toHaveCount(1);
 
-      if (anchor) {
-        visitedAnchors.push(anchor);
+        const measured = await page.evaluate(() => {
+          const el = document.querySelector('.driver-active-element');
+          const overlay = document.querySelector('.driver-overlay path');
+          if (!el || !overlay) return null;
+          const rect = el.getBoundingClientRect();
+          const d = overlay.getAttribute('d') ?? '';
+          // `d` holds TWO subpaths — the full-viewport rect first, then the cut-out — so the
+          // cut-out is the SECOND `M` command, not the first. `M<x>,<y> h<w> a5,5 0 0 1 5,5
+          // v<h> …` on that second subpath gives the stage's own x/y/w/h directly (the
+          // `a5,5 0 0 1 5,5` corner arcs are the rounding, not additional size). Coordinates
+          // can be negative (an element flush against the viewport edge draws a stage with a
+          // negative x/y), hence `-?` on every captured number.
+          const subpaths = d.split(/(?=M)/).filter((s) => s.trim().length > 0);
+          const cutout = subpaths[1] ?? '';
+          const match = cutout.match(/M\s*(-?[\d.]+)[,\s]+(-?[\d.]+)\s*h\s*(-?[\d.]+)[^v]*v\s*(-?[\d.]+)/);
+          return {
+            anchor: el.getAttribute('data-tour'),
+            el: { x: rect.x, y: rect.y, w: rect.width, h: rect.height },
+            stage: match
+              ? { x: Number(match[1]), y: Number(match[2]), w: Number(match[3]), h: Number(match[4]) }
+              : null,
+            pathD: d,
+          };
+        });
+
+        expect(measured, `stage + element rects readable mid-walk (${tour} step ${i})`).not.toBeNull();
+        const { anchor, el, stage, pathD } = measured!;
+        expect(stage, `overlay path parsed to a stage rect (${tour} step ${i}, anchor ${anchor}) — d="${pathD}"`).not.toBeNull();
+
+        if (anchor) {
+          visitedAnchors.push(anchor);
+        }
+
+        const tolerance = 2;
+        const expectedX = Math.round(el.x) - 5;
+        const expectedY = Math.round(el.y) - 10;
+        const expectedW = Math.round(el.w) + 10;
+        const expectedH = Math.round(el.h) + 10;
+
+        const detail =
+          `step "${anchor}" (${tour}) — element rect ${JSON.stringify(el)}, ` +
+          `stage rect ${JSON.stringify(stage)}, expected {x:${expectedX}, y:${expectedY}, w:${expectedW}, h:${expectedH}}`;
+
+        expect(Math.abs(stage!.x - expectedX), `stage.x must line up with the element — ${detail}`).toBeLessThanOrEqual(tolerance);
+        expect(Math.abs(stage!.y - expectedY), `stage.y must line up with the element — ${detail}`).toBeLessThanOrEqual(tolerance);
+        expect(Math.abs(stage!.w - expectedW), `stage.w must line up with the element — ${detail}`).toBeLessThanOrEqual(tolerance);
+        expect(Math.abs(stage!.h - expectedH), `stage.h must line up with the element — ${detail}`).toBeLessThanOrEqual(tolerance);
+
+        const isDone = await nextBtn.evaluate((el) => el.classList.contains('driver-popover-done-btn'));
+        if (isDone) break;
+
+        const beforeClickProgress = await progressText.textContent();
+        await page.keyboard.press('ArrowRight');
+        await expect(
+          progressText,
+          `tour advanced past step "${beforeClickProgress}" (${tour} step ${i})`,
+        ).not.toHaveText(beforeClickProgress ?? '', { timeout: 5_000 });
       }
 
-      const tolerance = 2;
-      const expectedX = Math.round(el.x) - 5;
-      const expectedY = Math.round(el.y) - 10;
-      const expectedW = Math.round(el.w) + 10;
-      const expectedH = Math.round(el.h) + 10;
-
-      const detail =
-        `step "${anchor}" — element rect ${JSON.stringify(el)}, ` +
-        `stage rect ${JSON.stringify(stage)}, expected {x:${expectedX}, y:${expectedY}, w:${expectedW}, h:${expectedH}}`;
-
-      expect(Math.abs(stage!.x - expectedX), `stage.x must line up with the element — ${detail}`).toBeLessThanOrEqual(tolerance);
-      expect(Math.abs(stage!.y - expectedY), `stage.y must line up with the element — ${detail}`).toBeLessThanOrEqual(tolerance);
-      expect(Math.abs(stage!.w - expectedW), `stage.w must line up with the element — ${detail}`).toBeLessThanOrEqual(tolerance);
-      expect(Math.abs(stage!.h - expectedH), `stage.h must line up with the element — ${detail}`).toBeLessThanOrEqual(tolerance);
-
-      const isDone = await nextBtn.evaluate((el) => el.classList.contains('driver-popover-done-btn'));
-      if (isDone) break;
-
-      const beforeClickProgress = await progressText.textContent();
-      await page.keyboard.press('ArrowRight');
+      // El bucle sale en el paso "Listo" SIN pulsarlo, así que el tour sigue abierto y su
+      // overlay se come los clicks — incluido el del botón que abre el selector para el
+      // siguiente recorrido. Cerrarlo aquí es lo que permite encadenar los dos tours.
+      await page.keyboard.press('Escape');
       await expect(
-        progressText,
-        `tour advanced past step "${beforeClickProgress}" (step ${i})`,
-      ).not.toHaveText(beforeClickProgress ?? '', { timeout: 5_000 });
+        tourPopover(page),
+        `the ${tour} tour is closed before starting the next one`,
+      ).toHaveCount(0);
     }
+
+    await walkTourMeasuringStage('canvas');
+    await walkTourMeasuringStage('rightPanel');
 
     // Prove the walk actually covered ground, including the three anchors that only exist
     // with content on the canvas (one of them the originally reported step) — otherwise a

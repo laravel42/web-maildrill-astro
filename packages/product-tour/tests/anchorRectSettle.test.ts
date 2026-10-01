@@ -388,33 +388,54 @@ describe('createTour — anchor rect settling (T11, D50)', () => {
     const anchorB = document.querySelector('[data-tour="b"]') as HTMLElement;
 
     // Keyed off ELAPSED WALL-CLOCK TIME, not call count — this is the crux of the D50b fix.
-    // Before ~120ms of real elapsed time since the stub was installed, every read reports
-    // y=500 (mid-move); from ~120ms onward it reports the settled value y=10 forever after.
-    // Two reads taken back-to-back in the SAME synchronous task (no `await` between them) can
-    // NEVER straddle that 120ms boundary in a way that matters here: either both land before it
-    // (both y=500 — happens to "agree", but for the wrong reason: nothing was actually measured
-    // moving, just the same instant sampled twice) or both land after it (both y=10). A
-    // pre-D50b implementation that takes its first comparison from two SYNCHRONOUS calls (no
-    // `setTimeout` in between) would see `y=500 === y=500` on its very first pair — since
-    // `stubRectSequence`-based tests never modelled that shape, THIS is the test that would
-    // have let a same-task pair slip through undetected. The correct implementation
-    // (`waitForRectToSettle()` under D50b) never compares two reads that were not separated by
-    // a real `delay()` tick, so its first VALID comparison can only happen at t>=~50ms — by
-    // which point (given the fixture's ~120ms threshold) the rect is still reporting y=500, so
-    // the engine must poll at least once more before it ever sees two equal, time-separated
-    // samples once the real threshold passes and the rect genuinely stops changing at y=10.
-    const installedAt = Date.now();
+    // Una implementación pre-D50b que tomara su primera comparación de dos llamadas SÍNCRONAS
+    // (sin `setTimeout` entre medias) vería `y === y` en su primerísimo par y resolvería al
+    // instante; como los tests basados en `stubRectSequence` nunca modelaron esa forma, ESTE es
+    // el test que habría dejado pasar un par de misma-task sin detectarlo. La implementación
+    // correcta (`waitForRectToSettle()` bajo D50b) nunca compara dos lecturas que no estén
+    // separadas por un `delay()` real.
+    //
+    // Dos fases explícitas, controladas por el test — NO por lo que haya tardado el setup.
+    // Ese acoplamiento era el origen del flake: el umbral se contaba desde que se instalaba el
+    // stub, así que el test solo pasaba si `tour.start()` + `waitForOverlay()` + el registro de
+    // spies cabían en una ventana concreta de tiempo. Con la suite entera en paralelo no cabían
+    // y el rect ya estaba asentado al llegar la flecha (medido: `elapsedUntilMove` = 65ms, por
+    // debajo del mínimo de 100). Aislado pasaba 7/7: el defecto era del montaje, no del motor.
+    //
+    // FASE 0 — hasta que el test llame a `startMoving()`: `y` CONSTANTE (500). La sonda de
+    // "misma task" de abajo lee en esta fase, así que dos lecturas síncronas seguidas coinciden
+    // siempre, sin depender de que el reloj no avance entre ellas.
+    //
+    // FASE 1 — desde `startMoving()`: el ancla "se mueve". `y` cambia cada 25ms, la MITAD del
+    // intervalo de muestreo del motor (`D50_SETTLE_SAMPLE_INTERVAL_MS = 50`), así que dos
+    // muestras consecutivas separadas por un `delay()` real NUNCA pueden coincidir por
+    // casualidad mientras el movimiento dura. Esto es lo que antes faltaba: con un único salto
+    // 500→10, dos muestras separadas en el tiempo pero ambas anteriores al salto eran iguales y
+    // el motor las aceptaba como asentadas — correctamente, porque un rect que no cambia entre
+    // dos lecturas separadas ESTÁ asentado. El test necesita un rect que de verdad se mueva.
+    //
+    // A los 120ms el movimiento termina y `y` queda en 10 para siempre, así que el motor solo
+    // puede resolver con dos muestras iguales DESPUÉS de esa marca — nunca antes de 100ms.
+    let movingSince: number | null = null;
+    const startMoving = (): void => {
+      movingSince = Date.now();
+    };
     let sameTaskPairObserved: { first: number; second: number } | null = null;
     const rectFn = vi.fn(() => {
-      const elapsed = Date.now() - installedAt;
-      const y = elapsed < 120 ? 500 : 10;
+      let y: number;
+      if (movingSince === null) {
+        y = 500;
+      } else {
+        const elapsed = Date.now() - movingSince;
+        y = elapsed < 120 ? 500 + Math.floor(elapsed / 25) : 10;
+      }
       return { x: 0, y, width: 100, height: 40, top: y, left: 0, right: 100, bottom: y + 40, toJSON: () => ({}) } as DOMRect;
     });
     (anchorB as unknown as { getBoundingClientRect: typeof rectFn }).getBoundingClientRect = rectFn;
 
     // Independently verify the SAME-TASK claim this test is named for: two back-to-back,
-    // synchronous reads of this exact stub, taken right now (well before the 120ms threshold),
-    // are equal to each other — proving the stub genuinely produces the failure shape a
+    // synchronous reads of this exact stub, taken en FASE 0 (el ancla todavía quieta), are
+    // equal to each other — proving the stub genuinely produces the failure shape a
     // call-count-based stub (varies every call, never used here) could not: two reads with NO
     // time between them agreeing is exactly what a real browser always does, and exactly what
     // must NOT be trusted as "settled".
@@ -444,6 +465,11 @@ describe('createTour — anchor rect settling (T11, D50)', () => {
     onMoveToCallbacks.push(() => {
       rectAtMoveToCall = anchorB.getBoundingClientRect();
     });
+
+    // Arranca la FASE 1 justo aquí, inmediatamente antes de dispatchar la flecha: el ancla
+    // empieza a moverse cuando el MOTOR empieza a mirarla, que es la premisa que este test
+    // necesita, y deja de importar lo que tardara el setup.
+    startMoving();
 
     const dispatchedAt = Date.now();
     dispatchArrow('ArrowRight');
