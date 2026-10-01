@@ -216,11 +216,39 @@ describe("buildBuilder42TourSteps — siempre emite las anclas sin precondición
     );
   });
 
-  it("emite exactamente las 18 anclas del registro cuando todo está disponible y hay un nodo seleccionable", () => {
+  /**
+   * Antes esta aserción comparaba contra TODO el registro con una sola config. La
+   * cadena F29 añadió `pbx.settings.prefs`, que se emite solo en EMBEBIDO
+   * (`standaloneChrome: false`) — es el inverso de `pbx.profileMenu`, que solo existe
+   * en standalone (ver `tourSteps.standaloneChrome.test.ts`). Con una única config
+   * ninguna de las dos puede estar: la comparación correcta es la UNIÓN de los dos
+   * modos de chrome, que es lo que de verdad garantiza el invariante útil —
+   * **ninguna ancla del registro queda huérfana**, sin cablear un conteo que caduca
+   * cada vez que se añade un paso.
+   */
+  it("entre los dos modos de chrome emite TODAS las anclas del registro (ninguna queda huérfana)", () => {
+    insertChildUnderRoot("child-1");
+
+    const standalone = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N).map((s) => s.anchorKey);
+    const embedded = buildBuilder42TourSteps(
+      { ...ADVANCED_CONFIG, standaloneChrome: false },
+      TEST_I18N,
+    ).map((s) => s.anchorKey);
+
+    expect([...new Set([...standalone, ...embedded])].sort()).toEqual(
+      [...Object.values(BUILDER42_TOUR_ANCHORS)].sort(),
+    );
+  });
+
+  it("en standalone emite exactamente el registro menos pbx.settings.prefs (solo embebido)", () => {
     insertChildUnderRoot("child-1");
 
     const anchors = buildBuilder42TourSteps(ADVANCED_CONFIG, TEST_I18N).map((s) => s.anchorKey);
-    expect(anchors.sort()).toEqual([...Object.values(BUILDER42_TOUR_ANCHORS)].sort());
+    expect(anchors.sort()).toEqual(
+      Object.values(BUILDER42_TOUR_ANCHORS)
+        .filter((a) => a !== BUILDER42_TOUR_ANCHORS.settingsPrefs)
+        .sort(),
+    );
   });
 
   it("pbx.toolbar.views y pbx.toolbar.viewport son anclas distintas y consecutivas, en ese orden (D37)", () => {

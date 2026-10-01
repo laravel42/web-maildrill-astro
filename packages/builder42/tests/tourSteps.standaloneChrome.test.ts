@@ -11,6 +11,14 @@
  * `pbx.profileMenu` (que sigue sin equivalente embebido) y añadió
  * `pagesBreadcrumbAvailable` como el flag independiente para el breadcrumb.
  *
+ * ACTUALIZACIÓN cadena F29: `standaloneChrome` ya no gatea una sola ancla. El paso
+ * `pbx.settings.prefs` se añadió gateado al REVÉS por el mismo flag — solo existe en
+ * embebido (`!standaloneChrome`), porque es ahí donde la `<section>` de la tab
+ * "settings" monta `EditorPreferences`; en standalone muestra `SiteFileActions` y las
+ * preferencias viven en el menú de perfil, que ya cubre el paso `profileMenu`. Así que
+ * este archivo prueba DOS anclas contra `standaloneChrome`, una en cada sentido, y
+ * `OTHER_ANCHORS` excluye las tres condicionales.
+ *
  * Antes de este archivo, la aserción "con standaloneChrome: true, AMBAS anclas se
  * emiten" / "con standaloneChrome: false, NI ... NI ... se emiten" trataba las dos
  * anclas como un solo bloque — ahora las cuatro combinaciones de los dos booleans
@@ -64,13 +72,21 @@ afterEach(() => {
   resetDocumentState();
 });
 
-/** Anclas del registro que NO son `pagesBreadcrumb` ni `profileMenu` — la garantía
- * de "ninguna otra ancla cambia" se comprueba contra este conjunto. */
+/** Anclas del registro que NO son `pagesBreadcrumb`, `profileMenu` ni `settingsPrefs` — la
+ * garantía de "ninguna otra ancla cambia" se comprueba contra este conjunto.
+ *
+ * `settingsPrefs` entró aquí con la cadena F29: `tourSteps.ts` lo empuja solo con
+ * `standaloneChrome: false` (en standalone esa misma `<section>` monta `SiteFileActions`
+ * en vez de `EditorPreferences`, y las preferencias las cubre el paso `profileMenu`), así
+ * que es el INVERSO exacto de `profileMenu` y se asserta por separado más abajo. */
 const OTHER_ANCHORS = Object.values(BUILDER42_TOUR_ANCHORS).filter(
-  (a) => a !== BUILDER42_TOUR_ANCHORS.pagesBreadcrumb && a !== BUILDER42_TOUR_ANCHORS.profileMenu,
+  (a) =>
+    a !== BUILDER42_TOUR_ANCHORS.pagesBreadcrumb &&
+    a !== BUILDER42_TOUR_ANCHORS.profileMenu &&
+    a !== BUILDER42_TOUR_ANCHORS.settingsPrefs,
 );
 
-describe("buildBuilder42TourSteps — standaloneChrome gatea SOLO pbx.profileMenu, pagesBreadcrumbAvailable gatea SOLO pbx.pages.breadcrumb (D-F19.1)", () => {
+describe("buildBuilder42TourSteps — standaloneChrome gatea pbx.profileMenu y (inverso) pbx.settings.prefs, pagesBreadcrumbAvailable gatea SOLO pbx.pages.breadcrumb (D-F19.1, F29)", () => {
   it.each([
     { standaloneChrome: false, pagesBreadcrumbAvailable: false, expectBreadcrumb: false, expectProfileMenu: false },
     { standaloneChrome: false, pagesBreadcrumbAvailable: true, expectBreadcrumb: true, expectProfileMenu: false },
@@ -95,6 +111,14 @@ describe("buildBuilder42TourSteps — standaloneChrome gatea SOLO pbx.profileMen
         expect(anchors).toContain(BUILDER42_TOUR_ANCHORS.profileMenu);
       } else {
         expect(anchors).not.toContain(BUILDER42_TOUR_ANCHORS.profileMenu);
+      }
+
+      // `pbx.settings.prefs` es el INVERSO de `profileMenu` sobre el mismo flag (F29):
+      // solo en embebido, donde esa sección monta `EditorPreferences`.
+      if (standaloneChrome) {
+        expect(anchors).not.toContain(BUILDER42_TOUR_ANCHORS.settingsPrefs);
+      } else {
+        expect(anchors).toContain(BUILDER42_TOUR_ANCHORS.settingsPrefs);
       }
 
       // Ninguna OTRA ancla del registro se ve afectada por estos dos flags.
