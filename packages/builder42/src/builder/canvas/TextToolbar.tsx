@@ -1,13 +1,32 @@
 /**
  * TextToolbar — toolbar flotante de formato para el bloque `text` en edición
- * (docs/12 §B.11). Se posiciona ENCIMA del bloque (o debajo si no hay espacio
- * arriba dentro del frame), sin empujar el layout de los demás componentes —
- * es chrome de edición, nunca sale al HTML exportado (P8), igual que
- * `SelectionHandle`.
+ * (docs/12 §B.11). **Se posiciona sobre la línea del CURSOR** — no sobre el
+ * bloque — y lo sigue mientras se escribe o se mueve el caret, cayendo debajo
+ * de esa misma línea si no queda sitio arriba dentro de la zona visible del
+ * canvas. Sin empujar el layout de los demás componentes: es chrome de
+ * edición, nunca sale al HTML exportado (P8), igual que `SelectionHandle`.
  *
- * Mismo patrón de medición que `dnd/SelectionHandle.tsx`: mide el rect del
- * nodo en edición (`data-node-id`) contra el `frameRef` del Canvas con
- * `ResizeObserver`, y se reposiciona en cada resize/cambio de breakpoint.
+ * **Por qué el ancla es el cursor y no el bloque (defecto reportado por el
+ * usuario, 2026-10-02).** Hasta entonces el ancla era el borde superior del
+ * nodo en edición, y la decisión arriba/abajo se tomaba contra el FRAME. El
+ * frame es tan alto como la página entera, así que casi siempre "había sitio
+ * arriba" y la toolbar se quedaba pegada al techo del bloque: en un párrafo más
+ * alto que la ventana, editado por su parte de abajo — el caso normal en
+ * mobile — el ancla estaba fuera de la zona visible y la toolbar era
+ * literalmente inalcanzable, con lo que no se podía dar formato a ese texto.
+ * Ahora el ancla es `coordsAtPos(selection.head)` y el arriba/abajo se decide
+ * contra la intersección del scroller `.pbx-canvas` con la ventana, que es la
+ * única región donde "visible" significa algo. El hueco real sobre el cursor lo
+ * pone el CSS (`--above`: la toolbar queda entre 6px y ~44px por encima de la
+ * línea del caret, su propio alto más el hueco).
+ *
+ * Mismo patrón de medición que `dnd/SelectionHandle.tsx` para lo que sigue
+ * siendo del bloque: mide contra el `frameRef` del Canvas con `ResizeObserver`
+ * y se reposiciona en cada resize/cambio de breakpoint. A eso se le suman dos
+ * disparadores propios del seguimiento del cursor: los eventos
+ * `selectionUpdate`/`update` del editor tiptap, y el `scroll` del canvas (que
+ * no mueve el ancla en coordenadas del frame, pero sí cambia cuánto sitio
+ * visible queda por encima).
  *
  * No conoce a `TextEditingView` directamente: lee `activeTiptapEditor` del
  * store (publicado por `Text.stub.tsx` vía `onReady`/`onDestroy` de
@@ -72,9 +91,9 @@
  * testearla sin jsdom en este paquete (ver el doc-comment de ese archivo).
  */
 
-import { useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import { useEditorState } from "@tiptap/react";
+import { useEditorState, type Editor as TiptapEditorInstance } from "@tiptap/react";
 import { Popover } from "@josecortez1/c42-react";
 import { useDocumentStore } from "../store/documentStore";
 import { LocaleQuickAccess } from "../inspector/controls/LocaleQuickAccess";
@@ -114,6 +133,42 @@ interface EditorFormatState {
 const HEX6 = /^#[0-9a-f]{6}$/i;
 
 const TOOLBAR_HEIGHT_ESTIMATE = 40; // px — suficiente para decidir arriba/abajo antes de medir la toolbar en sí.
+
+/**
+ * Hueco entre el ancla y la toolbar. **Tiene que coincidir con el `6px` de
+ * `.pbx-text-toolbar--above` / `--below` en `chrome/canvas-nodes.css`**, que es
+ * quien lo aplica de verdad (`translateY(calc(-100% - 6px))` / `translateY(6px)`);
+ * aquí solo se usa para decidir si cabe arriba. Si se cambia uno, cambiar el otro.
+ */
+const TOOLBAR_GAP = 6;
+
+/**
+ * Rect de la LÍNEA DEL CURSOR en coordenadas de viewport, o `null` si no se
+ * puede obtener (defecto reportado por el usuario: la toolbar se anclaba al
+ * borde superior del BLOQUE, así que en un párrafo alto editado por abajo —
+ * típico en mobile — el ancla quedaba fuera de la zona visible del canvas y la
+ * toolbar se volvía inalcanzable).
+ *
+ * `coordsAtPos` es la API de ProseMirror para esto y devuelve la caja de la
+ * posición pedida; `selection.head` es el extremo móvil, así que con una
+ * selección de rango la toolbar sigue al lado por el que se está extendiendo.
+ * Va envuelto en `try`: `coordsAtPos` lanza `RangeError` si la posición ya no
+ * existe en el documento, lo que puede pasar entre una transacción y el
+ * siguiente layout (p. ej. al deshacer). Devolver `null` hace que el llamante
+ * caiga al rect del bloque, que es el comportamiento anterior — degradar, no
+ * romper.
+ */
+function caretRect(
+  editor: TiptapEditorInstance | null,
+): { top: number; bottom: number; left: number } | null {
+  if (!editor || editor.isDestroyed) return null;
+  try {
+    const coords = editor.view.coordsAtPos(editor.state.selection.head);
+    return { top: coords.top, bottom: coords.bottom, left: coords.left };
+  } catch {
+    return null;
+  }
+}
 
 export function TextToolbar({ frameRef }: TextToolbarProps) {
   const { t } = useTranslation("canvas");
@@ -178,28 +233,71 @@ export function TextToolbar({ frameRef }: TextToolbarProps) {
     return out;
   }, [siteTokens, siteThemes, activeThemeId]);
 
+  // Medición. Vive en un `useCallback` (y no dentro del efecto) porque la
+  // llaman CUATRO disparadores distintos: el efecto de montaje, el
+  // `ResizeObserver`, los eventos del editor tiptap (es lo que hace que la
+  // toolbar siga al cursor) y el scroll del canvas.
+  const measure = useCallback(() => {
+    const frame = frameRef.current;
+    if (!editingTextNodeId || !frame) {
+      setBox(null);
+      return;
+    }
+    const el = frame.querySelector<HTMLElement>(`[data-node-id="${editingTextNodeId}"]`);
+    if (!el) {
+      setBox(null);
+      return;
+    }
+    const fr = frame.getBoundingClientRect();
+
+    // El ancla es la línea del cursor; el rect del BLOQUE es solo el fallback
+    // (ver `caretRect`). Antes el ancla era siempre el bloque, y de ahí venía
+    // el defecto: en un párrafo más alto que la zona visible, editar por abajo
+    // dejaba la toolbar pegada a un borde superior que ya no se veía.
+    const caret = caretRect(editor);
+    const anchor = caret ?? (() => {
+      const nr = el.getBoundingClientRect();
+      return { top: nr.top, bottom: nr.bottom, left: nr.left };
+    })();
+
+    // ¿Cabe arriba DENTRO DE LO VISIBLE? La decisión no puede tomarse contra el
+    // frame (que es tan alto como la página entera y casi siempre tiene sitio
+    // de sobra por arriba): se toma contra la intersección del scroller del
+    // canvas con la ventana. `.pbx-canvas` es el elemento que scrollea
+    // (`app/layout/Canvas.tsx`); `Math.max(…, 0)` cubre el caso de que el
+    // propio documento del host esté scrolleado de forma que el canvas empiece
+    // por encima del borde superior de la ventana, que es lo normal cuando el
+    // editor va embebido en una página con chrome propio.
+    const scroller = frame.closest<HTMLElement>(".pbx-canvas");
+    const visibleTop = Math.max(scroller ? scroller.getBoundingClientRect().top : fr.top, 0);
+    const height = toolbarRef.current?.offsetHeight || TOOLBAR_HEIGHT_ESTIMATE;
+    const below = anchor.top - visibleTop < height + TOOLBAR_GAP;
+
+    // Clamp horizontal: la toolbar sigue al cursor también en X, pero no se
+    // sale por el borde izquierdo del frame. Si es MÁS ANCHA que el frame
+    // (pasa de verdad a 375px: son trece controles) `maxLeft` sale 0 y queda
+    // pegada a la izquierda, que es lo mejor disponible sin rediseñarla.
+    const width = toolbarRef.current?.offsetWidth ?? 0;
+    const maxLeft = Math.max(0, frame.clientWidth - width);
+    const left = Math.max(0, Math.min(anchor.left - fr.left, maxLeft));
+    const top = (below ? anchor.bottom : anchor.top) - fr.top;
+
+    // Igualdad antes de `setBox`: esto corre en cada pulsación de tecla, y sin
+    // el guard cada una provocaría un re-render de la toolbar aunque no se
+    // mueva (escribir dentro de la misma línea no cambia `top`).
+    setBox((prev) =>
+      prev && prev.top === top && prev.left === left && prev.below === below
+        ? prev
+        : { top, left, below },
+    );
+  }, [editingTextNodeId, editor, frameRef]);
+
   useLayoutEffect(() => {
     const frame = frameRef.current;
     if (!editingTextNodeId || !frame) {
       setBox(null);
       return;
     }
-    const measure = () => {
-      const el = frame.querySelector<HTMLElement>(`[data-node-id="${editingTextNodeId}"]`);
-      if (!el) {
-        setBox(null);
-        return;
-      }
-      const nr = el.getBoundingClientRect();
-      const fr = frame.getBoundingClientRect();
-      const spaceAbove = nr.top - fr.top;
-      const below = spaceAbove < TOOLBAR_HEIGHT_ESTIMATE;
-      setBox({
-        top: below ? nr.bottom - fr.top : nr.top - fr.top,
-        left: nr.left - fr.left,
-        below,
-      });
-    };
     measure();
 
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
@@ -207,11 +305,44 @@ export function TextToolbar({ frameRef }: TextToolbarProps) {
     const el = frame.querySelector<HTMLElement>(`[data-node-id="${editingTextNodeId}"]`);
     if (el) ro?.observe(el);
     window.addEventListener("resize", measure);
+    // El scroll NO cambia la posición del cursor en coordenadas del frame
+    // (ancla y frame se mueven juntos), pero SÍ cambia cuánto sitio visible
+    // queda por encima — o sea, la decisión arriba/abajo. De ahí este listener.
+    const scroller = frame.closest<HTMLElement>(".pbx-canvas");
+    scroller?.addEventListener("scroll", measure, { passive: true });
+    // Seguimiento del cursor: `selectionUpdate` cubre flechas, clicks y
+    // selecciones; `update` cubre el tecleo (que mueve el cursor sin emitir
+    // `selectionUpdate` por sí mismo). Ambos son subconjuntos de `transaction`,
+    // que se usa a propósito en su lugar porque dispara mucho más.
+    editor?.on("selectionUpdate", measure);
+    editor?.on("update", measure);
     return () => {
       ro?.disconnect();
       window.removeEventListener("resize", measure);
+      scroller?.removeEventListener("scroll", measure);
+      editor?.off("selectionUpdate", measure);
+      editor?.off("update", measure);
     };
-  }, [editingTextNodeId, activeBreakpoint, frameRef]);
+  }, [editingTextNodeId, activeBreakpoint, frameRef, editor, measure]);
+
+  // Segunda pasada cuando la toolbar ya existe en el DOM. En el efecto de
+  // arriba `toolbarRef.current` es `null` la primera vez (el componente retorna
+  // `null` mientras `box` lo es, así que no hay nodo que medir), de modo que el
+  // alto y el ancho reales — los que deciden el arriba/abajo y el clamp
+  // horizontal — solo se conocen a partir de aquí. El `ResizeObserver` sobre la
+  // propia toolbar cubre que su ancho cambie en vivo (el selector de idioma
+  // aparece/desaparece, el popover de enlace se abre). No hay bucle: `measure`
+  // no reescribe `box` si el resultado es el mismo, y este efecto no depende de
+  // `box` sino de que exista o no.
+  const hasBox = box !== null;
+  useLayoutEffect(() => {
+    const toolbar = toolbarRef.current;
+    if (!hasBox || !toolbar) return;
+    measure();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
+    ro?.observe(toolbar);
+    return () => ro?.disconnect();
+  }, [hasBox, measure]);
 
   // Borrador de URL del popover de enlace (D-F21.1…D-F21.4). Tienen que vivir
   // AQUÍ, junto a los demás hooks, y no más abajo: este componente retorna
