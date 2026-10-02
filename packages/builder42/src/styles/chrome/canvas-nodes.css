@@ -788,17 +788,31 @@
   outline: none;
 }
 
-/* PÃ¡rrafos (y demÃ¡s bloques) VACÃOS: en ediciÃ³n ProseMirror les inyecta un
- * `<br class="ProseMirror-trailingBreak">` (solo en la vista de ediciÃ³n, no en
- * `getHTML()`) para que tengan una lÃ­nea donde poner el cursor. El render
- * estÃ¡tico pinta `<p></p>` que colapsa a 0px de alto â†’ discrepancia al salir de
- * ediciÃ³n. Reservamos aquÃ­ esa misma lÃ­nea en el render estÃ¡tico del canvas con
- * un ZWSP en `::before`, replicando la altura del trailing break.
+/* Parrafos (y demas bloques) VACIOS: en edicion ProseMirror les inyecta un
+ * `<br class="ProseMirror-trailingBreak">` (solo en su vista, nunca en
+ * `getHTML()`) para que tengan una linea donde poner el cursor. El render
+ * estatico pinta `<p></p>`, que no genera caja de linea y mide 0px de alto ->
+ * la linea en blanco que el usuario escribio desaparece. Reservamos esa misma
+ * linea con un ZWSP en `::before`, replicando la altura del trailing break.
  *
- * Solo aplica en el canvas (`.pbx-canvas__frame`) y solo a bloques REALMENTE
- * vacÃ­os (`:empty` NO matchea `<p><br></p>` de la vista de ediciÃ³n, que tiene
- * hijo). El export no incluye `chrome.css`, asÃ­ que el HTML publicado sigue
- * colapsando los pÃ¡rrafos vacÃ­os (P8 intacto). */
+ * Esta regla cubre SOLO el canvas de Edit. Su GEMELA vive en `baseCss()`
+ * (`export/base.ts`) y cubre el export publicado y el iframe de Preview, que
+ * renderiza el export real -- mismo mecanismo a proposito, porque dos
+ * mecanismos distintos volverian a diferir en algun pixel. Si se toca una,
+ * tocar la otra, igual que el reset de margin y su duplicado en
+ * `chrome/output-base.css`.
+ *
+ * NOTA HISTORICA: hasta 2026-10-02 este comentario afirmaba que el HTML
+ * publicado seguia colapsando los parrafos vacios, con P8 como justificacion,
+ * como si fuera una decision. No lo era: convertia cada linea en blanco en una
+ * diferencia entre Edit y Preview, que es justo lo que el usuario reporto. P8
+ * sigue intacto -- el export no incluye `chrome.css`; lo que hace la gemela de
+ * `baseCss()` es llevar el MISMO efecto por el canal que si viaja al sitio
+ * publicado.
+ *
+ * `:empty` NO matchea `<p><br></p>` (la vista de edicion, que tiene hijo) ni
+ * `<p> </p>` (un espacio ya es contenido), asi que solo actua sobre bloques
+ * realmente vacios. */
 .pbx-canvas__frame .pbx-node :is(p, h1, h2, h3, h4, h5, h6, li, blockquote):empty::before {
   content: "\200b"; /* zero-width space: fuerza una caja en lÃ­nea â†’ altura de 1 lÃ­nea */
 }

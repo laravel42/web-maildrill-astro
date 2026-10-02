@@ -14,6 +14,35 @@ export function baseCss(): string {
     // párrafos con líneas vacías o, para un ajuste fino, con el grupo
     // `spacing` del Inspector — nunca queda un margin "gratis" sin declarar.
     "p, h1, h2, h3, h4, h5, h6, blockquote, ul, ol, li { margin: 0; padding: 0; }",
+    // Bloques tipográficos VACÍOS — la línea en blanco que el usuario escribe
+    // tiene que llegar al sitio publicado (defecto reportado 2026-10-02).
+    //
+    // El reset de arriba dice, literalmente, que "el usuario separa párrafos
+    // con líneas vacías". Pero un `<p></p>` sin contenido no genera ninguna
+    // caja de línea, así que mide **0px de alto** y la línea en blanco
+    // desaparece — y `editor.getHTML()` es exactamente lo que se guarda en
+    // `props.content` (`TiptapEditor.tsx`), que para un párrafo vacío emite
+    // `<p></p>` pelado. En EDICIÓN no se notaba porque ProseMirror inyecta un
+    // `<br class="ProseMirror-trailingBreak">` en los bloques vacíos (solo en
+    // su vista, nunca en `getHTML()`), y en el canvas estático tampoco porque
+    // `chrome/canvas-nodes.css` ya reservaba esa línea con un ZWSP. Faltaba
+    // justo aquí: en el export y, por tanto, en Preview, que renderiza el
+    // export real dentro de un iframe. Resultado: Edit y Preview no coincidían
+    // — una violación de WYSIWYG, no una preferencia estética.
+    //
+    // **Es el GEMELO de la regla de `chrome/canvas-nodes.css`** (buscar
+    // `ProseMirror-trailingBreak` allí) y usa el MISMO mecanismo a propósito:
+    // dos mecanismos distintos volverían a diferir en algún píxel. Si se toca
+    // una, tocar la otra — igual que el reset de margin de arriba, duplicado
+    // en `chrome/output-base.css` por la misma razón.
+    //
+    // `:empty` no matchea `<p> </p>` (un espacio ya es contenido) ni
+    // `<p><br></p>`, así que solo actúa sobre bloques realmente vacíos. Radio
+    // de impacto medido antes de añadirla: **0** bloques vacíos de estos tipos
+    // en los 18 templates exportados, así que no cambia nada de lo que el
+    // producto ya publica; solo los sitios donde el usuario escribió de verdad
+    // una línea en blanco.
+    "p:empty::before, h1:empty::before, h2:empty::before, h3:empty::before, h4:empty::before, h5:empty::before, h6:empty::before, li:empty::before, blockquote:empty::before { content: '\\200b'; }",
     "img { max-width: 100%; display: block; }",
     // Scrollbars finas del sitio exportado (T6). Personalizables por tema con
     // las variables --scrollbar-* (el theme las reasigna vía tokens
