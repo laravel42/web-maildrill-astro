@@ -342,35 +342,6 @@
   font-weight: 700;
 }
 
-/* animation 'toastin' is applied inline (global keyframe cannot live in a CSS Module). */
-.toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: var(--z-toast);
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  background: var(--text);
-  color: #fff;
-  padding: 12px 16px 12px 13px;
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(28, 25, 23, 0.3);
-  font-size: 13px;
-  font-weight: 500;
-}
-.toastIc {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #22c55e;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* Columns are: 1 check · 2 campaign · 3 status · 4 channel · 5 recipients ·
    6 failed · 7 open · 8 click · 9 updated. .gridPlain rows stop at 7, so the
    .grid rules below must never hide an index those rows still need. */

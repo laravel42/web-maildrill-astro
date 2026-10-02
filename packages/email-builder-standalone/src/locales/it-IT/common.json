@@ -34,7 +34,8 @@
       "insert": "Inserisci blocco",
       "view": "Vista",
       "library": "Libreria",
-      "edit": "Modifica"
+      "edit": "Modifica",
+      "help": "Aiuto"
     },
     "action": {
       "tabEditor": "Vai all'editor",
@@ -46,7 +47,8 @@
       "openLibrary": "Apri libreria componenti",
       "toggleInspector": "Espandi / compatta inspector",
       "undo": "Annulla",
-      "redo": "Ripeti"
+      "redo": "Ripeti",
+      "tour": "Guarda il tour guidato"
     }
   },
   "bubbleMenu": {

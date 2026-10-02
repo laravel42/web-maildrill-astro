@@ -74,7 +74,9 @@ export default function ColorInput({
         border: label ? '1px solid' : '',
         borderColor: 'cadet.400',
         width: '100%',
-        height: 36,
+        // Homologado con Builder42 (--pb-chrome-panel-row-height), ver
+        // packages/email-builder-standalone/INSPECTOR_INPUT_HEIGHT_AUDIT.md
+        height: 32,
         paddingTop: '8px',
         paddingBottom: '8px',
         paddingLeft: '12px',

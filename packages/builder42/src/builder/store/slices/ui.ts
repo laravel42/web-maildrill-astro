@@ -13,6 +13,7 @@
 import type { Editor as TiptapEditorInstance } from "@tiptap/react";
 
 import type { Breakpoint, NodeId, StyleState } from "../../model/types";
+import type { InspectorTab } from "../../inspector/form/types";
 import { initialSite } from "./core";
 import type { SliceCreator } from "./types";
 
@@ -33,6 +34,14 @@ export type SiteTab =
   | "seo"
   | "publish"
   | "settings";
+
+/**
+ * Tab activa del sidebar izquierdo (`Sidebar.tsx`): "Componentes", "Tokens" o
+ * "Plantillas". Vive aquí (en vez de un `useState` local del componente) para
+ * que código que corre FUERA de React — p. ej. el `before()` de un paso del
+ * tour guiado — pueda cambiarla.
+ */
+export type SideTab = "components" | "tokens" | "templates";
 
 export interface UiSlice {
   selectedId: NodeId | null;
@@ -98,6 +107,26 @@ export interface UiSlice {
    */
   requestedSiteTab: SiteTab | null;
 
+  /**
+   * Tab activa del sidebar izquierdo (`SideTab`). UI-state (no entra a
+   * zundo ni se serializa) — ver doc del tipo `SideTab` arriba.
+   */
+  sidebarTab: SideTab;
+
+  /**
+   * Tab activa del Inspector para el nodo seleccionado (`InspectorTab`:
+   * "props" | "style" | "behaviors"). UI-state (no entra a zundo ni se
+   * serializa) — vive aquí (en vez de un `useState` local de
+   * `InspectorForm.tsx`) por el MISMO motivo que `sidebarTab` (D38): código
+   * que corre FUERA de React — el `before()` del paso `pbx.inspector.breakpoints`
+   * del tour guiado — necesita poder abrir la tab "style" para que el ancla de
+   * `VisibilityStrip` (montada solo dentro de esa tab) exista (D48). El
+   * fallback a la primera tab disponible cuando el nodo activo no tiene la tab
+   * guardada sigue siendo un valor DERIVADO calculado en `InspectorForm`, no
+   * una escritura a este campo — ver el comentario en ese componente.
+   */
+  inspectorTab: InspectorTab;
+
   // UI
   select: (id: NodeId | null) => void;
   /** Entra en modo edición inline de texto para `id` (docs/12 §B.11). */
@@ -125,6 +154,10 @@ export interface UiSlice {
   openSiteSettings: (tab: SiteTab) => void;
   /** Limpia la petición pendiente de tab (la consume `SiteSettingsPanel`). */
   clearRequestedSiteTab: () => void;
+  /** Cambia la tab activa del sidebar izquierdo (`SideTab`). */
+  setSidebarTab: (tab: SideTab) => void;
+  /** Cambia la tab activa del Inspector (`InspectorTab`) para el nodo seleccionado. */
+  setInspectorTab: (tab: InspectorTab) => void;
 }
 
 export const createUiSlice: SliceCreator<UiSlice> = (set) => ({
@@ -133,12 +166,18 @@ export const createUiSlice: SliceCreator<UiSlice> = (set) => ({
   activeTiptapEditor: null,
   editingModalId: null,
   previewStateBySelectedId: {},
-  // Canvas frame starts at Desktop (xl / 1280). Style cascade stays mobile-first;
-  // this is only which viewport the editor opens on.
-  activeBreakpoint: "xl",
+  // D-F29.7: arranca en `base`, el breakpoint cuyas ediciones se aplican a
+  // todos los tamaños — es el objetivo honesto por defecto. Arrancar en `xl`
+  // escribía en silencio las ediciones de un primer visitante bajo
+  // `@media (min-width:1280px)`, sin efecto visible en el preview de
+  // teléfono. Style cascade stays mobile-first; this is only which viewport
+  // the editor opens on.
+  activeBreakpoint: "base",
   view: "edit",
   editingLocale: initialSite.meta.defaultLang,
   requestedSiteTab: null,
+  sidebarTab: "components",
+  inspectorTab: "props",
 
   select: (id) =>
     set((s) => {
@@ -196,4 +235,6 @@ export const createUiSlice: SliceCreator<UiSlice> = (set) => ({
       s.requestedSiteTab = tab;
     }),
   clearRequestedSiteTab: () => set({ requestedSiteTab: null }),
+  setSidebarTab: (tab) => set({ sidebarTab: tab }),
+  setInspectorTab: (tab) => set({ inspectorTab: tab }),
 });

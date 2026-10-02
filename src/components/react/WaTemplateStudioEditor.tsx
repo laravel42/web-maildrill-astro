@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { TemplateDoc } from 'wa-template-studio';
 import waTemplateCatalog from '../../../docs/whatsapp-message-templates.json';
-import Icon from './Icon';
+import ToastHost from './shared/ToastHost';
 import ChannelEditorShell, { shellStyles } from './shared/ChannelEditorShell';
 import { CHANNEL } from './shared/channels';
 import { useAutosave } from './shared/useAutosave';
@@ -208,20 +208,7 @@ export default function WaTemplateStudioEditor({
       }}
       onBack={onClose}
       onSaveDraft={() => void handleSave()}
-      toast={
-        toast ? (
-          <div
-            className={shellStyles.toast}
-            role="status"
-            style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-          >
-            <span className={shellStyles.toastIcon}>
-              <Icon name="check" size={13} stroke={3} />
-            </span>
-            {toast}
-          </div>
-        ) : null
-      }
+      toast={<ToastHost toast={toast} />}
     >
       {loadError ? (
         <div className={shellStyles.state}>

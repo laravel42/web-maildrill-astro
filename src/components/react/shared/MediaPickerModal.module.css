@@ -1,23 +1,10 @@
-.overlay {
-  position: fixed;
-  inset: 0;
-  /* Above the email builder's MUI surfaces (drawers 1200, modals 1300). */
-  z-index: 1400;
-  background: rgba(28, 25, 23, 0.4);
-  backdrop-filter: blur(3px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
-}
+/* Overlay/panel shell now comes from shared/Modal (.amodal-overlay/.amodal,
+   size="xl" for the 920px width, zIndex=1400 to clear the vendored email
+   builder's MUI drawers/modals at 1200/1300). .modal only adds this modal's
+   bespoke max-height and visible overflow (Folder/Tag/Col filter popovers
+   need to escape the chrome). */
 .modal {
-  width: 920px;
-  max-width: 100%;
   max-height: min(720px, calc(100vh - 64px));
-  background: var(--surface);
-  border-radius: 20px;
-  box-shadow: 0 24px 60px rgba(28, 25, 23, 0.28);
-  /* Visible so Folder/Tag/Col filter popovers escape the chrome. */
   overflow: visible;
   display: flex;
   flex-direction: column;

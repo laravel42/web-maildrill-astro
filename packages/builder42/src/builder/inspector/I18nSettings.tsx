@@ -12,6 +12,7 @@ import { useDocumentStore } from "@/builder/store/documentStore";
 import { IconButton, ContentLocaleSelect, LocaleCombobox, Toggle, CloseIcon } from "@/components";
 import { TranslationModal } from "./TranslationModal";
 import { isKnownLocaleCode } from "./localeCatalog";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 export function I18nSettings() {
   const { t, i18n: i18next } = useTranslation("inspector");
@@ -38,7 +39,7 @@ export function I18nSettings() {
   };
 
   return (
-    <section className="pbx-site-settings__section">
+    <section className="pbx-site-settings__section" {...dataTourAttr(BUILDER42_TOUR_ANCHORS.settingsLanguages)}>
       <h4 className="pbx-inspector__heading">{t("i18nSettings.title")}</h4>
 
       <div className="pbx-i18n-settings__toggle">

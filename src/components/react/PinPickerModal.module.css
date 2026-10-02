@@ -1,29 +1,11 @@
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal, 1100);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
-  background: rgba(28, 25, 23, 0.4);
-  backdrop-filter: blur(3px);
-}
-
+/* Overlay/panel shell now comes from shared/Modal (.amodal-overlay/.amodal,
+   size="lg" for the 640px width); .dialog only adds this modal's fixed
+   height math (head + tabs + search + 8 rows + pager + actions). */
 .dialog {
   --pin-row-h: 46px;
   width: 520px;
-  max-width: 100%;
-  /* Head + tabs + search + 8 rows + pager + actions ≈ fixed shell. */
   height: min(692px, calc(100vh - 64px));
   max-height: min(692px, calc(100vh - 64px));
-  display: flex;
-  flex-direction: column;
-  background: var(--surface);
-  border-radius: 20px;
-  box-shadow: 0 24px 60px rgba(28, 25, 23, 0.28);
-  overflow: hidden;
-  box-sizing: border-box;
 }
 
 .head {
@@ -401,9 +383,6 @@
 }
 
 @media (max-width: 640px) {
-  .overlay {
-    padding: 16px;
-  }
   .dialog {
     height: calc(100vh - 32px);
     max-height: calc(100vh - 32px);

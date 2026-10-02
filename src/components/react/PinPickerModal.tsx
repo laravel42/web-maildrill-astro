@@ -5,6 +5,7 @@ import { ChannelPill } from './shared/CampaignPills';
 import { visiblePageNumbers } from './shared/pagination';
 import type { ChannelType } from '@/types/app';
 import Icon from './Icon';
+import Modal from './shared/Modal';
 import styles from './PinPickerModal.module.css';
 
 export type PinKind = 'list' | 'campaign' | 'subscriber';
@@ -60,21 +61,6 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
 
   const query = queries[kind];
   const kindMeta = KINDS.find((k) => k.id === kind)!;
-
-  useEffect(() => {
-    closeRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
-  }, [onClose]);
 
   useEffect(() => {
     let cancelled = false;
@@ -252,37 +238,29 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
   };
 
   return (
-    <div
-      className={styles.overlay}
-      onClick={onClose}
-      style={{ animation: 'ovfade 0.16s var(--ease-out)' }}
+    <Modal
+      open
+      onClose={onClose}
+      title="Pin records"
+      initialFocus={closeRef}
+      panelClassName={styles.dialog}
     >
-      <div
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="pin-picker-title"
-        onClick={(e) => e.stopPropagation()}
-        style={{ animation: 'pop 0.16s var(--ease-out)' }}
-      >
-        <header className={styles.head}>
-          <div className={styles.headText}>
-            <h2 id="pin-picker-title" className={styles.title}>
-              Pin records
-            </h2>
-            <p className={styles.sub}>
-              Keep lists, campaigns, or subscribers in the sidebar for quick access.
-            </p>
-          </div>
-          <button
-            ref={closeRef}
-            type="button"
-            className={styles.close}
-            aria-label="Close"
-            onClick={onClose}
-          >
-            <Icon name="x" size={16} stroke={2.2} />
-          </button>
+      <header className={styles.head}>
+        <div className={styles.headText}>
+          <h2 className={styles.title}>Pin records</h2>
+          <p className={styles.sub}>
+            Keep lists, campaigns, or subscribers in the sidebar for quick access.
+          </p>
+        </div>
+        <button
+          ref={closeRef}
+          type="button"
+          className={styles.close}
+          aria-label="Close"
+          onClick={onClose}
+        >
+          <Icon name="x" size={16} stroke={2.2} />
+        </button>
         </header>
 
         <div className={styles.toolbar} role="tablist" aria-label="Record type">
@@ -408,15 +386,14 @@ export default function PinPickerModal({ pinned, onPin, onClose }: Props) {
           </div>
         </div>
 
-        <div className={styles.actions}>
-          <button type="button" className="sbtn" onClick={onClose}>
-            Cancel
-          </button>
-          <button type="button" className="pbtn" onClick={confirm}>
-            Pin selected
-          </button>
-        </div>
+      <div className={styles.actions}>
+        <button type="button" className="sbtn" onClick={onClose}>
+          Cancel
+        </button>
+        <button type="button" className="pbtn" onClick={confirm}>
+          Pin selected
+        </button>
       </div>
-    </div>
+    </Modal>
   );
 }

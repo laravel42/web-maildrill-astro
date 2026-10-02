@@ -61,6 +61,19 @@ Upstream manifests are written for publishing, not source consumption:
   opens) so it reflects the host's current merge tags. **Report this upstream** —
   the slash menu should honour custom merge tags like the bubble menu does.
 
+- `email-builder-standalone/src/tour/**` — the guided product tour is a **first-party
+  addition with no upstream equivalent**: upstream EmailBuilder.js has no tour, no
+  `data-tour` anchors, and no `@md/product-tour` dependency. This is a divergence, not a
+  patch to a file that exists upstream — `tour/tourAnchors.ts` (the anchor registry),
+  `tour/tourSteps.ts`, its i18n `tour` namespace (`en-US`/`es-419`/`it-IT`), and
+  `tour/useEmailBuilderTour.ts` are all Maildrill-only. `documents/editor/EditorContext.tsx`
+  also carries tour-only additions (`tour`/`tourRestartNonce` state, `requestTourRestart()`)
+  alongside the zustand-selector fix above — **do not drop those on a future re-import**, they
+  are not part of the bug fix. A future upstream re-sync must preserve `src/tour/**`, the
+  `data-tour` attributes stamped across `App/**` (via that registry, never inline strings),
+  and these `EditorContext.tsx` seams; see `docs/AGENTS.md` for the tour's engine-level
+  contract.
+
 ## Scope
 
 `packages/**` is excluded from this repo's `tsconfig` and eslint: it is upstream
@@ -107,7 +120,40 @@ package is wired, not a re-apply checklist:
   `tsconfig.json` + `vitest.config.ts`, wired into the root `typecheck`
   script). Tracked in `docs/landing-pages-builder-plan.md`.
 
-### Divergence from the original import (historical)
+### Export boundary: the tour and the extraction to its own repo
+
+`packages/builder42` will be extracted to its own repo (a standalone demo/landing for
+Maildrill). Its guided product tour (`src/app/tour/**`, built on the shared
+`@md/product-tour` engine) must travel with that extraction **unchanged in logic**, rewiring
+only the host seams. Verified today (`git grep` for imports reaching outside the package
+into this host's `src/`, plus a read of the two files below):
+
+- **`packages/builder42` imports nothing from this host's `src/`.** The only occurrences of
+  a `src/…` path inside `packages/builder42` are comments pointing at the host file that
+  consumes the package (e.g. `tourAnchors.ts`'s doc comment naming
+  `src/components/react/shared/EditorHeader.tsx`) — never an actual import. Internal
+  `@/…` imports (`tsconfig.json`'s `"@/*": ["./src/*"]`) resolve inside
+  `packages/builder42/src`, not the host's.
+- **The only seams are the props `src/components/react/LandingPageBuilder.tsx` passes into
+  `Builder42Editor`:** `tourEnabled` (forces/silences the tour; omitted keeps it enabled) and
+  `onTourEvent` (receives the engine's domain-agnostic `TourAnalyticsEvent`s). Everything else
+  the tour needs — anchors, steps, copy, persistence — is self-contained inside the package.
+- **What has to be rewired on extraction day, and nothing else:**
+  1. **Analytics** — `LandingPageBuilder.tsx`'s `handleTourEvent` is the only place in this
+     repo that maps those events to `window.posthog?.capture(event.event, { tour_id,
+     step_index, total_steps, editor: 'landing' })`. The new standalone host writes its own
+     equivalent wrapper and passes it as `onTourEvent`; `packages/builder42` itself never
+     imports `posthog-js` or any analytics SDK (confirmed: no `posthog` reference in
+     `packages/builder42/src` outside comments and one unrelated icon-catalog entry).
+  2. **Persistence** — the tour reads/writes `tourSeen`/`tourVersion` through
+     `useLocalConfig`'s `pb:`-prefixed `localStorage` keys (`src/app/tour/useBuilder42Tour.ts`'s
+     `createConfigBackedTourPersistence`), which is already internal to the package — nothing
+     to rewire here beyond confirming the new host still ships `useLocalConfig` as-is.
+  - No anchor, step, or copy string needs to change: the tour describes only the editor
+    surface itself (§0 of `docs/product-tour-driverjs-plan.md`), which is exactly what a
+    standalone demo also shows.
+
+
 
 Kept as a record of *why* these files look the way they do. It is no longer a
 list of patches to re-apply — there is nothing to re-apply them onto.

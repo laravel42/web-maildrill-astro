@@ -75,11 +75,18 @@
     "italic": "Italic",
     "strike": "Strikethrough",
     "link": "Link",
-    "linkPrompt": "Link URL (empty to remove it)",
+    "linkFieldLabel": "Link URL",
+    "linkFieldPlaceholder": "https://example.com",
+    "linkApply": "Apply",
+    "linkRemove": "Remove link",
+    "linkInvalid": "Enter a web address, an email, a phone number, or a page-relative link starting with / or #.",
     "heading1": "Heading 1",
     "heading2": "Heading 2",
     "heading3": "Heading 3",
     "bulletList": "Bullet list",
-    "orderedList": "Numbered list"
+    "orderedList": "Numbered list",
+    "textColor": "Text color",
+    "backgroundColor": "Background color",
+    "clearColors": "Remove colors"
   }
 }

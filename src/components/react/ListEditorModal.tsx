@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Icon from './Icon';
-import { useEscapeClose } from './shared/useEscapeClose';
+import Modal from './shared/Modal';
 import { COLORS } from './ListEditorModal.logic';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import type { ChannelType } from '@/types/app';
@@ -44,8 +44,6 @@ export default function ListEditorModal({
   );
   const [gdprConsent, setGdprConsent] = useState(initialGdprConsent);
 
-  useEscapeClose(onClose);
-
   const isEdit = mode === 'edit';
   // A list with no channel cannot be sent to, so saving is blocked rather than
   // silently defaulted — the same rule the API enforces.
@@ -60,27 +58,20 @@ export default function ListEditorModal({
   };
 
   return (
-    <div
-      className={styles.overlay}
-      onClick={onClose}
-      style={{ animation: 'ovfade .18s var(--ease-out)' }}
+    <Modal
+      open
+      onClose={onClose}
+      title={isEdit ? 'Edit list' : 'Create list'}
+      panelClassName={styles.lem}
     >
-      <div
-        className={styles.lem}
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={isEdit ? 'Edit list' : 'Create list'}
-        style={{ animation: 'pop .18s ease' }}
-      >
-        <div className={styles.head}>
-          <span className={styles.title}>{isEdit ? 'Edit list' : 'Create list'}</span>
-          <button type="button" className={styles.x} onClick={onClose} aria-label="Close">
-            <Icon name="x" size={16} />
-          </button>
-        </div>
+      <div className={styles.head}>
+        <span className={styles.title}>{isEdit ? 'Edit list' : 'Create list'}</span>
+        <button type="button" className={styles.x} onClick={onClose} aria-label="Close">
+          <Icon name="x" size={16} />
+        </button>
+      </div>
 
-        <div className={styles.body}>
+      <div className={styles.body}>
           <label className={styles.label} htmlFor="lem-name">
             List name
           </label>
@@ -169,17 +160,16 @@ export default function ListEditorModal({
               />
             ))}
           </div>
-        </div>
-
-        <div className={styles.foot}>
-          <button type="button" className={styles.cancel} onClick={onClose}>
-            Cancel
-          </button>
-          <button type="button" className={styles.save} onClick={submit} disabled={!canSave}>
-            {isEdit ? 'Save changes' : 'Create list'}
-          </button>
-        </div>
       </div>
-    </div>
+
+      <div className={styles.foot}>
+        <button type="button" className={styles.cancel} onClick={onClose}>
+          Cancel
+        </button>
+        <button type="button" className={styles.save} onClick={submit} disabled={!canSave}>
+          {isEdit ? 'Save changes' : 'Create list'}
+        </button>
+      </div>
+    </Modal>
   );
 }

@@ -162,4 +162,22 @@
      mismo criterio que en claro, aclarado manteniendo el matiz (5.00:1 vs.
      surface-hover ink, 7.07:1 vs. bg ink). */
   --pb-chrome-header-brand-text:    #ff9985;
+
+  /* ------------------------------------------------------------------ *
+   * Tour (F5, docs/product-tour-driverjs-plan.md §2/§4) — override oscuro
+   * de `chrome/tour.css`. `--md-tour-*` no se reasigna aquí directamente
+   * (esas variables solo existen en `tour.css` como redirecciones a
+   * `--pb-chrome-*`, D2): lo que cambia en dark son los `--pb-chrome-*`
+   * subyacentes, y TODOS ya se reasignan arriba en este mismo bloque
+   * (`--pb-chrome-surface-raised`, `--pb-chrome-text`, `--pb-chrome-text-
+   * muted`, `--pb-chrome-border`, `--pb-chrome-frame-shadow`) — el popover
+   * Y el overlay del tour (que lee `--pb-chrome-text`, no `--pb-chrome-bg`,
+   * ver `chrome/tour.css`) heredan esos valores oscuros automáticamente vía
+   * cascada, sin necesitar un color nuevo aquí. El único que SÍ hace falta
+   * declarar en este override (`--pb-chrome-accent-text`) es, por diseño,
+   * constante entre temas (ver su comentario en `tokens.css`: acento sólido
+   * índigo con texto blanco encima nunca cambia) — se re-declara
+   * explícitamente para que el mapeo del tour quede documentado como
+   * completo en ambos temas, no por accidente de cascada. */
+  --pb-chrome-accent-text: var(--accent-contrast, #ffffff);
 }

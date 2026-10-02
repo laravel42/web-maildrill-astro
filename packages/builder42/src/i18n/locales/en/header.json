@@ -44,7 +44,8 @@
     "label": "Color system",
     "system": "System",
     "light": "Light",
-    "dark": "Dark"
+    "dark": "Dark",
+    "toggleTo": "Switch to {{mode}} mode"
   },
   "profile": {
     "label": "Preferences"
@@ -59,6 +60,9 @@
     "label": "Experience level",
     "simple": "Simple",
     "advanced": "Advanced"
+  },
+  "restartTour": {
+    "label": "View the guided tour"
   },
   "onboarding": {
     "title": "How would you like to start?",
@@ -91,7 +95,9 @@
     "hiddenBadge": "hidden",
     "hiddenAt": "Hidden at {{breakpoint}}",
     "show": "Show at this size",
-    "hide": "Hide at this size"
+    "hide": "Hide at this size",
+    "rootLabel": "Page root",
+    "rootLocked": "The page root can't be selected or deleted. Use its child below to select or delete the whole example."
   },
   "publish": {
     "button": "Publish",

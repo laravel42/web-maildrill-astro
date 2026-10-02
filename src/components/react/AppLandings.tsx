@@ -3,6 +3,7 @@ import Icon from './Icon';
 import TimeAgo from './shared/TimeAgo';
 import ConfirmDialog from './shared/ConfirmDialog';
 import { useToast } from './shared/useToast';
+import ToastHost from './shared/ToastHost';
 import { routes } from '@/config/routes';
 import { ApiError } from '@/lib/app/api';
 import {
@@ -446,14 +447,7 @@ export default function AppLandings({
         />
       ) : null}
 
-      {toast ? (
-        <div
-          className={`${styles.toast} ${tone === 'alert' ? styles.toastAlert : ''}`}
-          role="status"
-        >
-          {toast}
-        </div>
-      ) : null}
+      <ToastHost toast={toast} tone={tone} />
     </div>
   );
 }

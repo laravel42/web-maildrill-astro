@@ -34,7 +34,8 @@
       "insert": "Insert block",
       "view": "View",
       "library": "Library",
-      "edit": "Edit"
+      "edit": "Edit",
+      "help": "Help"
     },
     "action": {
       "tabEditor": "Go to editor",
@@ -46,7 +47,8 @@
       "openLibrary": "Open components library",
       "toggleInspector": "Expand / compact inspector",
       "undo": "Undo",
-      "redo": "Redo"
+      "redo": "Redo",
+      "tour": "View the guided tour"
     }
   },
   "bubbleMenu": {

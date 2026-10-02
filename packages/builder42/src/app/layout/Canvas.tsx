@@ -10,10 +10,11 @@
  * `ViewMode` pero fue eliminada de este host — ver el guard más abajo.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { NodeRenderer } from "@/builder/canvas/NodeRenderer";
+import { CanvasDocProvider } from "@/builder/canvas/CanvasDocContext";
 import { KeyboardReorder } from "@/builder/canvas/KeyboardReorder";
 import { exportPage, exportSite, type ExportedFile } from "@/builder/export/site";
 import { zipSite } from "@/builder/export/zip";
@@ -22,6 +23,7 @@ import { writeDocIntoSite } from "@/builder/model/site";
 import { useLocalConfig } from "@/hooks/useLocalConfig";
 import { useAutoScroll } from "@/builder/dnd/useAutoScroll";
 import { SelectionHandle } from "@/builder/dnd/SelectionHandle";
+import { NodeActionsRail } from "@/builder/dnd/NodeActionsRail";
 import { HoverHandle } from "@/builder/dnd/HoverHandle";
 import { TextToolbar } from "@/builder/canvas/TextToolbar";
 import { ModalEditorOverlay } from "@/builder/canvas/ModalEditorOverlay";
@@ -33,6 +35,14 @@ import { ErrorBoundary } from "@/components";
 import { ExportWarningsBanner } from "@/components/ExportWarningsBanner";
 import type { ExportWarning } from "@/builder/export/warnings";
 import { CanvasEmptyStart } from "./CanvasEmptyStart";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
+import { notifyTourZoneClick } from "@/app/tour/zoneTourTriggers";
+import {
+  simpleIconsCatalog,
+  subscribeSimpleIcons,
+  getSimpleIconsVersion,
+} from "@/builder/registry/catalogs/simpleIcons.catalog";
+import { usedSocialIconSlugs } from "@/builder/export/usage";
 
 export function Canvas() {
   const view = useDocumentStore((s) => s.view);
@@ -41,9 +51,98 @@ export function Canvas() {
   const activeBreakpoint = useDocumentStore((s) => s.activeBreakpoint);
   const activeThemeId = useDocumentStore((s) => s.activeThemeId);
   const select = useDocumentStore((s) => s.select);
+  // Disparador angosto (docs/34 §F11a3): antes bastaba con que el documento
+  // tuviera ALGÚN nodo `social-links`, sin mirar sus props — y los 17
+  // templates publicados traen ese nodo con `props: {}` (sin `links`), así
+  // que abrir cualquier template descargaba el catálogo de marcas (~5 MB /
+  // 1.78 MB brotli) para pintar CERO iconos. La condición ahora es un OR de
+  // dos casos, los únicos en los que el catálogo hace falta de verdad:
+  //  a) algún nodo `social-links` tiene al menos un link con `label` no
+  //     vacío tras trim() — ese es el único caso en que el canvas tiene un
+  //     glifo de marca real que pintar (el slug es el label en minúsculas,
+  //     ver `resolveIcon` en SocialLinks.tsx); o
+  //  b) el nodo seleccionado es un `social-links` — seleccionarlo es
+  //     condición necesaria para abrir el picker de redes del Inspector, que
+  //     necesita el catálogo cargado para sus previews aunque el nodo no
+  //     tenga labels todavía.
+  const needsBrandCatalog = useDocumentStore((s) => {
+    const selected = s.selectedId ? s.document.nodes[s.selectedId] : undefined;
+    if (selected?.type === "social-links") return true;
+    return Object.values(s.document.nodes).some((n) => {
+      if (n.type !== "social-links") return false;
+      const links = Array.isArray(n.props.links) ? n.props.links : [];
+      return links.some(
+        (l) => typeof (l as { label?: unknown })?.label === "string" && (l as { label: string }).label.trim() !== "",
+      );
+    });
+  });
   const canvasRef = useRef<HTMLElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   useAutoScroll(canvasRef);
+
+  // Guarda de navegación en Edit (chain L1): los componentes del registry
+  // pintan anchors REALES en el documento vivo (`Button.tsx`, `Navbar`,
+  // `NavMenu`, `Breadcrumb`, `LanguageNav`, `SocialLinks` renderizan
+  // `<a href>`), y nada los cancelaba en modo Edit — un click activaba la
+  // navegación del navegador y se llevaba el documento TOP-LEVEL entero
+  // fuera del editor (a diferencia de `PreviewFrame.tsx`, que ya intercepta
+  // TODA navegación de su iframe porque corre el export real dentro de un
+  // sandbox — ver la cabecera de ese archivo). Este listener es el
+  // equivalente para el canvas de Edit: un único handler en CAPTURE phase
+  // sobre la raíz del canvas, activo solo en modo Edit (`view === "edit"`,
+  // comprobado dentro del efecto porque `interactive` se calcula más abajo
+  // en esta función, después de los `return` tempranos), que cancela la
+  // activación de cualquier `<a href>` o el `submit` de un formulario ANTES
+  // de que el navegador actúe — pero sin `stopPropagation()`, para que el
+  // `onClick` de `rootProps` en `NodeRenderer` (que hace la selección) siga
+  // corriendo con normalidad. Capture phase es lo que permite ganarle a la
+  // acción por defecto del navegador Y al propio handler del componente
+  // (que no la cancela).
+  // NO borrar este `preventDefault`: no es un descuido de Preview, es la
+  // pieza que faltaba en Edit — ver `PreviewFrame.tsx` líneas ~45-60 para el
+  // guard equivalente del lado de Preview.
+  useEffect(() => {
+    const root = canvasRef.current;
+    const editModeActive = view === "edit";
+    if (!editModeActive || !root) return;
+
+    const cancelLinkActivation = (e: Event) => {
+      const target = e.target as Element | null;
+      const anchor = target?.closest?.("a[href]") ?? null;
+      if (anchor) {
+        e.preventDefault();
+      }
+    };
+    const cancelSubmit = (e: Event) => {
+      e.preventDefault();
+    };
+
+    root.addEventListener("click", cancelLinkActivation, true);
+    root.addEventListener("submit", cancelSubmit, true);
+    return () => {
+      root.removeEventListener("click", cancelLinkActivation, true);
+      root.removeEventListener("submit", cancelSubmit, true);
+    };
+  }, [view]);
+
+  // Suscripción al catálogo lazy de simple-icons (docs/34 §F11a): fuerza un
+  // re-render cuando el barrel termina de cargar, para que el canvas y la
+  // preview del picker (que leen `simpleIconsCatalog.get()` de forma
+  // síncrona) dejen de mostrar el icono genérico en cuanto llegan los datos.
+  // Solo importa que el valor cambie, no su contenido.
+  useSyncExternalStore(subscribeSimpleIcons, getSimpleIconsVersion, getSimpleIconsVersion);
+
+  // Precalentamiento (docs/34 §F11a, condición angosta en §F11a3): dispara
+  // `ensure()` solo cuando `needsBrandCatalog` es true — ver el comentario
+  // del selector arriba para las dos ramas del OR. Este efecto vive en
+  // `Canvas`, montado solo en el editor interactivo real del browser —
+  // nunca corre en export/SSR (`exportToHtml`/`zipSite` no montan React; esos
+  // caminos siguen llamando `ensure()` sin condición, ver `downloadZip` en
+  // `CodeView` más abajo).
+  useEffect(() => {
+    if (!needsBrandCatalog) return;
+    void simpleIconsCatalog.ensure([]);
+  }, [needsBrandCatalog]);
 
   // La vista JSON queda eliminada en este host (Maildrill no expone el
   // documento crudo a sus usuarios, ver
@@ -79,34 +178,44 @@ export function Canvas() {
     );
   }
 
+  // chain F31, T3: el proveedor envuelve TODO lo que monta un `NodeRenderer`
+  // (el árbol de abajo y el `ModalEditorOverlay`). Es un componente aparte a
+  // propósito: cuando uno de sus valores cambia re-renderiza solo él, y sus
+  // `children` llegan como la misma referencia de elemento, así que React salta
+  // el subárbol salvo los consumidores del contexto.
   return (
-    <main
-      className="pbx-canvas"
-      ref={canvasRef}
-      onClick={() => {
-        if (interactive) select(null);
-      }}
-    >
-      <div
-        className="pbx-canvas__frame"
-        ref={frameRef}
-        style={{ width: viewportWidth(activeBreakpoint) }}
-        data-breakpoint={activeBreakpoint}
-        data-theme={activeThemeId ?? undefined}
+    <CanvasDocProvider>
+      <main
+        className="pbx-canvas"
+        ref={canvasRef}
+        onClickCapture={() => notifyTourZoneClick("canvas")}
+        onClick={() => {
+          if (interactive) select(null);
+        }}
       >
-        <ErrorBoundary key={view} nodeId={rootId}>
-          <NodeRenderer id={rootId} interactive={interactive} />
-        </ErrorBoundary>
-        {interactive ? <CanvasEmptyStart /> : null}
-        {interactive ? <SelectionHandle frameRef={frameRef} /> : null}
-        {interactive ? <HoverHandle frameRef={frameRef} /> : null}
-        {interactive ? <TextToolbar frameRef={frameRef} /> : null}
-        {interactive ? <ModalEditorOverlay /> : null}
-      </div>
-      {interactive ? <KeyboardReorder /> : null}
-      {interactive ? <InvisibleElementsBubble /> : null}
-      {interactive ? <PickInsertBar /> : null}
-    </main>
+        <div
+          className="pbx-canvas__frame"
+          ref={frameRef}
+          style={{ width: viewportWidth(activeBreakpoint) }}
+          data-breakpoint={activeBreakpoint}
+          data-theme={activeThemeId ?? undefined}
+          {...dataTourAttr(BUILDER42_TOUR_ANCHORS.canvasFrame)}
+        >
+          <ErrorBoundary key={view} nodeId={rootId}>
+            <NodeRenderer id={rootId} interactive={interactive} />
+          </ErrorBoundary>
+          {interactive ? <CanvasEmptyStart /> : null}
+          {interactive ? <SelectionHandle frameRef={frameRef} /> : null}
+          {interactive ? <NodeActionsRail frameRef={frameRef} /> : null}
+          {interactive ? <HoverHandle frameRef={frameRef} /> : null}
+          {interactive ? <TextToolbar frameRef={frameRef} /> : null}
+          {interactive ? <ModalEditorOverlay /> : null}
+        </div>
+        {interactive ? <KeyboardReorder /> : null}
+        {interactive ? <InvisibleElementsBubble /> : null}
+        {interactive ? <PickInsertBar /> : null}
+      </main>
+    </CanvasDocProvider>
   );
 }
 
@@ -127,6 +236,11 @@ function CodeView() {
   const [prefix] = useLocalConfig("outputZipPrefix");
   const [useTimestamp] = useLocalConfig("outputZipTimestamp");
 
+  // Misma suscripción que en `Canvas`: la vista Código lee `simpleIconsCatalog`
+  // de forma síncrona dentro del `useMemo` de abajo, así que necesita
+  // re-renderizar cuando el catálogo llega (docs/34 §F11a).
+  useSyncExternalStore(subscribeSimpleIcons, getSimpleIconsVersion, getSimpleIconsVersion);
+
   const { html, css, site } = useMemo(() => {
     const flushed = writeDocIntoSite(site0, activePageId, activeDoc);
     const page = flushed.pages[activePageId]!;
@@ -134,9 +248,26 @@ function CodeView() {
     return { html: out.html, css: out.css, site: flushed };
   }, [site0, activePageId, activeDoc]);
 
-  const downloadZip = () => {
+  const downloadZip = async () => {
     setExporting(true);
     setExportWarnings([]);
+    // `ensure()` antes de exportar (decisión 5d): sin esto, un .zip generado
+    // antes de que el barrel termine de cargar saldría con los iconos de
+    // marca vacíos (el fallback genérico) aunque el canvas ya los mostrara
+    // bien — precisamente el escenario a evitar. Si la carga falla, no
+    // bloqueamos la descarga: los glifos de marca caen al icono genérico
+    // (el mismo fallback que ya usa cualquier marca no reconocida).
+    try {
+      await simpleIconsCatalog.ensure(usedSocialIconSlugs(site));
+    } catch (err) {
+      console.warn("simple-icons: no se pudo cargar el catálogo de marcas, se usa el icono genérico", err);
+    }
+    // El bloque de export es síncrono y pesado (exportSite + zipSite). Lo
+    // diferimos a una MACROtask con setTimeout(…, 0) para que el navegador
+    // pinte antes el botón deshabilitado y el label "Exporting…": el
+    // `.then`/`await` de arriba corre como MICROtask, que se ejecuta ANTES
+    // del siguiente paint, así que sin este setTimeout el hilo principal se
+    // bloquearía sin que el usuario llegue a ver el estado "exporting".
     setTimeout(() => {
       const built = exportSite(site, { minify: true });
       setFiles(built.files);

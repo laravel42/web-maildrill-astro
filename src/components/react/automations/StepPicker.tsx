@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../Icon';
+import Modal from '../shared/Modal';
 import { matchesSearchQuery } from '@/lib/app/search-match';
 import type { PieceMeta } from '@/lib/app/automations';
 import styles from './StepPicker.module.css';
@@ -99,21 +100,6 @@ export default function StepPicker({
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.stopPropagation();
-        onClose();
-      }
-    };
-    document.addEventListener('keydown', onKey, true);
-    return () => document.removeEventListener('keydown', onKey, true);
-  }, [onClose]);
-
   const all = useMemo(() => choicesFrom(pieces, kind), [pieces, kind]);
 
   const matches = useMemo(() => {
@@ -144,75 +130,74 @@ export default function StepPicker({
   }, [query]);
 
   return (
-    <div
-      className={styles.overlay}
-      role="dialog"
-      aria-modal="true"
-      aria-label={kind === 'trigger' ? 'Choose a trigger' : 'Add a step'}
+    <Modal
+      open
+      onClose={onClose}
+      title={kind === 'trigger' ? 'Choose a trigger' : 'Add a step'}
+      overlayClassName={styles.overlay}
+      panelClassName={styles.panel}
+      initialFocus={inputRef}
     >
-      <button type="button" className={styles.scrim} aria-label="Close" onClick={onClose} />
-      <div className={styles.panel}>
-        <div className={styles.head}>
-          <Icon name="search" size={16} className={styles.searchIcon} />
-          <input
-            ref={inputRef}
-            type="search"
-            className={styles.input}
-            value={query}
-            placeholder={kind === 'trigger' ? 'Search triggers…' : 'Search steps…'}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                setActive((i) => Math.min(flat.length - 1, i + 1));
-              } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                setActive((i) => Math.max(0, i - 1));
-              } else if (e.key === 'Enter' && flat[active]) {
-                e.preventDefault();
-                onPick(flat[active]);
-              }
-            }}
-          />
-          <button type="button" className="kbtn" aria-label="Close" onClick={onClose}>
-            <Icon name="x" size={16} />
-          </button>
-        </div>
-
-        <div className={styles.list}>
-          {flat.length === 0 ? (
-            <p className={styles.empty}>Nothing matches “{query}”.</p>
-          ) : (
-            groups.map(([category, list]) => (
-              <section key={category}>
-                <h3 className={styles.group}>{category}</h3>
-                {list.map((choice) => {
-                  const index = flat.indexOf(choice);
-                  return (
-                    <button
-                      key={`${choice.pieceName}.${choice.name}`}
-                      type="button"
-                      className={`${styles.item} ${index === active ? styles.itemActive : ''}`}
-                      onMouseEnter={() => setActive(index)}
-                      onClick={() => onPick(choice)}
-                    >
-                      <span
-                        className={styles.dot}
-                        style={{ background: `var(${choice.accent ?? '--text3'})` }}
-                        aria-hidden="true"
-                      />
-                      <span className={styles.itemText}>
-                        <span className={styles.itemTitle}>{choice.displayName}</span>
-                        <span className={styles.itemDesc}>{choice.description}</span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </section>
-            ))
-          )}
-        </div>
+      <div className={styles.head}>
+        <Icon name="search" size={16} className={styles.searchIcon} />
+        <input
+          ref={inputRef}
+          type="search"
+          className={styles.input}
+          value={query}
+          placeholder={kind === 'trigger' ? 'Search triggers…' : 'Search steps…'}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              setActive((i) => Math.min(flat.length - 1, i + 1));
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              setActive((i) => Math.max(0, i - 1));
+            } else if (e.key === 'Enter' && flat[active]) {
+              e.preventDefault();
+              onPick(flat[active]);
+            }
+          }}
+        />
+        <button type="button" className="kbtn" aria-label="Close" onClick={onClose}>
+          <Icon name="x" size={16} />
+        </button>
       </div>
-    </div>
+
+      <div className={styles.list}>
+        {flat.length === 0 ? (
+          <p className={styles.empty}>Nothing matches “{query}”.</p>
+        ) : (
+          groups.map(([category, list]) => (
+            <section key={category}>
+              <h3 className={styles.group}>{category}</h3>
+              {list.map((choice) => {
+                const index = flat.indexOf(choice);
+                return (
+                  <button
+                    key={`${choice.pieceName}.${choice.name}`}
+                    type="button"
+                    className={`${styles.item} ${index === active ? styles.itemActive : ''}`}
+                    onMouseEnter={() => setActive(index)}
+                    onClick={() => onPick(choice)}
+                  >
+                    <span
+                      className={styles.dot}
+                      style={{ background: `var(${choice.accent ?? '--text3'})` }}
+                      aria-hidden="true"
+                    />
+                    <span className={styles.itemText}>
+                      <span className={styles.itemTitle}>{choice.displayName}</span>
+                      <span className={styles.itemDesc}>{choice.description}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </section>
+          ))
+        )}
+      </div>
+    </Modal>
   );
 }

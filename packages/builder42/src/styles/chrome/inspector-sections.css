@@ -134,7 +134,7 @@
 }
 .pbx-behavior-theme-empty__btn:hover {
   background: var(--pb-chrome-accent);
-  color: #fff;
+  color: var(--pb-chrome-text-on-accent);
 }
 
 /* Contador de behaviors en el heading */
@@ -144,7 +144,7 @@
   justify-content: center;
   width: 18px;
   height: 18px;
-  border-radius: var(--pb-chrome-radius-pill);
+  border-radius: var(--pb-chrome-radius-chip);
   background: var(--pb-chrome-accent);
   color: var(--pb-chrome-text-on-accent);
   font-size: 10px;
@@ -248,6 +248,36 @@
   z-index: 2;
   background: var(--pb-chrome-surface);
   padding-top: 0;
+  /* La barra sticky (breadcrumb + fila de tabs) vive dentro de
+   * `.pbx-inspector__body`, que reserva `padding: 0 10px` para el contenido
+   * scrolleable. Sin cancelar ese padding, la fila de tabs y su subrayado
+   * (`border-bottom` de `.pbx-inspector-header`/`.pbx-inspector-tabs`) quedan
+   * a 10px de cada borde del panel — medido: 11px izq / 10px der — en vez de
+   * llegar al borde del sidepanel como debe. Márgenes negativos que anulan
+   * exactamente ese padding para que el subrayado corra de lado a lado; el
+   * padding interno de cada tab (`.pbx-inspector-tab { padding: 8px 10px }`) y
+   * el que se repone abajo mantienen el texto con su misma sangría, así solo
+   * el subrayado gana ancho, no las etiquetas. */
+  margin-left: -10px;
+  margin-right: -10px;
+}
+
+/* Repone la sangría horizontal SOLO al contenido de la barra (breadcrumb),
+ * no a su subrayado: la fila de tabs ya la aporta el `padding` propio de cada
+ * `.pbx-inspector-tab`, así que aquí se sangra el header (fila 1) para que el
+ * breadcrumb no quede pegado al borde tras el bleed. */
+.pbx-inspector-sticky-bar > .pbx-inspector-header {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+/* La fila de tabs recupera el borde del panel sin sangrar sus botones: el
+ * subrayado (border-bottom) llega de lado a lado y el primer/último tab
+ * conserva su padding de 10px, alineando el texto con el breadcrumb de
+ * arriba. */
+.pbx-inspector-sticky-bar > .pbx-inspector-tabs {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .pbx-inspector-header {
@@ -290,6 +320,7 @@
   background: transparent;
   padding: 8px 10px;
   margin-bottom: -1px;
+  font-family: inherit; /* T8: <button> never inherits from .pbx-app on its own (UA default, Arial) — this covers .pbx-inspector-tab__count and the unstyled __label span too, both plain descendants with no font rule of their own. */
   font-size: var(--pb-chrome-font-size-label);
   font-weight: var(--pb-chrome-font-weight-semibold);
   color: var(--pb-chrome-text-muted);
@@ -328,7 +359,7 @@
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  border-radius: var(--pb-chrome-radius-pill);
+  border-radius: var(--pb-chrome-radius-chip);
   background: var(--pb-chrome-surface-alt);
   /* --pb-chrome-text-muted sobre --pb-chrome-surface-alt mide 4.34:1 en
      claro — bajo el piso 4.5:1 AA a este font-size (10px, no califica como
@@ -557,8 +588,12 @@
 }
 
 /* --- Dots de breakpoint para tokens responsive (docs/49) — mismo patrón
-   visual/aria que `.pbx-visibility-strip__dots`/`__dot` (`inspector-panel.css`),
-   pero "set"/"heredado" en vez de "oculto"/"visible". --- */
+   visual/aria que tenía antes `VisibilityStrip` (ver docs/17-followup: ese
+   strip reemplazó sus dots por chips icono+abreviatura, `.pbx-visibility-strip__bp`
+   en `inspector-panel.css`, por falta de contexto visual; este componente es
+   un caso distinto — "set"/"heredado" de un token, no "oculto"/"visible" de
+   un nodo — y conserva el dot simple mientras no se reporte el mismo
+   problema aquí). --- */
 .pbx-responsive-scalar__dots {
   display: flex;
   align-items: center;
@@ -601,7 +636,7 @@
 .pbx-token-add__btn {
   border: 1px solid var(--pb-chrome-bg-hover);
   background: var(--pb-chrome-bg-alt);
-  color: #93c5fd;
+  color: var(--pb-chrome-accent-on-dark);
   width: 28px;
   height: 28px;
   border-radius: var(--pb-chrome-radius-xs);
@@ -702,6 +737,7 @@
   height: 41px;
   border-radius: var(--pb-chrome-radius-xs) var(--pb-chrome-radius-xs) 0 0;
   cursor: pointer;
+  font-family: inherit; /* T8: <button> never inherits from .pbx-app on its own (UA default, Arial). */
   font-size: 13px;
   font-weight: 500;
   border-bottom: 3px solid transparent;

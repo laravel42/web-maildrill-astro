@@ -33,6 +33,7 @@ import type {
   StyleState,
 } from "@/builder/model/types";
 import { flattenTokens, resolveToken } from "@/builder/model/tokens";
+import { effectiveThemeTokens, resolveTokenValue } from "@/builder/model/theme";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { IconButton, LinkIcon, CloseIcon, ResetIcon, WarnIcon, PbxSelect } from "@/components";
 import { resolveValueOrigin } from "./origin";
@@ -106,6 +107,25 @@ export interface PropertyFieldProps {
    * posiciones distintas de la misma fila).
    */
   inlineTokenAction?: boolean;
+  /**
+   * `true` muestra el VALOR RESUELTO del token en vez del chip con su
+   * nombre, cuando el campo está vinculado a uno (petición del usuario,
+   * este commit — modo simple del panel: la sección "Tokens" está oculta
+   * ahí, así que un chip con un `path` como `spacing.sm` no tiene contexto
+   * y confunde más de lo que ayuda; el usuario edita el VALOR sin necesitar
+   * saber que hay un token detrás).
+   *
+   * El vínculo al token se conserva mientras el campo no se toca — sigue
+   * siendo `{ token: "…" }` en el modelo, y el badge de "modificado"
+   * (`data-origin="active"`) sigue aplicando igual. Solo al EDITAR el
+   * campo se desvincula (mismo camino que el botón "×" de
+   * `unlinkToken`/`chooseToken` ya usa): escribir un valor nuevo desde un
+   * control que ni siquiera muestra que hay un token detrás no puede seguir
+   * escribiendo AL TOKEN — eso cambiaría silenciosamente todos los demás
+   * nodos que lo comparten. Editar aquí siempre pasa a valor libre en ESTE
+   * nodo, igual que cualquier otro campo sin token.
+   */
+  showTokenAsValue?: boolean;
   children: (args: PropertyFieldRenderArgs) => React.ReactNode;
 }
 
@@ -124,6 +144,7 @@ export function PropertyField({
   bare = false,
   stateOverride = null,
   inlineTokenAction = false,
+  showTokenAsValue = false,
   children,
 }: PropertyFieldProps) {
   const { t } = useTranslation("inspector");
@@ -159,7 +180,27 @@ export function PropertyField({
     rawValue !== null &&
     "token" in rawValue;
   const tokenPath = isToken ? (rawValue as { token: string }).token : "";
-  const resolvedToken = isToken ? resolveToken(tokens, tokenPath, breakpoint, breakpointConfig) : undefined;
+  // Theme-aware (bug real reportado por el usuario): antes se usaba
+  // `resolveToken(tokens, …)` a secas, que solo lee el valor BASE del sitio
+  // — si el nodo vive bajo un tema que remapea ese token (p. ej. un botón
+  // verde por tema pero cuyo token base es azul), el Inspector mostraba el
+  // azul base mientras el canvas pintaba el verde del tema, inconsistencia
+  // visible en color/swatch. `activeThemeId` es la MISMA fuente de verdad
+  // que usa el canvas en vivo (`Canvas.tsx`, `data-theme={activeThemeId}`).
+  // Los tokens responsive de tipografía (`sizes`/`lineHeights`) no tienen
+  // remapeo de tema — se resuelven igual que antes con `resolveToken`; el
+  // resto sigue la cadena de referencias YA aplicando el tema activo
+  // (`effectiveThemeTokens` + `resolveTokenValue`, misma fuente que
+  // `themesToCss` usa para las custom properties reales del canvas).
+  const activeThemeId = useDocumentStore((s) => s.activeThemeId);
+  const themes = useDocumentStore((s) => s.site.meta.themes);
+  const isResponsiveTypography =
+    tokenPath.startsWith("typography.sizes.") || tokenPath.startsWith("typography.lineHeights.");
+  const resolvedToken = isToken
+    ? isResponsiveTypography
+      ? resolveToken(tokens, tokenPath, breakpoint, breakpointConfig)
+      : resolveTokenValue(effectiveThemeTokens(tokens, themes, activeThemeId ?? undefined), tokenPath)
+    : undefined;
   const broken = isToken && resolvedToken === undefined;
   const freeValue = typeof rawValue === "string" ? rawValue : "";
 
@@ -209,8 +250,13 @@ export function PropertyField({
 
   const dataOrigin = isModified ? "active" : origin.kind === "none" ? "none" : "inherited";
 
+  // El botón de "vincular a token" tampoco se muestra en modo simple
+  // (`showTokenAsValue`): si el concepto de token está oculto (no hay
+  // sección "Tokens" visible para dar contexto), ofrecer VINCULAR uno sería
+  // tan confuso como mostrar el nombre de uno ya vinculado — mismo criterio
+  // que el chip, arriba.
   const tokenButton =
-    canTokenize && !isToken && !picking ? (
+    canTokenize && !isToken && !picking && !showTokenAsValue ? (
       <IconButton
         icon={LinkIcon}
         label={t("styleField.useToken")}
@@ -250,6 +296,19 @@ export function PropertyField({
         />
       </div>
     );
+  } else if (isToken && showTokenAsValue) {
+    // Modo simple (docs, ver comentario de `showTokenAsValue` arriba): el
+    // control normal, con el VALOR RESUELTO del token como `freeValue` —
+    // nunca `undefined` (un token roto cae a cadena vacía, igual que
+    // cualquier otro campo sin valor). `commit` sigue siendo el `commit`
+    // normal de la capa activa: escribir aquí SIEMPRE pasa a valor libre
+    // (nunca vuelve a escribir `{ token }`), desvinculando implícitamente
+    // sin que el usuario tenga que ver ni tocar un botón de "desvincular".
+    control = children({
+      freeValue: resolvedToken ?? "",
+      commit,
+      tokenAction: null,
+    });
   } else if (isToken) {
     control = (
       <div className={`pbx-panel-token-chip${broken ? " pbx-panel-token-chip--broken" : ""}`}>

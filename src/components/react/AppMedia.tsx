@@ -6,12 +6,14 @@ import { anyMatchesSearchQuery } from '@/lib/app/search-match';
 import { api, ApiError } from '@/lib/app/api';
 import { toMediaFile, type ApiMediaAsset } from '@/lib/app/media-map';
 import Icon from './Icon';
+import Modal from './shared/Modal';
 import ConfirmDialog from './shared/ConfirmDialog';
 import ColFilter from './shared/ColFilter';
 import FilterChipsRow from './shared/FilterChipsRow';
 import FolderFilter from './shared/FolderFilter';
 import TagFilter from './shared/TagFilter';
 import { useToast } from './shared/useToast';
+import ToastHost from './shared/ToastHost';
 import { agoNow } from './shared/time';
 import { visiblePageNumbers } from './shared/pagination';
 import {
@@ -862,192 +864,182 @@ export default function AppMedia({
       )}
 
       {/* upload modal */}
-      {uploadOpen && (
-        <div
-          className={styles.modalOv}
-          onClick={closeUpload}
-          style={{ animation: 'ovfade .2s ease' }}
-        >
-          <div
-            className={styles.modal}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Upload media"
-            onClick={(e) => e.stopPropagation()}
-            style={{ animation: 'pop .18s ease' }}
+      <Modal
+        open={uploadOpen}
+        onClose={closeUpload}
+        title="Upload media"
+        panelClassName={styles.uploadDialog}
+      >
+        <div className="amodal__head">
+          <span className="amodal__title">Upload media</span>
+          <button
+            type="button"
+            className="iconbtn"
+            aria-label="Close"
+            onClick={closeUpload}
+            disabled={uploading}
           >
-            <div className={styles.modalHead}>
-              <span className={styles.modalTitle}>Upload media</span>
-              <button
-                type="button"
-                className="iconbtn"
-                aria-label="Close"
-                onClick={closeUpload}
-                disabled={uploading}
-              >
-                <Icon name="x" size={16} />
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              {!storageReady && (
-                <p className="screen__sub" style={{ margin: '0 0 12px' }}>
-                  Media storage isn't configured yet, so uploads are disabled.
-                </p>
-              )}
+            <Icon name="x" size={16} />
+          </button>
+        </div>
+        <div className="amodal__body">
+          {!storageReady && (
+            <p className="screen__sub" style={{ margin: '0 0 12px' }}>
+              Media storage isn't configured yet, so uploads are disabled.
+            </p>
+          )}
 
-              <label
-                className={styles.drop}
-                style={{
-                  display: 'flex',
-                  cursor: storageReady && !uploading ? 'pointer' : 'not-allowed',
-                  opacity: storageReady ? 1 : 0.55,
-                }}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
+          <label
+            className={styles.drop}
+            style={{
+              display: 'flex',
+              cursor: storageReady && !uploading ? 'pointer' : 'not-allowed',
+              opacity: storageReady ? 1 : 0.55,
+            }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (storageReady && !uploading) stageFiles([...e.dataTransfer.files]);
+            }}
+          >
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/gif,image/webp,image/avif,image/svg+xml"
+              disabled={!storageReady || uploading}
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const files = [...(e.target.files ?? [])];
+                e.target.value = '';
+                stageFiles(files);
+              }}
+            />
+            <span className={styles.dropIc}>
+              <Icon name="media" size={22} />
+            </span>
+            <span className={styles.dropTitle}>
+              {uploading
+                ? 'Uploading…'
+                : uploadQueue.length > 0
+                  ? '1 image ready'
+                  : 'Drop an image here'}
+            </span>
+            <span className={styles.dropSub}>
+              or <span className={styles.dropBrowse}>browse</span> · PNG, JPG, GIF, WebP, AVIF,
+              SVG up to 15 MB
+            </span>
+          </label>
+
+          {uploadQueue.length > 0 && (
+            <UploadQueue
+              files={uploadQueue}
+              disabled={uploading || suggesting}
+              onRemove={(i) => setUploadQueue((prev) => prev.filter((_, idx) => idx !== i))}
+            />
+          )}
+
+          {suggesting && (
+            <p className={styles.suggesting} aria-live="polite">
+              <Icon name="sparkle" size={14} />
+              Analyzing image for name and tags…
+            </p>
+          )}
+
+          <label className={styles.fieldLabel} htmlFor="media-upload-name">
+            Name <span className={styles.req}>*</span>
+          </label>
+          <input
+            id="media-upload-name"
+            className={`${styles.fieldInput}${uploadNameError ? ` ${styles.fieldInvalid}` : ''}`}
+            type="text"
+            value={uploadName}
+            disabled={uploading}
+            required
+            aria-required="true"
+            aria-invalid={uploadNameError}
+            onChange={(e) => {
+              setUploadName(e.target.value);
+              if (e.target.value.trim()) setUploadNameError(false);
+            }}
+            onBlur={() => {
+              if (!uploadName.trim()) return;
+              setUploadName(toKebabCase(uploadName));
+            }}
+          />
+          {uploadNameError && (
+            <p className={styles.fieldError} role="alert">
+              Name is required
+            </p>
+          )}
+
+          <span className={styles.fieldLabel} id="media-upload-folder-label">
+            Folder
+          </span>
+          <div aria-labelledby="media-upload-folder-label">
+            <FolderFilter
+              options={folderOptions}
+              value={uploadFolder.trim() ? uploadFolder.trim() : null}
+              onChange={(key) => setUploadFolder(key ?? '')}
+              block
+              disabled={uploading}
+            />
+          </div>
+
+          <span className={styles.fieldLabel}>Tags</span>
+          <div className={styles.uploadTags}>
+            {uploadTags.map((tag) => {
+              const st = tagStyle(tag);
+              return (
+                <span
+                  key={tag}
+                  className={styles.tag}
+                  style={{ background: st.bg, color: st.c }}
+                >
+                  <span className={styles.tagLabel} style={{ color: st.c }}>
+                    {tag}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.tagX}
+                    style={{ color: st.c }}
+                    aria-label={`Remove tag ${tag}`}
+                    disabled={uploading}
+                    onClick={() => setUploadTags((prev) => prev.filter((t) => t !== tag))}
+                  >
+                    <Icon name="x" size={14} stroke={3} />
+                  </button>
+                </span>
+              );
+            })}
+            <input
+              className={styles.tagInput}
+              placeholder="Add tag…"
+              value={uploadTagDraft}
+              disabled={uploading}
+              onChange={(e) => setUploadTagDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
                   e.preventDefault();
-                  if (storageReady && !uploading) stageFiles([...e.dataTransfer.files]);
-                }}
-              >
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/gif,image/webp,image/avif,image/svg+xml"
-                  disabled={!storageReady || uploading}
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    const files = [...(e.target.files ?? [])];
-                    e.target.value = '';
-                    stageFiles(files);
-                  }}
-                />
-                <span className={styles.dropIc}>
-                  <Icon name="media" size={22} />
-                </span>
-                <span className={styles.dropTitle}>
-                  {uploading
-                    ? 'Uploading…'
-                    : uploadQueue.length > 0
-                      ? '1 image ready'
-                      : 'Drop an image here'}
-                </span>
-                <span className={styles.dropSub}>
-                  or <span className={styles.dropBrowse}>browse</span> · PNG, JPG, GIF, WebP, AVIF,
-                  SVG up to 15 MB
-                </span>
-              </label>
-
-              {uploadQueue.length > 0 && (
-                <UploadQueue
-                  files={uploadQueue}
-                  disabled={uploading || suggesting}
-                  onRemove={(i) => setUploadQueue((prev) => prev.filter((_, idx) => idx !== i))}
-                />
-              )}
-
-              {suggesting && (
-                <p className={styles.suggesting} aria-live="polite">
-                  <Icon name="sparkle" size={14} />
-                  Analyzing image for name and tags…
-                </p>
-              )}
-
-              <label className={styles.fieldLabel} htmlFor="media-upload-name">
-                Name <span className={styles.req}>*</span>
-              </label>
-              <input
-                id="media-upload-name"
-                className={`${styles.fieldInput}${uploadNameError ? ` ${styles.fieldInvalid}` : ''}`}
-                type="text"
-                value={uploadName}
-                disabled={uploading}
-                required
-                aria-required="true"
-                aria-invalid={uploadNameError}
-                onChange={(e) => {
-                  setUploadName(e.target.value);
-                  if (e.target.value.trim()) setUploadNameError(false);
-                }}
-                onBlur={() => {
-                  if (!uploadName.trim()) return;
-                  setUploadName(toKebabCase(uploadName));
-                }}
-              />
-              {uploadNameError && (
-                <p className={styles.fieldError} role="alert">
-                  Name is required
-                </p>
-              )}
-
-              <span className={styles.fieldLabel} id="media-upload-folder-label">
-                Folder
-              </span>
-              <div aria-labelledby="media-upload-folder-label">
-                <FolderFilter
-                  options={folderOptions}
-                  value={uploadFolder.trim() ? uploadFolder.trim() : null}
-                  onChange={(key) => setUploadFolder(key ?? '')}
-                  block
-                  disabled={uploading}
-                />
-              </div>
-
-              <span className={styles.fieldLabel}>Tags</span>
-              <div className={styles.uploadTags}>
-                {uploadTags.map((tag) => {
-                  const st = tagStyle(tag);
-                  return (
-                    <span
-                      key={tag}
-                      className={styles.tag}
-                      style={{ background: st.bg, color: st.c }}
-                    >
-                      <span className={styles.tagLabel} style={{ color: st.c }}>
-                        {tag}
-                      </span>
-                      <button
-                        type="button"
-                        className={styles.tagX}
-                        style={{ color: st.c }}
-                        aria-label={`Remove tag ${tag}`}
-                        disabled={uploading}
-                        onClick={() => setUploadTags((prev) => prev.filter((t) => t !== tag))}
-                      >
-                        <Icon name="x" size={14} stroke={3} />
-                      </button>
-                    </span>
-                  );
-                })}
-                <input
-                  className={styles.tagInput}
-                  placeholder="Add tag…"
-                  value={uploadTagDraft}
-                  disabled={uploading}
-                  onChange={(e) => setUploadTagDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addUploadTag();
-                    }
-                  }}
-                  aria-label="Add tag"
-                />
-              </div>
-            </div>
-            <div className={styles.modalFoot}>
-              <button type="button" className="sbtn" onClick={closeUpload} disabled={uploading}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="pbtn"
-                onClick={() => void commitUpload()}
-                disabled={uploading || !storageReady}
-              >
-                {uploading ? 'Uploading…' : 'Done'}
-              </button>
-            </div>
+                  addUploadTag();
+                }
+              }}
+              aria-label="Add tag"
+            />
           </div>
         </div>
-      )}
+        <div className="amodal__foot">
+          <button type="button" className="sbtn" onClick={closeUpload} disabled={uploading}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="pbtn"
+            onClick={() => void commitUpload()}
+            disabled={uploading || !storageReady}
+          >
+            {uploading ? 'Uploading…' : 'Done'}
+          </button>
+        </div>
+      </Modal>
 
       {confirmDelete && (
         <ConfirmDialog
@@ -1063,18 +1055,7 @@ export default function AppMedia({
         />
       )}
 
-      {toast && (
-        <div
-          className={styles.toast}
-          role="status"
-          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-        >
-          <span className={styles.toastIc}>
-            <Icon name="check" size={13} stroke={3} />
-          </span>
-          {toast}
-        </div>
-      )}
+      <ToastHost toast={toast} />
     </div>
   );
 }

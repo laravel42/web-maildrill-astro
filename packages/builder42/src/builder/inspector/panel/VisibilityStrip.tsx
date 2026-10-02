@@ -1,8 +1,12 @@
 /**
  * VisibilityStrip — reemplazo de `controls/VisibilityField.tsx` (docs/41
  * §5.2, §8 checklist #6/#7, Paso 7 de la tabla §7). Strip de ancho completo,
- * sin tarjeta, 36px de alto, con divisoria de 1px debajo. Tres estados
- * (docs/41 §5.2):
+ * sin tarjeta, con divisoria de 1px debajo. **2 filas** (petición del
+ * usuario, este commit — antes 1 fila de 36px con todo apretado: label +
+ * "Anular aquí"/ojo + chips de breakpoint compitiendo por el mismo ancho):
+ * fila 1 = label + acciones (ojo / "Anular aquí"), fila 2 = los chips de
+ * breakpoint a ancho completo, con más espacio para el icono+abreviatura de
+ * cada uno. Tres estados (docs/41 §5.2):
  *
  * - **Visible**: fondo transparente, sin icono a la izquierda, ojo abierto
  *   como botón de alternancia (nunca azul — el azul del panel está
@@ -19,9 +23,15 @@
  *   más fuerte que "mostrar": el usuario quiere que ESTE breakpoint sea
  *   visible sin importar qué diga la cascada).
  *
- * Micro-indicador: un punto por breakpoint configurado (`cfg.order`, nunca 4
- * hardcodeados — docs/41 §2.1 punto 3), clic = `setActiveBreakpoint`, hover =
- * tooltip nativo (`title`) con el estado de ESE breakpoint.
+ * Micro-indicador: un chip icono+abreviatura por breakpoint configurado
+ * (`cfg.order`, nunca 4 hardcodeados — docs/41 §2.1 punto 3), clic =
+ * `setActiveBreakpoint`, hover = tooltip nativo (`title`) con el estado de
+ * ESE breakpoint. Antes eran puntos (`dots`) sin ninguna pista de a qué
+ * breakpoint correspondía cada uno — reemplazados por el MISMO icono de
+ * dispositivo que usa `ViewportDropdown` (`viewportIcon`, ahora compartido
+ * vía `builder/model/breakpointIcons.ts`) más el id corto del breakpoint
+ * (sm/md/lg/xl) al lado, para que la fila sea legible sin depender del
+ * tooltip (feedback real de usuario: los dots no se entendían).
  */
 
 import { useMemo } from "react";
@@ -29,8 +39,11 @@ import { useTranslation } from "react-i18next";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { getDefinition } from "@/builder/registry/componentRegistry";
 import { isHiddenAt, computeShowAction } from "@/builder/model/visibility";
+import { viewportIcon } from "@/builder/model/breakpointIcons";
 import type { BuilderNode, Breakpoint } from "@/builder/model/types";
 import { Eye, EyeOff } from "@/components";
+import { FieldHelp } from "../controls/FieldHelp";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 /** `true` si `layout.display: "none"` está declarado EN la capa del breakpoint activo (no heredado). */
 function declaredNoneInActiveLayer(node: BuilderNode, bp: Breakpoint): boolean {
@@ -87,21 +100,53 @@ export function VisibilityStrip({ node }: { node: BuilderNode }) {
 
   return (
     <div className={stripClassName}>
-      <span className="pbx-visibility-strip__label">{t("panel.visibility.fieldLabel")}</span>
+      <div className="pbx-visibility-strip__top">
+        <span className="pbx-visibility-strip__label">
+          <span className="pbx-visibility-strip__label-text">{t("panel.visibility.fieldLabel")}</span>
+          <FieldHelp message={t("panel.visibility.help")} />
+        </span>
 
-      {kind === "hiddenInherited" ? (
-        <button type="button" className="pbx-visibility-strip__override" onClick={overrideHere}>
-          {t("panel.visibility.overrideHere")}
-        </button>
-      ) : null}
+        {kind === "hiddenInherited" ? (
+          <button type="button" className="pbx-visibility-strip__override" onClick={overrideHere}>
+            {t("panel.visibility.overrideHere")}
+          </button>
+        ) : null}
 
-      <div className="pbx-visibility-strip__dots" role="group" aria-label={t("visibility.label")}>
+        {kind !== "hiddenInherited" ? (
+          <button
+            type="button"
+            className={"pbx-visibility-strip__eye" + (hidden ? " pbx-visibility-strip__eye--hidden" : "")}
+            onClick={toggle}
+            aria-pressed={hidden}
+            aria-label={hidden ? t("panel.visibility.toggleShow", { bp: breakpoint }) : t("panel.visibility.toggleHide", { bp: breakpoint })}
+            title={hidden ? t("panel.visibility.toggleShow", { bp: breakpoint }) : t("panel.visibility.toggleHide", { bp: breakpoint })}
+          >
+            {hidden ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        ) : (
+          // Ojo "fantasma" de solo lectura (docs/41 §5.2): atenuado, no
+          // interactivo — el único camino desde aquí es "Anular aquí", nunca
+          // togglear directo (togglear un heredado ambiguo sobre qué capa
+          // tocar).
+          <span className="pbx-visibility-strip__eye pbx-visibility-strip__eye--ghost" aria-hidden="true">
+            <EyeOff size={16} />
+          </span>
+        )}
+      </div>
+
+      <div
+        className="pbx-visibility-strip__breakpoints"
+        role="group"
+        aria-label={t("visibility.label")}
+        {...dataTourAttr(BUILDER42_TOUR_ANCHORS.inspectorBreakpoints)}
+      >
         {cfg.order.map((bp) => {
           const bpHidden = isHiddenAt(node.style, bp, cfg);
-          const dotClassName =
-            "pbx-visibility-strip__dot" +
-            (bpHidden ? " pbx-visibility-strip__dot--hidden" : "") +
-            (bp === breakpoint ? " pbx-visibility-strip__dot--active" : "");
+          const BpIcon = viewportIcon(bp);
+          const itemClassName =
+            "pbx-visibility-strip__bp" +
+            (bpHidden ? " pbx-visibility-strip__bp--hidden" : "") +
+            (bp === breakpoint ? " pbx-visibility-strip__bp--active" : "");
           const tooltip = bpHidden
             ? t("panel.visibility.dotTooltipHidden", { bp })
             : t("panel.visibility.dotTooltipVisible", { bp });
@@ -109,35 +154,17 @@ export function VisibilityStrip({ node }: { node: BuilderNode }) {
             <button
               key={bp}
               type="button"
-              className={dotClassName}
+              className={itemClassName}
               title={tooltip}
               aria-label={tooltip}
               onClick={() => setActiveBreakpoint(bp)}
-            />
+            >
+              <BpIcon size={13} aria-hidden="true" />
+              <span className="pbx-visibility-strip__bp-label">{bp}</span>
+            </button>
           );
         })}
       </div>
-
-      {kind !== "hiddenInherited" ? (
-        <button
-          type="button"
-          className={"pbx-visibility-strip__eye" + (hidden ? " pbx-visibility-strip__eye--hidden" : "")}
-          onClick={toggle}
-          aria-pressed={hidden}
-          aria-label={hidden ? t("panel.visibility.toggleShow", { bp: breakpoint }) : t("panel.visibility.toggleHide", { bp: breakpoint })}
-          title={hidden ? t("panel.visibility.toggleShow", { bp: breakpoint }) : t("panel.visibility.toggleHide", { bp: breakpoint })}
-        >
-          {hidden ? <EyeOff size={16} /> : <Eye size={16} />}
-        </button>
-      ) : (
-        // Ojo "fantasma" de solo lectura (docs/41 §5.2): atenuado, no
-        // interactivo — el único camino desde aquí es "Anular aquí", nunca
-        // togglear directo (togglear un heredado ambiguo sobre qué capa
-        // tocar).
-        <span className="pbx-visibility-strip__eye pbx-visibility-strip__eye--ghost" aria-hidden="true">
-          <EyeOff size={16} />
-        </span>
-      )}
     </div>
   );
 }

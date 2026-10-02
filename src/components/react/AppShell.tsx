@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { appNavGroups, appSettingsNav } from '@/config/navigation';
 import { routes } from '@/config/routes';
 import Icon from './Icon';
+import Modal from './shared/Modal';
 import type { IconName } from '@/lib/icons';
 import type { Props } from './AppShell.types';
 import { COMMANDS } from './AppShell.logic';
@@ -206,7 +207,6 @@ export default function AppShell({
         setQuery('');
       }
       if (event.key === 'Escape') {
-        setCmdOpen(false);
         setMobileNav(false);
         setUserMenu(false);
         setPickerOpen(false);
@@ -583,51 +583,47 @@ export default function AppShell({
         />
       )}
 
-      {cmdOpen && (
-        <div className={styles.cmdk} role="dialog" aria-modal="true" aria-label="Command palette">
-          <button
-            type="button"
-            className={styles.cmdkBackdrop}
-            aria-label="Close"
-            onClick={() => setCmdOpen(false)}
+      <Modal
+        open={cmdOpen}
+        onClose={() => setCmdOpen(false)}
+        title="Command palette"
+        overlayClassName={styles.cmdk}
+        panelClassName={styles.cmdkPanel}
+      >
+        <div className={styles.cmdkSearch}>
+          <Icon name="search" size={17} className={styles.cmdkSearchic} />
+          <input
+            autoFocus
+            className={styles.cmdkInput}
+            placeholder="Search or jump to…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search commands"
           />
-          <div className={styles.cmdkPanel} style={{ animation: 'pop 0.16s var(--ease-out)' }}>
-            <div className={styles.cmdkSearch}>
-              <Icon name="search" size={17} className={styles.cmdkSearchic} />
-              <input
-                autoFocus
-                className={styles.cmdkInput}
-                placeholder="Search or jump to…"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                aria-label="Search commands"
-              />
-              <kbd className={styles.cmdkEsc}>ESC</kbd>
-            </div>
-            <ul className={styles.cmdkList}>
-              {filtered.length === 0 ? (
-                <li className={styles.cmdkEmpty}>No results for "{query}"</li>
-              ) : (
-                filtered.map((c) => (
-                  <li key={c.label}>
-                    <a href={c.href} className={styles.cmdkItem} onClick={() => setCmdOpen(false)}>
-                      <span
-                        className={`${styles.cmdkIc} ${
-                          c.hint === 'Action' ? styles.cmdkIcAction : styles.cmdkIcNav
-                        }`}
-                      >
-                        <Icon name={c.icon} size={15} />
-                      </span>
-                      <span className={styles.cmdkLabel}>{c.label}</span>
-                      <span className={styles.cmdkHint}>{c.hint}</span>
-                    </a>
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
+          <kbd className={styles.cmdkEsc}>ESC</kbd>
         </div>
-      )}
+        <ul className={styles.cmdkList}>
+          {filtered.length === 0 ? (
+            <li className={styles.cmdkEmpty}>No results for "{query}"</li>
+          ) : (
+            filtered.map((c) => (
+              <li key={c.label}>
+                <a href={c.href} className={styles.cmdkItem} onClick={() => setCmdOpen(false)}>
+                  <span
+                    className={`${styles.cmdkIc} ${
+                      c.hint === 'Action' ? styles.cmdkIcAction : styles.cmdkIcNav
+                    }`}
+                  >
+                    <Icon name={c.icon} size={15} />
+                  </span>
+                  <span className={styles.cmdkLabel}>{c.label}</span>
+                  <span className={styles.cmdkHint}>{c.hint}</span>
+                </a>
+              </li>
+            ))
+          )}
+        </ul>
+      </Modal>
     </div>
   );
 }

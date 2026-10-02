@@ -44,7 +44,8 @@
     "label": "Sistema de color",
     "system": "Sistema",
     "light": "Claro",
-    "dark": "Oscuro"
+    "dark": "Oscuro",
+    "toggleTo": "Cambiar a modo {{mode}}"
   },
   "profile": {
     "label": "Preferencias"
@@ -59,6 +60,9 @@
     "label": "Nivel de experiencia",
     "simple": "Simple",
     "advanced": "Avanzado"
+  },
+  "restartTour": {
+    "label": "Ver el recorrido guiado"
   },
   "onboarding": {
     "title": "¿Cómo querés empezar?",
@@ -91,7 +95,9 @@
     "hiddenBadge": "oculto",
     "hiddenAt": "Oculto en {{breakpoint}}",
     "show": "Mostrar en este tamaño",
-    "hide": "Ocultar en este tamaño"
+    "hide": "Ocultar en este tamaño",
+    "rootLabel": "Raíz de la página",
+    "rootLocked": "La raíz de la página no se puede seleccionar ni eliminar. Usa su hijo de abajo para seleccionar o eliminar todo el ejemplo."
   },
   "publish": {
     "button": "Publicar",

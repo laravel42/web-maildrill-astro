@@ -27,6 +27,7 @@ import { parallaxBehavior } from "./behaviors/parallax";
 import { scrollProgressBehavior } from "./behaviors/scrollProgress";
 import { scrollSpyBehavior } from "./behaviors/scrollSpy";
 import { lightboxBehavior } from "./behaviors/lightbox";
+import { stickerDragBehavior } from "./behaviors/stickerDrag";
 
 const DEFINITIONS: BehaviorDefinition[] = [
   carouselBehavior,
@@ -46,6 +47,7 @@ const DEFINITIONS: BehaviorDefinition[] = [
   scrollProgressBehavior,
   scrollSpyBehavior,
   lightboxBehavior,
+  stickerDragBehavior,
 ];
 
 export const behaviorRegistry: Record<string, BehaviorDefinition> = Object.fromEntries(

@@ -188,7 +188,13 @@ test.describe('templates', () => {
     const sendTest = page.getByRole('button', { name: 'Send test' });
     await expect(sendTest).toBeVisible({ timeout: 45_000 });
     await sendTest.click();
-    const dialog = page.getByRole('dialog').first();
+    /* `:not(.driver-popover)`: driver.js's guided-tour popover is itself a
+       `role="dialog"`, so a bare `getByRole('dialog').first()` here resolved to
+       whichever of the two happened to come first in the DOM — this test's result
+       depended on whether the tour was open at that moment, not on the send-test
+       dialog. Scope it to the dialog this test is actually about (same pattern
+       `tests/e2e/tour.spec.ts` already uses). */
+    const dialog = page.locator('[role="dialog"]:not(.driver-popover)').first();
     await expect(dialog).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(dialog).not.toBeVisible();

@@ -12,6 +12,7 @@ import {
 import SearchableSelect from './shared/SearchableSelect';
 import PhoneField from './PhoneField';
 import { useToast } from './shared/useToast';
+import ToastHost from './shared/ToastHost';
 import AppProfileSecurity from './profile/AppProfileSecurity';
 import AppProfileSessions from './profile/AppProfileSessions';
 import styles from './AppProfile.module.css';
@@ -657,18 +658,7 @@ export default function AppProfile({
         </div>
       )}
 
-      {toast && (
-        <div
-          className={`${styles.toast}${tone === 'alert' ? ` ${styles.toastAlert}` : ''}`}
-          role="status"
-          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-        >
-          <span className={styles.toastIc}>
-            <Icon name={tone === 'alert' ? 'minus' : 'check'} size={13} stroke={3} />
-          </span>
-          {toast}
-        </div>
-      )}
+      <ToastHost toast={toast} tone={tone} />
     </div>
   );
 }

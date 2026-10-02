@@ -116,6 +116,8 @@
     "notAvailable": "This element does not support animations or effects.",
     "remove": "Remove behavior",
     "add": "Add",
+    "none": "None",
+    "hasMoreWarning": "This element also has other behaviors applied that this control doesn't show. Choosing one here replaces all of them.",
     "categories": {
       "content": "Content",
       "motion": "Scroll animation",
@@ -130,6 +132,7 @@
       "theme-toggle": "Button to switch between light and dark theme.",
       "form-validation": "Validates fields in real time with error messages (requires JS).",
       "sticky": "Sticks the element while scrolling; adds a visual marker once the page has scrolled.",
+      "sticker-drag": "Lets the visitor drag the sticker around; can be locked to one axis or kept inside its container.",
       "count-up": "Animates the number from 0 to its final value as it enters the screen.",
       "marquee": "Scrolls the logos in a continuous loop (requires JS to pause on hover).",
       "expandable": "Collapses the block to a set height and adds a \"Show more\" button (fully visible without JS).",
@@ -148,6 +151,7 @@
       "tabs": "Tabs (animated)",
       "form-validation": "Real-time validation (Alpine)",
       "sticky": "Sticky on scroll",
+      "sticker-drag": "Draggable sticker",
       "count-up": "Animated counter",
       "marquee": "Continuous scroll (marquee)",
       "expandable": "Show more (expandable)",
@@ -157,6 +161,16 @@
       "lightbox": "Lightbox (full-screen)"
     },
     "fields": {
+      "sticker-drag": {
+        "axis": "Axes",
+        "axisOptions": {
+          "both": "Both",
+          "x": "Horizontal only",
+          "y": "Vertical only"
+        },
+        "bounded": "Keep inside the container",
+        "boundedHelp": "When on, the sticker cannot be dragged past the edges of the section that holds it, so a visitor cannot lose it off-screen."
+      },
       "theme-toggle": {
         "light": "Light theme",
         "dark": "Dark theme",
@@ -263,6 +277,20 @@
       "configureThemes": "Configure themes",
       "storageKeyHelp": "Name the published site uses to remember the theme each visitor chose and reapply it on their next visit (it takes priority over the system theme, and is stored in the browser via localStorage). Change it only if you need this toggle to remember its preference separately from another one on the same domain. Default: “pb-theme”."
     }
+  },
+  "stylePresets": {
+    "title": "Style presets",
+    "hint": "Apply a ready-made combination and then edit every property by hand.",
+    "chipOutline": "Chip (outline)",
+    "chipSolid": "Chip (solid)",
+    "eyebrowOnLight": "Eyebrow (on light)",
+    "eyebrowOnDark": "Eyebrow (on dark)",
+    "sectionTitleOnLight": "Section title (on light)",
+    "sectionTitleOnDark": "Section title (on dark)",
+    "bodyText": "Body text",
+    "stickerBadge": "Sticker (round badge)",
+    "stickerRibbonOutline": "Sticker ribbon (outline)",
+    "stickerRibbonSolid": "Sticker ribbon (solid)"
   },
   "fieldHelp": {
     "label": "More information"
@@ -603,13 +631,18 @@
       "fontWeight": "Weight",
       "fontFamily": "Font",
       "lineHeight": "Line height",
+      "letterSpacing": "Tracking",
+      "textTransform": "Letter case",
       "textDecoration": "Decoration",
       "background": "Background",
       "borderRadius": "Radius",
       "border": "Border",
       "boxShadow": "Shadow",
       "cursor": "Cursor",
-      "outline": "Outline"
+      "outline": "Outline",
+      "rotate": "Rotation",
+      "scale": "Scale",
+      "transition": "Transition"
     },
     "custom": "Custom",
     "origin": {
@@ -636,6 +669,7 @@
     },
     "visibility": {
       "fieldLabel": "Visibility",
+      "help": "The eye hides the element at the active breakpoint and every wider one, unless you override it at one of them. To make it visible again from a certain size up, switch to that breakpoint with the buttons below and press \"Override here\" (or the eye, if it's already visible).",
       "overrideHere": "Override here",
       "toggleShow": "Show at {{bp}}",
       "toggleHide": "Hide at {{bp}}",

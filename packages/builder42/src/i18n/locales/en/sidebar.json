@@ -28,6 +28,12 @@
     "hint": "Apply a page template or tap a section to place it on the canvas.",
     "sectionTooltip": "Tap to pick and place on the canvas",
     "descInfoLabel": "View description",
+    "preview": {
+      "desktop": "Desktop view",
+      "mobile": "Mobile view",
+      "zoom": "Zoom in",
+      "fit": "Fit to view"
+    },
     "categories": {
       "page": "Page templates",
       "section": "Section templates"
@@ -78,6 +84,8 @@
       "landingProductDesc": "Feature tabs, pricing, logo-cloud and stats",
       "restaurantPage": "Restaurant",
       "restaurantPageDesc": "Bookings, daily menu and FAQ in 3 languages",
+      "pizzeriaPage": "Pizzeria",
+      "pizzeriaPageDesc": "Wood-fired menu, process carousel and video reviews (English only)",
       "clothingStorePage": "Clothing store",
       "clothingStorePageDesc": "Catalog, perks and multilingual newsletter",
       "fitnessStudioPage": "Gym",

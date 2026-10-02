@@ -21,7 +21,10 @@ import { getUndoRedoState, resetUndoRedoStore, updateUndoRedoState } from './Und
 
 // Inspector width when expanded. 385 crowded the canvas; 320 still fits the
 // widest control rows (colour + swatch, paired number inputs) without wrapping.
-export const lateralPanel = 320;
+// Homologado con Builder42 (`.pbx-body`, shell.css:
+// `grid-template-columns: 312px 1fr 326px`) — antes 320px, ya muy
+// cercano; 326px lo iguala exactamente al inspector real de Builder42.
+export const lateralPanel = 326;
 export const DEFAULT_IMAGE_PLACEHOLDER =
   'https://ddc4vowthkjlv.cloudfront.net/uploads/gallery/1/69cc1b1083b90.jpg';
 
@@ -155,6 +158,12 @@ type TValue = {
     isLocked: boolean;
   };
   tour: boolean;
+  /**
+   * Bumped by `requestTourRestart()` to ask the mounted tour controller to
+   * relaunch the guided tour on demand (CommandPalette entry, header help
+   * button). See `useTourRestartNonce`.
+   */
+  tourRestartNonce: number;
   stickyHeader: boolean;
   heightContent: string;
   containerGrow: boolean;
@@ -188,7 +197,12 @@ const createInitialState = (): TValue => ({
   samplesDrawerOpen: true,
   componentsLibraryDrawerOpen: false,
   componentsLibraryDrawerMode: 'full',
-  componentsLibraryDrawerCategory: 'sections',
+  // 'blocks' — 'sections' was the initial value from before Point 7
+  // (EMAIL_BUILDER_TASKS.md) removed the standalone Sections tab; it is
+  // no longer a valid category key (see CATEGORIES in
+  // ComponentsLibraryDrawer.tsx), so defaulting to it would immediately
+  // get normalized away on first read (T2, D28).
+  componentsLibraryDrawerCategory: 'blocks',
   inspectorDrawerWidth: lateralPanel,
   devMode: false,
   componentsStorageMode: 'backend',
@@ -219,6 +233,7 @@ const createInitialState = (): TValue => ({
     isLocked: false,
   },
   tour: false,
+  tourRestartNonce: 0,
   stickyHeader: true,
   heightContent: 'calc(100dvh - 4px)',
   containerGrow: true,
@@ -341,6 +356,31 @@ export function useThemeSaving() {
 
 export function setThemeSaving(enabled: boolean) {
   return editorStateStore.setState({ themeSaving: enabled });
+}
+
+/**
+ * Product tour (F4, docs/product-tour-driverjs-plan.md §4). `tour` is the
+ * flag the host passes to enable/disable the guided tour entirely (default
+ * `false` — see `createInitialState`); it existed since F1 with no
+ * consumer. `tourRestartNonce` is bumped by `requestTourRestart()` to ask
+ * the mounted tour controller (`src/tour/useEmailBuilderTour.ts`) to relaunch
+ * the tour on demand — from the CommandPalette entry or the header help
+ * button — without adding a second parallel "is the tour open" flag.
+ */
+export function useTour() {
+  return editorStateStore((s) => s.tour);
+}
+
+export function setTour(enabled: boolean) {
+  return editorStateStore.setState({ tour: enabled });
+}
+
+export function useTourRestartNonce() {
+  return editorStateStore((s) => s.tourRestartNonce);
+}
+
+export function requestTourRestart() {
+  editorStateStore.setState((s) => ({ tourRestartNonce: s.tourRestartNonce + 1 }));
 }
 
 /** Non-React accessor used by the Components Library storage helpers. */

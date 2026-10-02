@@ -16,6 +16,7 @@ import {
   clearThemeBundle,
   useAppliedThemeId,
 } from '../../../documents/editor/EditorContext';
+import { dataTourAttr, EMAIL_BUILDER_TOUR_ANCHORS } from '../../../tour/tourAnchors';
 
 import { THEME_PRESETS, type ThemePreset } from './defaults';
 import ThemePresetPreview from './ThemePresetPreview';
@@ -42,7 +43,11 @@ export default function ThemePresetsButton() {
   return (
     <>
       <Tooltip title={t('theme.presets.tooltip', 'Predefined themes')}>
-        <IconButton size="small" onClick={(e) => setAnchorEl(e.currentTarget)}>
+        <IconButton
+          size="small"
+          onClick={(e) => setAnchorEl(e.currentTarget)}
+          {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.themePresets)}
+        >
           <PaletteOutlined fontSize="small" />
         </IconButton>
       </Tooltip>

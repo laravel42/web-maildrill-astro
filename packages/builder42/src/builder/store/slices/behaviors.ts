@@ -21,6 +21,15 @@ export interface BehaviorsSlice {
    * modal para ligar/desligar disparadores por id.
    */
   setNodeAction: (nodeId: NodeId, action: NodeAction | null) => void;
+  /**
+   * Reemplaza TODOS los behaviors del nodo por, como mucho, uno solo
+   * (`type`), en una sola escritura (un solo paso de undo). `null` deja al
+   * nodo sin behaviors. Si `type` ya estaba activo, conserva esa instancia
+   * (con sus opciones ya editadas) en vez de reconstruirla; si no estaba,
+   * crea una nueva con `defaultOptions` clonadas, igual que `addBehavior`.
+   * La usa el select de la tab "Interactividad" del Inspector.
+   */
+  setNodeBehavior: (nodeId: NodeId, type: string | null) => void;
 }
 
 export const createBehaviorsSlice: SliceCreator<BehaviorsSlice> = (set) => ({
@@ -78,5 +87,27 @@ export const createBehaviorsSlice: SliceCreator<BehaviorsSlice> = (set) => ({
           }
         }
       }
+    }),
+
+  setNodeBehavior: (nodeId, type) =>
+    set((s) => {
+      const node = s.document.nodes[nodeId];
+      if (!node) return;
+      if (type === null) {
+        delete node.behaviors; // JSON limpio (ausente = sin behaviors)
+        return;
+      }
+      const def = getBehaviorDefinition(type);
+      if (!def) return;
+      // Si el tipo elegido ya estaba activo, conserva esa instancia (con
+      // sus opciones ya editadas) en vez de reconstruirla; solo se
+      // descartan las demás.
+      const existing = node.behaviors?.find((b) => b.type === type);
+      if (existing) {
+        node.behaviors = [existing];
+        return;
+      }
+      const options = def.defaultOptions ? structuredClone(def.defaultOptions) : undefined;
+      node.behaviors = [options ? { type, options } : { type }];
     }),
 });

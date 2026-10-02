@@ -26,6 +26,8 @@ import { useLocalConfig } from "@/hooks/useLocalConfig";
 import { Toggle } from "@/components";
 import { ExportWarningsBanner } from "@/components/ExportWarningsBanner";
 import type { ExportWarning } from "@/builder/export/warnings";
+import { simpleIconsCatalog } from "@/builder/registry/catalogs/simpleIcons.catalog";
+import { usedSocialIconSlugs } from "@/builder/export/usage";
 
 export function SiteFileActions() {
   const { t: ti } = useTranslation("inspector");
@@ -42,11 +44,24 @@ export function SiteFileActions() {
   const previewName = buildOutputFileName(prefix, useTimestamp);
   const zipPreviewName = buildOutputFileName(zipPrefix, zipTimestamp, new Date(), "zip");
 
-  const handleDownloadZip = () => {
+  const handleDownloadZip = async () => {
     setExporting(true);
     setExportWarnings([]);
+    const site = getFlushedSite();
+    // `ensure()` antes de exportar (decisión 5d, mismo razonamiento que
+    // `Canvas.tsx#downloadZip`): evita un .zip con iconos de marca vacíos si
+    // el barrel todavía no había terminado de cargar. Si la carga falla, no
+    // bloqueamos la descarga: los glifos de marca caen al icono genérico.
+    try {
+      await simpleIconsCatalog.ensure(usedSocialIconSlugs(site));
+    } catch (err) {
+      console.warn("simple-icons: no se pudo cargar el catálogo de marcas, se usa el icono genérico", err);
+    }
+    // Macrotask (ver `Canvas.tsx#downloadZip`): el `await` de arriba corre
+    // como microtask, ANTES del siguiente paint, así que sin este
+    // setTimeout el botón nunca llegaría a pintarse deshabilitado/"Exporting…"
+    // antes de que el hilo principal se bloquee con el export síncrono.
     setTimeout(() => {
-      const site = getFlushedSite();
       const built = exportSite(site, { minify: true });
       setExportWarnings(built.warnings);
       downloadBlob(

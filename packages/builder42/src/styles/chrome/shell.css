@@ -16,11 +16,24 @@
    fijo desbordaría ese contenedor. `min-height: 0` evita que el flex-item
    fuerce una altura mínima mayor que la de su padre (bug clásico de flex +
    `height: 100%` en cadena). */
+/* T8: base typeface for the chrome ROOT. The embedded barrel
+   (`chrome-embedded.css`) deliberately omits `chrome/standalone.css` — the
+   only file that sets a page-level `font-family` on `html`/`body`/`#root`
+   plus the Geist `@font-face` — because embedded mode must never fight the
+   host's own page chrome for those. That leaves `.pbx-app` with no base
+   font of its own: a UA-styled `<button>` never inherits anything and
+   renders in Chrome's default (Arial). `--pb-chrome-font` already bridges
+   to `var(--font-sans, "Geist", ...)` (`tokens.css`), so this follows the
+   host in embedded mode and falls back to the standalone literal stack
+   when there is no host (e.g. this file loaded without the host's tokens
+   defined) — keep it a token here, never a literal family, or embedded and
+   standalone drift apart again. */
 .pbx-app {
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  font-family: var(--pb-chrome-font);
 }
 
 .pbx-body {
@@ -31,19 +44,39 @@
   transition: grid-template-columns var(--pb-chrome-transition);
 }
 
-/* Panel collapse modifiers (Fase 11.10) — wide screens. */
-.pbx-body--sidebar-collapsed {
-  grid-template-columns: 0 1fr 326px;
+/* Panel collapse modifiers (Fase 11.10). Homologación UI/UX fase B: el
+ * sidebar YA NO colapsa a ancho 0 — su modo mínimo es "compact" (riel
+ * angosto de 168px con los bloques esenciales, ver `sidebar.css`
+ * `.pbx-compact-rail`), nunca desaparece del todo. El inspector conserva su
+ * colapso binario a 0 (fuera de alcance de esta fase). */
+.pbx-body--sidebar-compact {
+  grid-template-columns: 168px 1fr 326px;
 }
 .pbx-body--inspector-collapsed {
   grid-template-columns: 312px 1fr 0;
 }
-.pbx-body--sidebar-collapsed.pbx-body--inspector-collapsed {
-  grid-template-columns: 0 1fr 0;
+.pbx-body--sidebar-compact.pbx-body--inspector-collapsed {
+  grid-template-columns: 168px 1fr 0;
 }
 
-/* Preview (docs/21 §3.5): sin Sidebar/Inspector → una sola columna full-width. */
-.pbx-body--preview {
+/* Preview (docs/21 §3.5): sin Sidebar/Inspector → una sola columna full-width.
+ *
+ * Los tres selectores compuestos NO son redundantes: `--preview` convive en
+ * el mismo `class` con los modificadores de colapso (los tres se empujan por
+ * separado en `Builder42Editor.tsx` / `app/App.tsx`, y el colapso persiste en
+ * preferencias, así que sobrevive al cambio de vista). Con un solo
+ * `.pbx-body--preview` (0,1,0) la combinación
+ * `.pbx-body--sidebar-compact.pbx-body--inspector-collapsed` (0,2,0) ganaba
+ * por especificidad y preview quedaba con `168px 1fr 0` mientras el árbol
+ * solo renderiza `.pbx-canvas-col`: el canvas caía en la primera pista de
+ * 168px, pegado a la izquierda — bug reportado (con un solo panel colapsado
+ * no se veía porque ahí empata a 0,1,0 y gana este bloque por orden de
+ * aparición). `narrow.css` ya resolvía el caso <1024px con esta misma forma
+ * explícita; no dependas del orden de las reglas para esto. */
+.pbx-body--preview,
+.pbx-body--preview.pbx-body--sidebar-compact,
+.pbx-body--preview.pbx-body--inspector-collapsed,
+.pbx-body--preview.pbx-body--sidebar-compact.pbx-body--inspector-collapsed {
   grid-template-columns: 1fr;
 }
 

@@ -4,6 +4,9 @@
   "type": "module",
   "main": "./src/index.tsx",
   "types": "./src/index.tsx",
+  "scripts": {
+    "test": "vitest run"
+  },
   "exports": {
     ".": {
       "types": "./src/index.tsx",
@@ -13,6 +16,10 @@
     "./standalone": {
       "types": "./src/standalone.tsx",
       "import": "./src/standalone.tsx"
+    },
+    "./tour": {
+      "types": "./src/tour/tourAnchors.ts",
+      "import": "./src/tour/tourAnchors.ts"
     },
     "./style.css": "./src/global.css"
   },
@@ -43,6 +50,7 @@
     "@floating-ui/react": "^0.27.20",
     "@josecortez1/c42-core": "0.1.0",
     "@josecortez1/c42-react": "0.1.0",
+    "@md/product-tour": "workspace:*",
     "@mui/icons-material": "^9.2.0",
     "@mui/material": "^9.2.0",
     "@r2wc/react-to-web-component": "^2.1.1",
@@ -59,7 +67,6 @@
     "@tiptap/suggestion": "3.30.6",
     "approve-builds": "^1.0.0",
     "csso": "^5.0.5",
-    "driver.js": "^1.8.0",
     "emoji-mart": "^5.6.0",
     "fast-json-patch": "^3.1.1",
     "highlight.js": "^11.11.1",
@@ -80,5 +87,9 @@
     "vite-plugin-dts": "^5.0.3",
     "zod": "^4.4.3",
     "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "happy-dom": "20.11.12",
+    "vitest": "4.1.11"
   }
 }

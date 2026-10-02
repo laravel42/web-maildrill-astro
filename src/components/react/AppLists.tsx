@@ -7,6 +7,7 @@ import {
   type SetStateAction,
 } from 'react';
 import Icon from './Icon';
+import ToastHost from './shared/ToastHost';
 import ConfirmDialog from './shared/ConfirmDialog';
 import CustomFieldsModal from './CustomFieldsModal';
 import ListEditorModal, { type ListEditorValues } from './ListEditorModal';
@@ -888,18 +889,7 @@ export default function AppLists({
         />
       )}
 
-      {toast && (
-        <div
-          className={styles.toast}
-          role="status"
-          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-        >
-          <span className={styles.toastIc}>
-            <Icon name="check" size={13} stroke={3} />
-          </span>
-          {toast}
-        </div>
-      )}
+      <ToastHost toast={toast} />
     </div>
   );
 }

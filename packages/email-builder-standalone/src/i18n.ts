@@ -4,12 +4,15 @@ import { initReactI18next } from 'react-i18next';
 import enAiWizard from './locales/en-US/aiWizard.json';
 import enCommon from './locales/en-US/common.json';
 import enInspector from './locales/en-US/inspector.json';
+import enTour from './locales/en-US/tour.json';
 import esAiWizard from './locales/es-419/aiWizard.json';
 import esCommon from './locales/es-419/common.json';
 import esInspector from './locales/es-419/inspector.json';
+import esTour from './locales/es-419/tour.json';
 import itAiWizard from './locales/it-IT/aiWizard.json';
 import itCommon from './locales/it-IT/common.json';
 import itInspector from './locales/it-IT/inspector.json';
+import itTour from './locales/it-IT/tour.json';
 
 export const SUPPORTED_LOCALES = ['en-US', 'es-419', 'it-IT'] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
@@ -39,32 +42,38 @@ const resources: Resource = {
     common: enCommon,
     inspector: enInspector,
     aiWizard: enAiWizard,
+    tour: enTour,
   },
   'es-419': {
     common: esCommon,
     inspector: esInspector,
     aiWizard: esAiWizard,
+    tour: esTour,
   },
   'it-IT': {
     common: itCommon,
     inspector: itInspector,
     aiWizard: itAiWizard,
+    tour: itTour,
   },
   // Short locale codes (same resources, for compatibility with parent apps)
   en: {
     common: enCommon,
     inspector: enInspector,
     aiWizard: enAiWizard,
+    tour: enTour,
   },
   es: {
     common: esCommon,
     inspector: esInspector,
     aiWizard: esAiWizard,
+    tour: esTour,
   },
   it: {
     common: itCommon,
     inspector: itInspector,
     aiWizard: itAiWizard,
+    tour: itTour,
   },
 };
 
@@ -98,7 +107,7 @@ if (i18n.isInitialized) {
       resources,
       fallbackLng: 'en-US',
       supportedLngs: [...SUPPORTED_LOCALES],
-      ns: ['common', 'inspector', 'aiWizard'],
+      ns: ['common', 'inspector', 'aiWizard', 'tour'],
       defaultNS: 'common',
       interpolation: {
         escapeValue: false,

@@ -32,6 +32,24 @@ const LAYOUTS_KEY = 'eb:lib:layouts';
 const PRIMITIVES_KEY = 'eb:lib:primitives';
 const SEEDED_KEY = 'eb:lib:seeded';
 
+/**
+ * Ids retired from the bundled catalog. `mergeById` below is append-only,
+ * so dropping an item from `localPresets.data.json` alone would leave it
+ * in `localStorage` forever for anyone already seeded — and bundled
+ * sections carry no `preset-` prefix, so they can't be told apart from
+ * user-saved rows the way templates can. Listing the id here prunes it
+ * on the next seeding pass (which the content-hash version change
+ * triggers automatically).
+ *
+ * Keep entries here permanently: removing one would resurrect the row
+ * for any user whose `localStorage` predates the prune.
+ */
+const RETIRED_SECTION_IDS: readonly string[] = [
+  // Duplicate of "Announcement bar" (`0398040b-…`): same block save for
+  // `mobilePadding`/`fontSize`. See COMPONENT_ICONS_PLAN.md §22.
+  '82a88271-0ed0-46f9-93d6-26ca2e0448de',
+];
+
 type WithId = { id: string };
 
 function readArray<T extends WithId>(key: string): T[] {
@@ -68,6 +86,14 @@ function replaceBundledTemplates<T extends WithId>(incoming: T[] | undefined): v
   localStorage.setItem(TEMPLATES_KEY, JSON.stringify([...incoming, ...keptUser]));
 }
 
+/** Drop rows whose id was retired from the bundled catalog. */
+function pruneRetired(key: string, retired: readonly string[]): void {
+  if (!retired.length) return;
+  const existing = readArray<WithId>(key);
+  const kept = existing.filter((e) => !retired.includes(String(e.id)));
+  if (kept.length !== existing.length) localStorage.setItem(key, JSON.stringify(kept));
+}
+
 export async function seedLocalLibrary(): Promise<void> {
   const { default: presets } = await import('./localPresets');
   const version = presets.version ?? '1';
@@ -83,6 +109,10 @@ export async function seedLocalLibrary(): Promise<void> {
     setThumbnailsCacheVersion(version);
     bumpComponentsLibraryRefresh();
   }
+
+  // Prune retired ids before the early-return: an already-seeded user
+  // must lose a removed row even if the seeding pass itself is skipped.
+  pruneRetired(SECTIONS_KEY, RETIRED_SECTION_IDS);
 
   // Already seeded for this catalog version — nothing to do.
   if (localStorage.getItem(SEEDED_KEY) === version) return;

@@ -28,7 +28,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDrag } from 'react-dnd';
 import { useTranslation } from 'react-i18next';
 
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import Inventory2Outlined from '@mui/icons-material/Inventory2Outlined';
 import {
   Alert,
@@ -45,6 +44,8 @@ import EmptyState from '../../components/EmptyState';
 import { resolveBackendUrl } from '../../components/UnsplashImagePicker/unsplash-api';
 import {
   getComponentsStorageMode,
+  setComponentsLibraryDrawerCategory,
+  useComponentsLibraryDrawerCategory,
   useComponentsLibraryDrawerOpen,
   useComponentsLibraryEnabled,
   useComponentsLibraryRefreshNonce,
@@ -77,12 +78,21 @@ import { isThumbnailPending, useThumbnailStatusVersion } from './thumbnailStatus
 import LibraryCardPrimitiveRender from './thumbnail/LibraryCardPrimitiveRender';
 import LibraryCardThumbnail from './thumbnail/LibraryCardThumbnail';
 import { resolveThumbnailUrl } from './thumbnail/thumbnailUrl';
+import { dataTourAttr, EMAIL_BUILDER_TOUR_ANCHORS } from '../../tour/tourAnchors';
 
-/** Width (in px) when the drawer is open. Collapses to 0 when closed. */
-export const COMPONENTS_LIBRARY_DRAWER_WIDTH = 380;
+/**
+ * Width (in px) when the drawer is open. Homologado con Builder42
+ * (`.pbx-body`, shell.css: `grid-template-columns: 312px 1fr 326px`) —
+ * antes 380px, notablemente más ancho que el sidebar real de Builder42.
+ */
+export const COMPONENTS_LIBRARY_DRAWER_WIDTH = 312;
 
-/** Width (in px) when the drawer is collapsed to its compact base-blocks rail. */
-export const COMPACT_LIBRARY_DRAWER_WIDTH = 164;
+/**
+ * Width (in px) when the drawer is collapsed to its compact base-blocks
+ * rail. Homologado con Builder42 (`.pbx-body--sidebar-compact`,
+ * shell.css: 168px) — ya estaba casi idéntico (antes 164px).
+ */
+export const COMPACT_LIBRARY_DRAWER_WIDTH = 168;
 
 /** Card axis is per-category: role | type | shape | none. */
 type LibraryItem = {
@@ -125,6 +135,23 @@ const CATEGORIES: ReadonlyArray<{ key: string; labelKey: string; enabled: boolea
   { key: 'blocks', labelKey: 'componentsLibrary.drawer.category.blocks', enabled: true },
   { key: 'templates', labelKey: 'componentsLibrary.drawer.category.templates', enabled: true },
 ];
+
+/**
+ * Resolve the drawer's active tab from the stored category (editor
+ * store, D28) against the currently visible tabs. Pure and React-free
+ * so a tour `before()` hook (or a unit test) can call it without
+ * mounting anything: normalization happens on read, not via a
+ * render-then-fix effect. Falls back to the first visible key, and to
+ * `'blocks'` when nothing is visible (shouldn't happen — Blocks is
+ * always enabled — but keeps the function total).
+ */
+export function resolveLibraryCategory(
+  stored: string | null | undefined,
+  visibleKeys: readonly string[],
+): string {
+  if (stored != null && visibleKeys.includes(stored)) return stored;
+  return visibleKeys[0] ?? 'blocks';
+}
 
 /**
  * Single draggable card. The drag item carries `(category, axis, id)`;
@@ -266,15 +293,21 @@ function LibraryCard({
       {...hoverHandlers}
       onClick={onClick ? () => onClick(item) : undefined}
       sx={{
-        p: 1,
+        // Homologado con Builder42 (`.pbx-palette__item`, sidebar.css:
+        // `padding: 10px 6px; gap: 8px`) — antes `p: 1` (8px uniforme).
+        p: '10px 6px',
         borderRadius: 1,
-        border: '1px dashed',
-        borderColor: theme.palette.divider,
+        // Homologado con Builder42 (`.pbx-palette__item`, sidebar.css:
+        // `border: 1px solid var(--pb-chrome-border)`) — sólido, no
+        // dashed; color exacto `theme.palette.grey[200]` (mapeado 1:1 a
+        // `--border` del host en theme.ts), no `divider` (tono distinto).
+        border: '1px solid',
+        borderColor: theme.palette.grey[200],
         cursor: onClick ? 'pointer' : 'grab',
         opacity: isDragging ? 0.5 : 1,
         display: 'flex',
         flexDirection: 'column',
-        gap: 0.75,
+        gap: 1,
         transition: 'background-color 120ms ease, border-color 120ms ease',
         '&:hover': {
           backgroundColor: theme.palette.action.hover,
@@ -291,45 +324,45 @@ function LibraryCard({
           src={thumbnailUrl}
           alt={item.name}
           loading={thumbnailPending}
-          // Point 8 (EMAIL_BUILDER_TASKS.md): Templates previews were too
-          // small — double the default 120px height for that category only.
-          height={category === 'template' ? 240 : undefined}
+          // Caja del preview. Para sections/layouts es la caja del icono
+          // diseñado: 48px (COMPONENT_ICONS_PLAN.md §20) — escala exacta
+          // 2× sobre el `viewBox 24`, que es lo que hace nítido el trazo
+          // y duplica el tamaño absoluto del detalle. La card pasa de
+          // ~76px a ~96px de alto (48 + label ~18 + padding 20 + gap 8 +
+          // border 2), desviación consciente del `min-height: 76px` de
+          // `.pbx-palette__item`, que está calibrado para glifos.
+          //
+          // La rama `template` es inalcanzable: `LibraryCard` retorna
+          // antes con `.eb-template-card` (PNG propio) para esa
+          // categoría. Se deja el 240 documentado como tal.
+          height={category === 'template' ? 240 : 48}
           placeholderText={t('componentsLibrary.thumbnail.placeholder', 'No preview')}
+          // Draft icon review (COMPONENT_ICONS_PLAN.md, Tanda 1) — only
+          // renders when this item's id has a hand-designed icon; falls
+          // back to the existing PNG/placeholder otherwise.
+          iconId={item.id}
         />
       )}
-      <Box
+      {
+        // Homologado con Builder42 (`.pbx-palette__item`): el label va
+        // directo, sin un Box wrapper extra ni el DragIndicatorIcon en
+        // línea — ahí el grip de arrastre (`.pbx-palette__grip`) es un
+        // overlay `position: absolute`, visible solo al hover/focus, NO
+        // un ícono que ocupe espacio junto al texto.
+      }
+      <Typography
+        variant="body2"
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 0.75,
+          fontSize: '0.8rem',
+          fontWeight: 500,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}
+        title={item.name}
       >
-        <DragIndicatorIcon
-          sx={{
-            fontSize: 16,
-            color: 'text.secondary',
-            flexShrink: 0,
-            // Templates are click-only — hide the drag affordance so the
-            // card doesn't look draggable.
-            display: isDraggable ? 'inline-flex' : 'none',
-          }}
-        />
-        <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography
-            variant="body2"
-            sx={{
-              fontSize: '0.8rem',
-              fontWeight: 500,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-            title={item.name}
-          >
-            {item.name}
-          </Typography>
-        </Box>
-      </Box>
+        {item.name}
+      </Typography>
     </Box>
   );
 }
@@ -530,7 +563,10 @@ function CategoryListingBody({
         <LibrarySkeletonGrid
           columns={columns ?? 2}
           count={4}
-          thumbnailHeight={category === 'template' ? 168 : 120}
+          // Sections: misma altura que la caja real del icono (48px), no
+          // 120 — el 120 venía del thumbnail PNG original y provocaba
+          // salto de layout al pasar de skeleton a card.
+          thumbnailHeight={category === 'template' ? 168 : 48}
         />
       );
     }
@@ -691,6 +727,14 @@ function SectionsCategoryContent({
       category="section"
       loading={loading}
       error={error}
+      // 2 columnas (COMPONENT_ICONS_PLAN.md §20). Antes 3, homologado
+      // con `.pbx-palette` de Builder42 (`repeat(3, 1fr)`), pero ese
+      // grid es para tiles de TIPO DE BLOQUE (un glifo + una palabra).
+      // Las cards de secciones llevan un diagrama de layout que necesita
+      // caja de 48px para leerse: a 3 columnas la card tiene ~79px de
+      // contenido, a 2 sube a ~128px (drawer 312 − px:1.5×2 = 288, gap
+      // 4px). El grid de bloques base sigue en 2 columnas
+      // (BlocksCategoryContent.tsx), así que ambos coinciden.
       columns={2}
       groupLabelKey="componentsLibrary.sectionRole"
       search={search}
@@ -857,6 +901,7 @@ export default function ComponentsLibraryDrawer() {
       }),
     [templateLibrary],
   );
+  const visibleKeys = useMemo(() => visibleCategories.map((c) => c.key), [visibleCategories]);
   const [sectionsRefreshKey, setSectionsRefreshKey] = useState(0);
   const [templatesRefreshKey, setTemplatesRefreshKey] = useState(0);
   const [renameTarget, setRenameTarget] = useState<RenameSubtreeTarget | null>(null);
@@ -872,16 +917,27 @@ export default function ComponentsLibraryDrawer() {
   // single shared value across tabs.)
   const SEARCH_UNFILTERED = '';
   const SORT_DEFAULT: LibrarySortKey = 'updatedDesc';
-  // Active category tab. Defaults to the first visible category.
-  const [activeTab, setActiveTab] = useState<string>(() => visibleCategories[0]?.key ?? 'blocks');
+  // Active category tab (D28): lives in the editor store, not local
+  // React state, so it can be driven from outside React (e.g. a tour
+  // `before()` hook opening the drawer on a specific tab). Normalized
+  // on every read via `resolveLibraryCategory` — never trust the raw
+  // stored value directly, it may point at a tab that's currently
+  // hidden (Templates disabled) or at the legacy dead default.
+  const storedCategory = useComponentsLibraryDrawerCategory();
+  const activeTab = resolveLibraryCategory(storedCategory, visibleKeys);
 
-  // Keep the active tab valid when the visible set changes (disabling
-  // templateLibrary hides Templates).
+  // Keep the store in sync with the resolved value: when the raw stored
+  // category isn't valid for the current visible set (e.g. Templates
+  // just got hidden, or the initial default), persist the resolved
+  // fallback so the store never keeps an invisible tab "selected".
+  // Guarded by the equality check so this can't loop — the setter
+  // itself also no-ops on this test, but we compare here too since
+  // `activeTab` is derived every render.
   useEffect(() => {
-    if (!visibleCategories.some((c) => c.key === activeTab)) {
-      setActiveTab(visibleCategories[0]?.key ?? 'blocks');
+    if (storedCategory !== activeTab) {
+      setComponentsLibraryDrawerCategory(activeTab);
     }
-  }, [visibleCategories, activeTab]);
+  }, [storedCategory, activeTab]);
 
   // External mutations to localStorage (the seeder / lazy thumbnail
   // generator) bump the global nonce; refetch every tab in response.
@@ -913,6 +969,7 @@ export default function ComponentsLibraryDrawer() {
 
   return (
     <Box
+      {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.libraryRail)}
       sx={{
         position: 'absolute',
         top: 0,
@@ -940,10 +997,10 @@ export default function ComponentsLibraryDrawer() {
       >
         {open ? (
           <>
-            <Box className="eb-side-tabs">
+            <Box className="eb-side-tabs" {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.libraryTabs)}>
               <Tabs
                 value={activeTab}
-                onChange={(_, v: string) => setActiveTab(v)}
+                onChange={(_, v: string) => setComponentsLibraryDrawerCategory(v)}
                 variant="fullWidth"
                 aria-label={t('componentsLibrary.drawer.title')}
               >
@@ -984,13 +1041,15 @@ export default function ComponentsLibraryDrawer() {
                 </>
               )}
               {activeTab === 'templates' && (
-                <TemplatesCategoryContent
-                  search={SEARCH_UNFILTERED}
-                  sort={SORT_DEFAULT}
-                  onRename={setRenameTarget}
-                  refreshKey={templatesRefreshKey}
-                  onChange={() => setTemplatesRefreshKey((k) => k + 1)}
-                />
+                <Box {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.libraryTemplates)}>
+                  <TemplatesCategoryContent
+                    search={SEARCH_UNFILTERED}
+                    sort={SORT_DEFAULT}
+                    onRename={setRenameTarget}
+                    refreshKey={templatesRefreshKey}
+                    onChange={() => setTemplatesRefreshKey((k) => k + 1)}
+                  />
+                </Box>
               )}
             </Box>
           </>

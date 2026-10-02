@@ -18,6 +18,7 @@ import TemplatePreview from './shared/TemplatePreview';
 import GalleryPreview, { FauxEmail } from './shared/GalleryPreview';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
 import { useToast } from './shared/useToast';
+import ToastHost from './shared/ToastHost';
 import { visiblePageNumbers } from './shared/pagination';
 import { CHANNEL_TABS, VIEWS, ASC_FIRST, PAGE_SIZE } from './AppTemplates.logic';
 import type { ViewKey, SortKey } from './AppTemplates.types';
@@ -898,18 +899,7 @@ export default function AppTemplates({ initial }: { initial?: GalleryTemplate[] 
         />
       )}
 
-      {toast && (
-        <div
-          className={styles.toast}
-          role="status"
-          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-        >
-          <span className={styles.toastIc}>
-            <Icon name="check" size={13} stroke={3} />
-          </span>
-          {toast}
-        </div>
-      )}
+      <ToastHost toast={toast} />
     </div>
   );
 }

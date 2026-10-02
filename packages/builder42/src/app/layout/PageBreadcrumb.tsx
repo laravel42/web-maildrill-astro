@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 import { Select } from "@/components";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import type { BuilderPage } from "@/builder/model/types";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 /** Etiqueta de página: el slug, o el título si es la home (slug vacío). */
 function pageLabel(page: BuilderPage): string {
@@ -45,7 +46,11 @@ export function PageBreadcrumb() {
   const localeConfig = i18nConfig && i18nConfig.locales.length > 1 ? i18nConfig : null;
 
   return (
-    <nav className="pbx-breadcrumb" aria-label={t("breadcrumb.label")}>
+    <nav
+      className="pbx-breadcrumb"
+      aria-label={t("breadcrumb.label")}
+      {...dataTourAttr(BUILDER42_TOUR_ANCHORS.pagesBreadcrumb)}
+    >
       {localeConfig && (
         <span className="pbx-breadcrumb__locale">
           <Select

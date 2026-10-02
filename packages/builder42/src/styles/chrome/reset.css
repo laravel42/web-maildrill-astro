@@ -49,7 +49,7 @@
 }
 :where([class*="pbx-"])::-webkit-scrollbar-thumb {
   background: var(--pb-chrome-scrollbar-thumb);
-  border-radius: var(--pb-chrome-radius-pill);
+  border-radius: var(--pb-chrome-radius-chip);
   border: 2px solid transparent;
   background-clip: padding-box;
 }

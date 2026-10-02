@@ -34,6 +34,7 @@ import { useTranslation } from "react-i18next";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { useExperienceLevel } from "@/hooks/useExperienceLevel";
 import { getDefinition } from "@/builder/registry/componentRegistry";
+import { StylePresetsSection } from "../StylePresetsSection";
 import { PbxSelect } from "@/components";
 import type { BuilderNode, StyleGroup, StyleState, StyleValue } from "@/builder/model/types";
 import {
@@ -393,25 +394,28 @@ export function StylePanel({ node }: { node: BuilderNode }) {
           })}
         </>
       ) : (
-        sections.map((section) => (
-          <StylePanelSection
-            key={section.id}
-            node={node}
-            section={section}
-            breakpoint={breakpoint}
-            breakpointConfig={breakpointConfig}
-            defaultStyle={defaultStyle}
-            tokens={tokens}
-            open={openSections.has(section.id)}
-            onToggleOpen={() => toggleSection(section.id)}
-            showAdvanced={!isSimple}
-            isSimple={isSimple}
-            sidesLocked={sidesLocked}
-            onToggleSidesLock={(key) =>
-              setSidesLocked((prev) => ({ ...prev, [key]: !prev[key] }))
-            }
-          />
-        ))
+        <>
+          <StylePresetsSection node={node} />
+          {sections.map((section) => (
+            <StylePanelSection
+              key={section.id}
+              node={node}
+              section={section}
+              breakpoint={breakpoint}
+              breakpointConfig={breakpointConfig}
+              defaultStyle={defaultStyle}
+              tokens={tokens}
+              open={openSections.has(section.id)}
+              onToggleOpen={() => toggleSection(section.id)}
+              showAdvanced={!isSimple}
+              isSimple={isSimple}
+              sidesLocked={sidesLocked}
+              onToggleSidesLock={(key) =>
+                setSidesLocked((prev) => ({ ...prev, [key]: !prev[key] }))
+              }
+            />
+          ))}
+        </>
       )}
     </div>
   );
@@ -563,6 +567,7 @@ function StylePanelRow({
         tokenGroupPrefix={tokenGroupPrefix}
         tokens={tokens}
         controlId={controlId}
+        showTokenAsValue={isSimple}
       >
         {({ freeValue, commit }) => {
           // Commit espejo: además de `width` (que lo escribe el propio
@@ -624,6 +629,7 @@ function StylePanelRow({
         tokenGroupPrefix={tokenGroupPrefix}
         tokens={tokens}
         controlId={controlId}
+        showTokenAsValue={isSimple}
       >
         {({ freeValue, commit }) =>
           isSimple ? (
@@ -672,6 +678,7 @@ function StylePanelRow({
         tokenGroupPrefix={tokenGroupPrefix}
         tokens={tokens}
         controlId={controlId}
+        showTokenAsValue={isSimple}
       >
         {({ freeValue, commit }) =>
           isSimple ? (
@@ -731,6 +738,7 @@ function StylePanelRow({
         tokenGroupPrefix={tokenGroupPrefix}
         tokens={tokens}
         controlId={controlId}
+        showTokenAsValue={isSimple}
       >
         {({ freeValue, commit }) =>
           isSimple ? (
@@ -791,6 +799,7 @@ function StylePanelRow({
                   tokenGroupPrefix={fieldA ? tokenGroupForField(fieldA) : null}
                   tokens={tokens}
                   bare
+                  showTokenAsValue={isSimple}
                 >
                   {(args) => renderLeafControl(fieldA, args)}
                 </PropertyField>
@@ -810,6 +819,7 @@ function StylePanelRow({
                   tokenGroupPrefix={fieldB ? tokenGroupForField(fieldB) : null}
                   tokens={tokens}
                   bare
+                  showTokenAsValue={isSimple}
                 >
                   {(args) => renderLeafControl(fieldB, args)}
                 </PropertyField>
@@ -852,6 +862,7 @@ function StylePanelRow({
         tokens={tokens}
         tall
         inlineTokenAction
+        showTokenAsValue={isSimple}
       >
         {({ freeValue, commit, tokenAction }) =>
           isSimple ? (
@@ -884,6 +895,7 @@ function StylePanelRow({
       tokenGroupPrefix={tokenGroupPrefix}
       tokens={tokens}
       controlId={controlId}
+      showTokenAsValue={isSimple}
     >
       {(args) => renderRowControl(row, field, args, t, controlId, isSimple, tokens)}
     </PropertyField>

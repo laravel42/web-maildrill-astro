@@ -450,47 +450,15 @@
 }
 
 /* upload modal */
-.modalOv {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal, 90);
-  background: rgba(28, 25, 23, 0.4);
-  backdrop-filter: blur(3px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
-}
-.modal {
+/* Shell (overlay/head/body/foot chrome) now comes from shared/Modal.tsx +
+   .amodal__* (src/styles/app.css). This only overrides the panel's width and
+   keeps overflow visible so the folder combobox popover can escape it. */
+.uploadDialog {
   width: 560px;
-  max-width: 100%;
-  background: var(--surface);
-  border-radius: 20px;
-  box-shadow: 0 24px 60px rgba(28, 25, 23, 0.28);
-  /* Visible so the folder combobox popover can escape the dialog. */
   overflow: visible;
-  display: flex;
-  flex-direction: column;
-  max-height: 100%;
 }
-.modalHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 22px;
-  border-bottom: 1px solid var(--divider);
-  background: var(--surface);
-  border-radius: 20px 20px 0 0;
-}
-.modalTitle {
-  font-size: 15px;
-  font-weight: 600;
-}
-.modalBody {
-  padding: 22px;
+.uploadDialog :global(.amodal__body) {
   overflow: visible;
-  background: var(--surface);
-  border-radius: 0;
 }
 .fieldLabel {
   display: block;
@@ -664,45 +632,6 @@
 }
 .qbar {
   height: 6px;
-}
-.modalFoot {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 22px;
-  border-top: 1px solid var(--divider);
-  background: var(--surface2);
-  border-radius: 0 0 20px 20px;
-}
-
-/* toast */
-.toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: var(--z-toast);
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  background: var(--text);
-  color: #fff;
-  padding: 12px 16px 12px 13px;
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(28, 25, 23, 0.3);
-  font-size: 13px;
-  font-weight: 500;
-}
-.toastIc {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #22c55e;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
 }
 
 @media (max-width: 900px) {

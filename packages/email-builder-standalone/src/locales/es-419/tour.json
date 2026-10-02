@@ -1,0 +1,82 @@
+{
+  "labels": {
+    "nextBtnText": "Siguiente",
+    "prevBtnText": "Atrás",
+    "doneBtnText": "Listo",
+    "progressText": "{{current}} de {{total}}"
+  },
+  "steps": {
+    "headerIdentity": {
+      "title": "Nombra tu plantilla",
+      "description": "Define aquí el nombre y la categoría de la plantilla — así la vuelves a encontrar en la galería."
+    },
+    "headerSave": {
+      "title": "Guardar plantilla",
+      "description": "Nombra y guarda la plantilla de forma explícita. Úsalo cuando quieras un punto de control propio, no solo el autoguardado."
+    },
+    "headerStatus": {
+      "title": "Estado del autoguardado",
+      "description": "Tu trabajo se guarda solo mientras avanzas. Aquí ves el estado: Draft, Saving…, Autosaved o Unsaved changes si algo no ha terminado de sincronizarse."
+    },
+    "toolbarViews": {
+      "title": "Editar o previsualizar",
+      "description": "Cambia entre el editor y la vista previa del correo terminado."
+    },
+    "viewportScreenSize": {
+      "title": "Escritorio o móvil",
+      "description": "Previsualiza cómo se ve el correo en escritorio o en móvil. Algunos bloques permiten valores distintos para cada uno, así que revisa los dos antes de enviar."
+    },
+    "toolbarHistory": {
+      "title": "Deshacer sin miedo",
+      "description": "Cualquier cambio se puede deshacer o rehacer, así que puedes probar libremente."
+    },
+    "libraryRail": {
+      "title": "Bloques a un clic",
+      "description": "Los bloques más usados están aquí — arrastra cualquiera al lienzo."
+    },
+    "libraryTabs": {
+      "title": "Bloques y plantillas",
+      "description": "Este panel agrupa bloques y plantillas completas para empezar desde cero o desde un diseño ya armado."
+    },
+    "blocksBasics": {
+      "title": "Básicos",
+      "description": "Bloques de propósito único — texto, imagen, botón, divisor, espaciador y redes sociales. Arrastra uno al lienzo, o haz clic para añadirlo."
+    },
+    "blocksLayout": {
+      "title": "Estructura",
+      "description": "Columnas y contenedores organizan los demás bloques dentro de ellos. Así construyes un correo que se ve bien en cualquier cliente."
+    },
+    "libraryTemplates": {
+      "title": "Plantillas",
+      "description": "Una galería de plantillas completas — empieza desde una en vez de un lienzo vacío. Aplicarla reemplaza lo que hay en el lienzo."
+    },
+    "canvasRoot": {
+      "title": "El lienzo",
+      "description": "Haz clic en un bloque para seleccionarlo, o arrastra uno desde la librería para añadirlo."
+    },
+    "canvasTextBlock": {
+      "title": "Edita el texto en el lienzo",
+      "description": "Haz clic en el texto para empezar a escribir — aparece una barra de formato mientras editas."
+    },
+    "inspectorPanel": {
+      "title": "Edita el bloque seleccionado",
+      "description": "Al seleccionar un bloque, sus opciones de contenido y estilo aparecen aquí."
+    },
+    "inspectorTabs": {
+      "title": "Contenido y Estilos",
+      "description": "Este panel tiene dos pestañas para el bloque seleccionado: Contenido (lo que dice) y Estilos (cómo se ve)."
+    },
+    "imageSources": {
+      "title": "Añade imágenes",
+      "description": "Elige una imagen de la librería del workspace, busca en Unsplash o sube la tuya."
+    },
+    "commandPalette": {
+      "title": "Todo desde el teclado",
+      "description": "Pulsa ⌘K (o Ctrl+K) para buscar y ejecutar cualquier acción del editor sin usar el mouse."
+    },
+    "headerActions": {
+      "title": "Probar y guardar",
+      "description": "Envíate un correo de prueba antes de guardar, para saber exactamente qué recibirán tus suscriptores."
+    }
+  }
+}

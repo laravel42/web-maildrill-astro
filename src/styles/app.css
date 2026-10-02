@@ -650,3 +650,158 @@
   color: var(--text4);
   text-align: center;
 }
+
+/* ---------------- toast (single shared host, ToastHost.tsx) ---------------- */
+/* The `toastin` entry animation is a global keyframe (global.css) — CSS
+   Modules cannot scope keyframes, so it stays global and is referenced here
+   by name instead of being redeclared per consumer. */
+.atoast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: var(--text);
+  color: var(--bg);
+  padding: 12px 16px 12px 13px;
+  border-radius: var(--radius-img);
+  /* No shadow token matches this exact value; it's the incumbent's shadow,
+     carried over unchanged 13 times so this is a deliberate one-off, not a
+     drift to clean up in this consolidation. */
+  box-shadow: 0 12px 32px rgba(28, 25, 23, 0.3);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  animation: toastin 0.22s var(--ease-out);
+}
+.atoast__ic {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  /* No status token matches this exact green; it's the incumbent's icon
+     badge color, carried over unchanged from every consumer. */
+  background: #22c55e;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Alert tone: same shell, warning hue — an unfinished/attention state, not a
+   hard failure (that's `role="alert"` doing the work, not red). */
+.atoast--alert .atoast__ic {
+  background: var(--warning);
+}
+.atoast--alert {
+  box-shadow: 0 12px 32px rgba(217, 119, 6, 0.32);
+}
+
+@media print {
+  .atoast {
+    display: none !important;
+  }
+}
+
+/* ---------------- modal shell (shared/Modal.tsx) ----------------
+   Overlay + panel primitives for every centered dialog. Aligned with
+   .adrawer* above: same surface, radius, and shadow language, just centered
+   instead of docked to an edge. Each consumer's head/body/foot content goes
+   inside `.amodal__*`; genuinely bespoke shapes keep their own module CSS and
+   only take the overlay/panel/focus behavior from Modal. */
+.amodal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: rgba(28, 25, 23, 0.4);
+  backdrop-filter: blur(3px);
+}
+/* ConfirmDialog opened from within another modal sits above it. */
+.amodal-overlay--confirm {
+  z-index: var(--z-confirm);
+}
+
+.amodal {
+  width: 460px;
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: var(--radius-dialog);
+  box-shadow: 0 24px 60px rgba(28, 25, 23, 0.28);
+  overflow: hidden;
+}
+.amodal--sm {
+  width: 400px;
+}
+.amodal--lg {
+  width: 640px;
+}
+.amodal--xl {
+  width: 920px;
+}
+
+.amodal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+}
+.amodal__title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+}
+.amodal__close {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: var(--surface2);
+  border-radius: 9px;
+  cursor: pointer;
+  color: var(--text4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+.amodal__close:hover {
+  color: var(--text2);
+  background: var(--border2);
+}
+
+.amodal__body {
+  padding: 22px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.amodal__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--divider);
+  background: var(--surface2);
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .amodal-overlay {
+    padding: 16px;
+  }
+}

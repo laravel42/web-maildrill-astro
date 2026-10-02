@@ -653,6 +653,45 @@ export interface BehaviorDefinition {
 }
 
 // ---------------------------------------------------------------------------
+// Style presets: recetas de estilo multi-campo que el usuario puede aplicar
+// y luego editar (F27). Mismo espíritu que un `BehaviorDefinition`: el core
+// (Inspector) consulta este registro con `appliesTo`, nunca hace
+// `switch(preset.id)`. A diferencia de un behavior, un preset no deja rastro
+// en el nodo — no hay `presetId`, no hay campo nuevo en `BuilderNode`, no hay
+// migración. Aplicar un preset es escribir un `NodeStyle` una sola vez; desde
+// ese momento cada propiedad escrita es tan editable como cualquier otra que
+// el usuario hubiera tocado a mano. No hay "quitar preset" ni round-trip: si
+// eso se necesita alguna vez, es un cambio de modelo, no de este registro.
+// ---------------------------------------------------------------------------
+
+/**
+ * Agrupación del catálogo de presets en el Inspector (mismo patrón que
+ * `BehaviorCategory`). `text` cubre los tres roles tipográficos derivados de
+ * `pizzeriaPage.ts` (`eyebrow`, `sectionTitle`, `bodyText` — F27, tareas
+ * T6-T8); `sticker` cubre las dos formas de pegatina (`stickerBadge`,
+ * `stickerRibbon` — T9).
+ */
+export type StylePresetCategory = "chip" | "button" | "text" | "sticker";
+
+export interface StylePresetDefinition {
+  /** Identificador estable ("chip-outline", "chip-solid"). */
+  id: string;
+  /** Clave i18n del label mostrado en el Inspector (namespace `inspector`). */
+  labelKey: string;
+  /** Agrupación del catálogo (ver `StylePresetCategory`). */
+  category: StylePresetCategory;
+  /** Restringe a qué nodos se ofrece. Ausente = todos. Mismo contrato que `BehaviorDefinition.appliesTo`. */
+  appliesTo?: (node: BuilderNode) => boolean;
+  /**
+   * Produce el `NodeStyle` a fusionar sobre el nodo. Recibe el nodo para que
+   * un preset pueda leer su estilo actual si algún día lo necesita (hoy
+   * ningún preset registrado lo hace), no para mutar nada — la función debe
+   * ser pura, el merge lo hace quien llama.
+   */
+  style: (node: BuilderNode) => NodeStyle;
+}
+
+// ---------------------------------------------------------------------------
 // Actions: acción de click de un nodo (docs/20 §3, docs/44 §2 — Fase 0)
 // ---------------------------------------------------------------------------
 

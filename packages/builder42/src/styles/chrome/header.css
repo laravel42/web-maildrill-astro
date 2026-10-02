@@ -750,7 +750,13 @@
  * que ocupaba `__left` se retiró (ahora vive como `PanelHandle` anclado al
  * canvas) — sin ese hijo, `space-between` pegaría `__right` contra el borde
  * IZQUIERDO en vez de mantenerlo a la derecha. `__center` sigue posicionado
- * absoluto, independiente de este eje. */
+ * absoluto, independiente de este eje.
+ * D-F22.1: un hijo de `__left` volvió (`PageBreadcrumb`, cuando el host no
+ * presta su propio slot — D-F22.2), pero la regla sigue en `flex-end` en vez
+ * de volver a `space-between`: `flex-end` ya empuja `__right` al borde
+ * derecho sin depender de si `__left` existe, así que sigue siendo correcto
+ * con o sin ese hijo. `__left` compensa con `margin-right: auto` en vez de
+ * que el contenedor cambie de eje. */
 .pbx-canvas-toolbar {
   position: relative;
   flex: none;
@@ -762,6 +768,86 @@
   background: var(--pb-chrome-surface);
   border-bottom: 1px solid var(--pb-chrome-border);
   z-index: 2;
+}
+
+/* D-F22.1 / D-F22.2 (this task, T1b): `__left` shares the row with
+ * `__center` only in appearance — `__center` is `position: absolute`
+ * (declared below) and therefore invisible to this flex row's own layout.
+ * The row has no idea `__center` exists, so nothing here stops `__left`
+ * from growing wide enough to slide underneath it, or past this bar's own
+ * 16px padding, once `PageBreadcrumb`'s label is the page's title instead
+ * of a short slug (measured: 364px for an empty-slug page, vs. `__center`'s
+ * stable 236px). The `max-width` below is that missing bound, expressed
+ * against the bar's own width because `__center` is centred on it:
+ * half of `__center` (236px / 2 = 118px) plus this bar's own 16px padding
+ * plus a further 16px of breathing room = 150px subtracted from 50% of the
+ * bar. `calc(50% - 150px)` therefore keeps `__left`'s right edge short of
+ * `__center`'s left edge at every width this task measured (1440/1280/1100/
+ * 980) — do not "simplify" this to a plain px value or drop the calc(): the
+ * 50% term is what makes the bound track the bar's own width instead of a
+ * viewport width that may differ from it (sidebar/inspector collapse both
+ * change the bar's width without changing the viewport). `min-width: 0` is
+ * required alongside it: a flex item's automatic minimum is its content's
+ * width, so without this the slot could not shrink below `PageBreadcrumb`'s
+ * unconstrained label even with `max-width` set — this was the mechanism
+ * behind the 14px spill past the bar's left padding at 1100px wide. */
+.pbx-canvas-toolbar__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(50% - 150px);
+  min-width: 0;
+  overflow: hidden;
+  /* Empuja `__center`/`__right` hacia la derecha sin que el contenedor
+   * necesite `space-between` (ver el comentario de arriba): así el bloque
+   * sigue centrado con `left: 50%` y este hijo es opcional sin romper nada. */
+  margin-right: auto;
+  z-index: 1;
+}
+
+/* `.pbx-breadcrumb__link` already truncates at 200px (see the rule above,
+ * in this same file) — but `narrow.css`'s `@media (max-width: 1200px)`
+ * rule resets that to `max-width: none` for the *standalone* header, where
+ * the section around it can float and does not need the 200px cap anymore.
+ * That reset is a plain `.pbx-breadcrumb__link` selector, so it also hits
+ * this slot's copy of the same component once the bar narrows below 1200px
+ * — this is the actual mechanism behind the measured 364px width. The same
+ * `narrow.css` block also sets `.pbx-breadcrumb { flex-shrink: 0; }`
+ * (deliberately, for the standalone header, where the breadcrumb "floats"
+ * and must not be squeezed) — inside THIS slot that is exactly what must
+ * NOT happen, because a `flex-shrink: 0` sibling ignores the `max-width`
+ * clip above at the box level and keeps rendering its content at full
+ * width (verified: `.pbx-canvas-toolbar__left` measured its correct
+ * clamped width, but the breadcrumb `<nav>` inside it still measured
+ * 364px — `overflow: hidden` on the ancestor clips it visually without the
+ * label ever truncating with an ellipsis). All three rules below win on
+ * specificity (two classes vs. one) over their `narrow.css` counterparts
+ * regardless of media query or source order, so they hold here without
+ * touching narrow.css or the component: the slot truncates its own label
+ * with an ellipsis instead of pushing past the `max-width` above, and it
+ * can now actually shrink to get there. The switcher trigger
+ * (`.pbx-breadcrumb__link`) stays a real, clickable `<button>` — only its
+ * text overflows into an ellipsis, nothing here changes its markup or
+ * hides it. */
+.pbx-canvas-toolbar__left .pbx-breadcrumb {
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.pbx-canvas-toolbar__left .pbx-breadcrumb__segment {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.pbx-canvas-toolbar__left .pbx-breadcrumb__link {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pbx-canvas-toolbar__right {

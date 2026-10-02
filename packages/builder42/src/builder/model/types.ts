@@ -110,6 +110,46 @@ export interface AppearanceStyle {
   outline?: StyleValue;
   /** boxShadow CSS (sombras, anillos de foco). */
   boxShadow?: StyleValue;
+  /**
+   * `rotate` CSS, la propiedad INDIVIDUAL (CSS Transforms Level 2), no el
+   * shorthand `transform`. Valor CRUDO, no tokenizado: el modelo de tokens no
+   * tiene familia de ángulos (igual razón que `letterSpacing` en
+   * `TypographyStyle` — no hay a qué apuntar). Acepta cualquier ángulo CSS
+   * (`-2deg`, `1.5deg`) y la palabra clave `none`.
+   *
+   * Existe porque un componente puede necesitar `transform` propio e inline
+   * por razones de layout (`registry/components/Sticker.tsx`, que traslada Y
+   * rota una pegatina fuera del flujo normal). Si este campo emitiera el
+   * shorthand `transform`, cualquier nodo con ambos perdería uno de los dos
+   * — el último que se aplique gana, nunca los dos. Las propiedades
+   * individuales `rotate`/`scale` COMPONEN con `transform` en vez de
+   * pisarlo (CSS Transforms 2, la cadena es transform → translate → rotate →
+   * scale, en ese orden fijo con independencia del orden de declaración), así
+   * que un nodo puede tener las dos fuentes a la vez sin conflicto.
+   */
+  rotate?: StyleValue;
+  /**
+   * `scale` CSS, propiedad individual — mismo razonamiento que `rotate` de
+   * arriba (compone con `transform` en vez de pisarlo, no tokenizado por no
+   * existir familia de proporciones). Acepta un factor sin unidad (`1.05`),
+   * dos factores separados por espacio (`"1 1.1"` para X/Y distintos) o
+   * `none`.
+   */
+  scale?: StyleValue;
+  /**
+   * `transition` CSS. Valor CRUDO, no tokenizado — mismo trato que
+   * `boxShadow`/`outline` arriba: es una propiedad shorthand de forma libre
+   * (lista de `<propiedad> <duración> <easing>` separada por comas) y el
+   * modelo de tokens no tiene familia de duraciones/easings a la que apuntar.
+   *
+   * Existe para animar `rotate`/`scale` (y cualquier otra propiedad, p. ej.
+   * bajo un estado `hover`) sin necesitar un modelo de animación aparte. El
+   * export neutraliza la transición dentro de
+   * `@media (prefers-reduced-motion: reduce)` para todo nodo que declare este
+   * campo (`export/cssSerializer.ts`) — declarar aquí es lo único que un
+   * componente necesita hacer para quedar cubierto, sin tocar cada sitio.
+   */
+  transition?: StyleValue;
 }
 
 /**
@@ -123,8 +163,34 @@ export interface TypographyStyle {
   fontSize?: StyleValue;
   fontWeight?: StyleValue;
   lineHeight?: StyleValue;
+  /**
+   * `letter-spacing`. Valor CRUDO, no tokenizado: el modelo de tokens no tiene
+   * familia de tracking (`typography.sizes`, `families`, `weights` y
+   * `lineHeights` son las que existen), así que no hay nada a lo que apuntar.
+   * Se admite cualquier longitud CSS (`-0.02em`, `0.08em`, `1px`) y la palabra
+   * clave `normal`. Unitless NO es válido en CSS para esta propiedad, por eso
+   * su campo del Inspector declara `defaultUnit: "em"`.
+   *
+   * Existe porque el tracking apretado es parte de la identidad de un titular
+   * display grande y no se puede compensar con otra propiedad: sin esto, un
+   * `clamp(2.5rem, 5vw, 5rem)` sale sistemáticamente más abierto que el mismo
+   * titular en cualquier plantilla de referencia moderna.
+   */
+  letterSpacing?: StyleValue;
   textAlign?: string;
   textDecoration?: string;
+  /**
+   * `text-transform`. Enum CSS (`none` | `uppercase` | `lowercase` |
+   * `capitalize`), no tokenizable, mismo trato que `textAlign` y
+   * `textDecoration`.
+   *
+   * Existe para que las etiquetas en mayúsculas (eyebrows, kickers, etiquetas
+   * de sección) se resuelvan con ESTILO y no escribiendo el copy en
+   * mayúsculas: el copy en mayúsculas viaja al export, a las traducciones y al
+   * lector de pantalla, que lo deletrea; `text-transform` es presentación y no
+   * toca el texto accesible.
+   */
+  textTransform?: string;
 }
 
 /** Grupos de estilo. El merge responsive es por grupo, campo a campo (docs/01 §2). */

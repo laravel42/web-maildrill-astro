@@ -22756,7 +22756,7 @@
   "sections": [
     {
       "id": "0398040b-0b75-46f2-80cf-f3317d7cad8b",
-      "name": "Announcement mobile-tight",
+      "name": "Announcement bar",
       "role": "banner",
       "tags": ["banner"],
       "createdAt": "2026-06-11T18:50:00.261Z",
@@ -23261,56 +23261,6 @@
                 "buttonTextColor": "#111827",
                 "fullWidth": false,
                 "size": "medium"
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "id": "82a88271-0ed0-46f9-93d6-26ca2e0448de",
-      "name": "Announcement bar",
-      "role": "banner",
-      "tags": ["banner"],
-      "createdAt": "2026-06-11T18:49:59.953Z",
-      "updatedAt": "2026-06-11T18:49:59.953Z",
-      "blocks": [
-        {
-          "id": "component-82a88271-1",
-          "block": {
-            "type": "Container",
-            "data": {
-              "style": {
-                "backgroundColor": "#111827",
-                "padding": {
-                  "top": 12,
-                  "right": 16,
-                  "bottom": 12,
-                  "left": 16
-                }
-              },
-              "props": {
-                "childrenIds": ["component-82a88271-2"]
-              }
-            }
-          }
-        },
-        {
-          "id": "component-82a88271-2",
-          "block": {
-            "type": "NotionText",
-            "data": {
-              "style": {
-                "color": "#FFFFFF",
-                "padding": {
-                  "top": 0,
-                  "right": 8,
-                  "bottom": 0,
-                  "left": 8
-                }
-              },
-              "props": {
-                "html": "<p style=\"text-align:center;\">🎉 New: dark mode is here! <a href=\"#\"><span style=\"color:#FFFFFF;\">Learn more →</span></a></p>"
               }
             }
           }

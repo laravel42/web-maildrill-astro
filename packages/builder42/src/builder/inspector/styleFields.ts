@@ -48,6 +48,10 @@ const U_RADII   = ["px", "%", "em", "rem"] as const;
 const U_FONT    = ["px", "rem", "em", "%"] as const;
 const U_WEIGHT  = ["100","200","300","400","500","600","700","800","900"] as const;
 const U_LINE    = ["", "px", "em", "rem"] as const; // sin unidad = ratio puro
+// `letter-spacing` se expresa casi siempre en `em` (escala con el cuerpo de
+// letra, que es lo que se quiere al apretar un titular display); `px` y `rem`
+// se dejan para casos donde el tracking debe ser fijo.
+const U_TRACK   = ["em", "rem", "px"] as const;
 
 export const STYLE_FIELDS: StyleFieldDef[] = [
   // ---- layout ---------------------------------------------------------------
@@ -267,6 +271,31 @@ export const STYLE_FIELDS: StyleFieldDef[] = [
   },
   {
     group: "typography",
+    key: "letterSpacing",
+    label: "Tracking",
+    control: "numeric",
+    units: [...U_TRACK],
+    // Unitless no es válido para `letter-spacing` en CSS (a diferencia de
+    // `line-height`, que es un ratio con significado), así que teclear "-0.02"
+    // debe resolverse a "-0.02em" y no quedarse en un valor que el navegador
+    // descarta en silencio.
+    defaultUnit: "em",
+    placeholder: "-0.02em",
+  },
+  {
+    group: "typography",
+    key: "textTransform",
+    label: "Mayúsculas",
+    control: "select",
+    options: [
+      { label: "none",       value: "none" },
+      { label: "uppercase",  value: "uppercase" },
+      { label: "lowercase",  value: "lowercase" },
+      { label: "capitalize", value: "capitalize" },
+    ],
+  },
+  {
+    group: "typography",
     key: "textDecoration",
     label: "Decoración",
     control: "select",
@@ -312,6 +341,31 @@ export const STYLE_FIELDS: StyleFieldDef[] = [
     label: "Outline",
     control: "text",
     placeholder: "2px solid #2563eb",
+  },
+  {
+    group: "appearance",
+    key: "rotate",
+    label: "Rotación",
+    control: "numeric",
+    units: ["deg"],
+    defaultUnit: "deg",
+    placeholder: "0deg",
+  },
+  {
+    group: "appearance",
+    key: "scale",
+    label: "Escala",
+    control: "numeric",
+    // Unitless: es un factor sin unidad (1.05), mismo criterio que
+    // lineHeight/fontWeight arriba — no se pone `defaultUnit`.
+    placeholder: "1",
+  },
+  {
+    group: "appearance",
+    key: "transition",
+    label: "Transición",
+    control: "text",
+    placeholder: "rotate 0.2s ease",
   },
 ];
 

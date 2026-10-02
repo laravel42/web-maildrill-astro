@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
 import { Reader, TReaderDocument } from '@eb/email-builder';
-import { ContentCopyOutlined } from '@mui/icons-material';
+import { ContentCopyOutlined, HelpOutlineOutlined } from '@mui/icons-material';
 import { Redo2, Undo2 } from 'lucide-react';
 import {
   Alert,
@@ -36,6 +36,7 @@ import {
   editorStateStore,
   lateralPanel,
   redoChange,
+  requestTourRestart,
   setComponentsLibraryDrawerOpen,
   setDocument,
   setInspectorDrawerMode,
@@ -77,6 +78,7 @@ import HtmlPanel from './HtmlPanel';
 import JsonPanel from './JsonPanel';
 import MainTabsGroup from './MainTabsGroup';
 import renderToStaticMarkup from './renderToStaticMarkup';
+import { dataTourAttr, EMAIL_BUILDER_TOUR_ANCHORS } from '../../tour/tourAnchors';
 import './history.css';
 
 const CSS_HEADER_CHAR_LIMIT = 16350;
@@ -420,7 +422,12 @@ export default function TemplatePanel({
       default:
         return (
           <>
-            <div className="pbx-history" role="group" aria-label={t('header.history')}>
+            <div
+              className="pbx-history"
+              role="group"
+              aria-label={t('header.history')}
+              {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.toolbarHistory)}
+            >
               <button
                 type="button"
                 className="pbx-history__btn"
@@ -442,6 +449,15 @@ export default function TemplatePanel({
                 <Redo2 size={16} aria-hidden="true" />
               </button>
             </div>
+            <button
+              type="button"
+              className="pbx-history__btn"
+              title={t('header.helpTour')}
+              aria-label={t('header.helpTour')}
+              onClick={() => requestTourRestart()}
+            >
+              <HelpOutlineOutlined fontSize="small" aria-hidden="true" />
+            </button>
             {enableComponentTree && <ToggleComponentTreeButton />}
           </>
         );
@@ -613,6 +629,7 @@ export default function TemplatePanel({
       <Box
         className="preview-container eb-canvas"
         ref={previewContainer}
+        {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.canvasRoot)}
         onClick={(e: React.MouseEvent) => {
           if (selectedMainTab === 'editor') {
             // No deseleccionar si el click viene de un portal MUI o del toolbar de NotionText

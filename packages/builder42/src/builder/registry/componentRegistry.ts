@@ -22,6 +22,7 @@ import { dividerDefinition } from "./components/Divider";
 import { spacerDefinition } from "./components/Spacer";
 import { sectionDefinition } from "./components/Section";
 import { badgeDefinition } from "./components/Badge";
+import { stickerDefinition } from "./components/Sticker";
 import { iconDefinition } from "./components/IconComponent";
 import { quoteDefinition } from "./components/Quote";
 import { statDefinition, statValueDefinition } from "./components/Stat";
@@ -54,6 +55,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   buttonDefinition,
   textDefinition,
   badgeDefinition,
+  stickerDefinition,
   iconDefinition,
   quoteDefinition,
   statDefinition,

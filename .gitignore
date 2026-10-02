@@ -45,6 +45,10 @@ scripts/.*
 .idea/
 *.swp
 
+# AI coding-agent local state (per-machine, never shared)
+.kiro/
+.cursor/
+
 # OS
 .DS_Store
 .DS_Store?

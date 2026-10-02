@@ -62,6 +62,7 @@ const BEHAVIOR_ENTRIES = {
   revealOnScroll: "behaviors/revealOnScroll.ts",
   scrollProgress: "behaviors/scrollProgress.ts",
   scrollSpy: "behaviors/scrollSpy.ts",
+  stickerDrag: "behaviors/stickerDrag.ts",
   sticky: "behaviors/sticky.ts",
   tabs: "behaviors/tabs.ts",
   themeToggle: "behaviors/themeToggle.ts",

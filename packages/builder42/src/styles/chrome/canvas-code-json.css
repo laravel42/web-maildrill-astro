@@ -13,7 +13,7 @@
 }
 
 .pbx-code h3 {
-  color: #93c5fd;
+  color: var(--pb-chrome-accent-on-dark);
   font-size: 13px;
   margin: 16px 0 4px;
 }

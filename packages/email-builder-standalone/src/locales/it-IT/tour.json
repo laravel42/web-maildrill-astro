@@ -1,0 +1,82 @@
+{
+  "labels": {
+    "nextBtnText": "Avanti",
+    "prevBtnText": "Indietro",
+    "doneBtnText": "Fine",
+    "progressText": "{{current}} di {{total}}"
+  },
+  "steps": {
+    "headerIdentity": {
+      "title": "Nome e categoria",
+      "description": "Imposta qui il nome e la categoria del template — così lo ritrovi nella galleria."
+    },
+    "headerSave": {
+      "title": "Salva template",
+      "description": "Nomina e salva il template in modo esplicito. Usalo quando vuoi un punto di controllo tuo, non solo il salvataggio automatico."
+    },
+    "headerStatus": {
+      "title": "Stato del salvataggio automatico",
+      "description": "Il tuo lavoro si salva da solo mentre procedi. Qui vedi lo stato: Draft, Saving…, Autosaved oppure Unsaved changes se qualcosa non si è ancora sincronizzato."
+    },
+    "toolbarViews": {
+      "title": "Modifica o anteprima",
+      "description": "Passa dall'editor all'anteprima dell'email finita."
+    },
+    "viewportScreenSize": {
+      "title": "Desktop o mobile",
+      "description": "Visualizza in anteprima come appare l'email su desktop o su mobile. Alcuni blocchi permettono valori diversi per ciascuno, quindi controlla entrambi prima di inviare."
+    },
+    "toolbarHistory": {
+      "title": "Annulla senza pensieri",
+      "description": "Ogni modifica può essere annullata o ripetuta, quindi puoi sperimentare liberamente."
+    },
+    "libraryRail": {
+      "title": "Blocchi a portata di clic",
+      "description": "I blocchi più usati sono qui — trascina uno qualsiasi sulla tela."
+    },
+    "libraryTabs": {
+      "title": "Blocchi e template",
+      "description": "Questo pannello raggruppa blocchi e template completi, per partire da zero o da un layout già pronto."
+    },
+    "blocksBasics": {
+      "title": "Base",
+      "description": "Blocchi a scopo unico — testo, immagine, pulsante, divisore, spaziatore e social. Trascinane uno sulla tela, oppure clicca per aggiungerlo."
+    },
+    "blocksLayout": {
+      "title": "Struttura",
+      "description": "Colonne e contenitori organizzano gli altri blocchi al loro interno. È così che costruisci un'email che funziona su ogni client."
+    },
+    "libraryTemplates": {
+      "title": "Template",
+      "description": "Una galleria di template completi — parti da uno invece che da una tela vuota. Applicarlo sostituisce ciò che c'è sulla tela."
+    },
+    "canvasRoot": {
+      "title": "La tela",
+      "description": "Clicca un blocco per selezionarlo, oppure trascinane uno dalla libreria per aggiungerlo."
+    },
+    "canvasTextBlock": {
+      "title": "Modifica il testo direttamente sulla tela",
+      "description": "Clicca sul testo per iniziare a scrivere — appare una barra di formattazione mentre modifichi."
+    },
+    "inspectorPanel": {
+      "title": "Modifica il blocco selezionato",
+      "description": "Quando un blocco è selezionato, qui trovi le sue opzioni di contenuto e stile."
+    },
+    "inspectorTabs": {
+      "title": "Contenuto e Stili",
+      "description": "Questo pannello ha due tab per il blocco selezionato: Contenuto (cosa dice) e Stili (come appare)."
+    },
+    "imageSources": {
+      "title": "Aggiungi immagini",
+      "description": "Scegli un'immagine dalla libreria del workspace, cerca su Unsplash o caricane una tua."
+    },
+    "commandPalette": {
+      "title": "Tutto dalla tastiera",
+      "description": "Premi ⌘K (o Ctrl+K) per cercare ed eseguire qualsiasi azione dell'editor senza il mouse."
+    },
+    "headerActions": {
+      "title": "Testa e salva",
+      "description": "Invia a te stesso un'email di prova prima di salvare, per sapere esattamente cosa riceveranno gli iscritti."
+    }
+  }
+}

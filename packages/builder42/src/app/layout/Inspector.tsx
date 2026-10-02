@@ -15,6 +15,7 @@ import { getDefinition } from "@/builder/registry/componentRegistry";
 import { InspectorForm } from "@/builder/inspector/InspectorForm";
 import { SiteSettingsPanel } from "@/builder/inspector/SiteSettingsPanel";
 import { useLocalConfig } from "@/hooks/useLocalConfig";
+import { notifyTourZoneClick } from "@/app/tour/zoneTourTriggers";
 import { PanelHandle } from "./PanelHandle";
 
 export function Inspector() {
@@ -43,7 +44,10 @@ export function Inspector() {
   };
 
   return (
-    <div className={"pbx-panel-slot pbx-panel-slot--right" + (inspectorCollapsed ? " pbx-panel-slot--collapsed" : "")}>
+    <div
+      className={"pbx-panel-slot pbx-panel-slot--right" + (inspectorCollapsed ? " pbx-panel-slot--collapsed" : "")}
+      onClickCapture={() => notifyTourZoneClick("rightPanel")}
+    >
       {/* Pestaña de colapsar/expandir anclada al borde izquierdo del panel —
           homologa el patrón de email-builder/wa-template-studio. Sustituye
           al `×` interno que vivía en `InspectorForm` y a `PanelToggleButtons`

@@ -17,6 +17,7 @@ import { useDocumentStore } from "@/builder/store/documentStore";
 import { pageRoute } from "@/builder/export/links";
 import { normalizeSlug, uniqueSlug } from "@/builder/model/site";
 import { CommittableInput } from "./controls/CommittableInput";
+import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 export function PageManager() {
   const { t } = useTranslation("inspector");
@@ -100,7 +101,7 @@ export function PageManager() {
   }
 
   return (
-    <section className="pbx-site-settings__section">
+    <section className="pbx-site-settings__section" {...dataTourAttr(BUILDER42_TOUR_ANCHORS.settingsPages)}>
       <h4 className="pbx-inspector__heading">{t("pageManager.title")}</h4>
       <ul className="pbx-page-manager__list">
         {pageOrder.map((id, index) => {

@@ -34,7 +34,8 @@
       "insert": "Insertar bloque",
       "view": "Vista",
       "library": "Biblioteca",
-      "edit": "Editar"
+      "edit": "Editar",
+      "help": "Ayuda"
     },
     "action": {
       "tabEditor": "Ir al editor",
@@ -46,7 +47,8 @@
       "openLibrary": "Abrir biblioteca de componentes",
       "toggleInspector": "Expandir / compactar inspector",
       "undo": "Deshacer",
-      "redo": "Rehacer"
+      "redo": "Rehacer",
+      "tour": "Ver el recorrido guiado"
     }
   },
   "bubbleMenu": {

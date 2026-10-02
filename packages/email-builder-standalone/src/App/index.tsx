@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 
 import { Box, Container, useTheme } from '@mui/material';
 
+import type { TourAnalyticsEvent } from '@md/product-tour';
+
 import { COMPACT_PANEL_WIDTH } from '../constants';
 import {
   DEFAULT_IMAGE_PLACEHOLDER,
@@ -26,12 +28,15 @@ import {
   setTemplateSaving,
   setTemplateLibrary,
   setThemeSaving,
+  setTour,
   useComponentsLibraryEnabled,
   useInspectorDrawerMode,
   useInspectorDrawerOpen,
   useSelectedMainTab,
 } from '../documents/editor/EditorContext';
 import { EmailBuilderWindow } from '../global';
+import { useEmailBuilderTour } from '../tour/useEmailBuilderTour';
+import type { EmailBuilderTourStepsConfig } from '../tour/tourSteps';
 
 import CommandPalette from './CommandPalette';
 import {
@@ -69,10 +74,13 @@ export type AppProps = {
   templateLibrary?: boolean;
   /** When true, shows the "Save as theme" button in the root inspector panel. Defaults to false. */
   themeSaving?: boolean;
+  /** Product tour analytics (F4) — forwarded to `@md/product-tour`'s `onEvent`, agnostic of any provider (§0.2). The host maps these to PostHog. */
+  onTourEvent?: (event: TourAnalyticsEvent) => void;
 };
 export default function App({
   galleryImages = true,
   darkMode = false,
+  tour = false,
   stickyHeader = true,
   heightContent = null,
   containerGrow = true,
@@ -90,6 +98,7 @@ export default function App({
   templateSaving,
   templateLibrary,
   themeSaving,
+  onTourEvent,
 }: AppProps) {
   const inspectorDrawerOpen = useInspectorDrawerOpen();
   const inspectorDrawerMode = useInspectorDrawerMode();
@@ -116,6 +125,39 @@ export default function App({
   const leftReservedWidth =
     componentsLibraryEnabled && selectedMainTab === 'editor' ? COMPACT_LIBRARY_DRAWER_WIDTH : 0;
   const rightReservedWidth = inspectorDrawerOpen ? COMPACT_PANEL_WIDTH : 0;
+
+  // F4 (docs/product-tour-driverjs-plan.md §4): starts/persists/relaunches the
+  // guided tour. `tourStepsConfig` mirrors exactly the flags
+  // `buildEmailBuilderTourSteps` (F3a) filters on — kept inline (not memoized)
+  // since it's a handful of primitives/booleans, recomputed each render.
+  // `enableAI`/`unsplashEnabled` aren't `AppProps` (they're set as window globals
+  // by `src/index.tsx`, read by `AIGeneration`/`ImageInput`) — read the same way
+  // here rather than growing `AppProps` with values this component never uses
+  // for anything else.
+  const globalWindow =
+    typeof window !== 'undefined'
+      ? (window as unknown as { __emailBuilderUnsplashEnabled?: boolean; __emailBuilderEnableAI?: boolean })
+      : undefined;
+  const tourStepsConfig: EmailBuilderTourStepsConfig = {
+    htmlTab,
+    jsonTab,
+    componentTree,
+    templateSaving,
+    themeSaving,
+    templateLibrary,
+    galleryImages,
+    unsplashEnabled: globalWindow?.__emailBuilderUnsplashEnabled,
+    enableAI: globalWindow?.__emailBuilderEnableAI,
+    // `eb.header.actions` lives in the HOST's `EditorHeader.tsx` (outside this
+    // package — see `src/components/react/shared/EditorHeader.tsx`), which
+    // renders that anchor unconditionally for the email channel; whether the
+    // "Send test" button itself shows depends on the host's own `onSendTest`
+    // prop, which never reaches this package. Since the anchor is always
+    // present here, `skipMissingElement` (default `true`) is the real safety
+    // net if a future host ever omits it — this config always allows the step.
+    onSendTest: true,
+  };
+  useEmailBuilderTour({ config: tourStepsConfig, onTourEvent });
 
   // Efecto inicial para configuración de devMode (solo una vez)
   useEffect(() => {
@@ -234,6 +276,9 @@ export default function App({
   useEffect(() => {
     setGalleryImages(galleryImages);
   }, [galleryImages]);
+  useEffect(() => {
+    setTour(tour);
+  }, [tour]);
   useEffect(() => {
     setDarkMode(darkMode);
   }, [darkMode]);

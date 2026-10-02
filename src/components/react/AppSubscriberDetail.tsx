@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from './Icon';
 import ConfirmDialog from './shared/ConfirmDialog';
 import { useToast } from './shared/useToast';
+import ToastHost from './shared/ToastHost';
 import { api, ApiError } from '@/lib/app/api';
 import { routes } from '@/config/routes';
 import { CHANNEL, CHANNEL_ORDER } from './shared/channels';
@@ -1097,18 +1098,7 @@ export default function AppSubscriberDetail({
         </div>
       </main>
 
-      {toast && (
-        <div
-          className={styles.toast}
-          role="status"
-          style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-        >
-          <span className={styles.toastIc}>
-            <Icon name="check" size={13} stroke={3} />
-          </span>
-          {toast}
-        </div>
-      )}
+      <ToastHost toast={toast} />
 
       {confirm === 'unsubscribe' && (
         <ConfirmDialog

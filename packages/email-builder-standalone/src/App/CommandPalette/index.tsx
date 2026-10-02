@@ -18,13 +18,14 @@
  * `theme.blocks.*.title` keys used by the Blocks tab tiles).
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { CommandPalette as C42CommandPalette } from '@josecortez1/c42-react';
 import CodeOutlined from '@mui/icons-material/CodeOutlined';
 import DataObjectOutlined from '@mui/icons-material/DataObjectOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
+import HelpOutlineOutlined from '@mui/icons-material/HelpOutlineOutlined';
 import LibraryAddOutlined from '@mui/icons-material/LibraryAddOutlined';
 import MonitorOutlined from '@mui/icons-material/MonitorOutlined';
 import PhoneIphoneOutlined from '@mui/icons-material/PhoneIphoneOutlined';
@@ -39,6 +40,7 @@ import {
   appendBuiltInBlockToParent,
   editorStateStore,
   redoChange,
+  requestTourRestart,
   setComponentsLibraryDrawerOpen,
   setInspectorDrawerMode,
   setSelectedBlockId,
@@ -47,6 +49,7 @@ import {
   undoChange,
 } from '../../documents/editor/EditorContext';
 import { BUTTONS } from '../ComponentsLibrary/builtInBlocks';
+import { dataTourAttr, EMAIL_BUILDER_TOUR_ANCHORS } from '../../tour/tourAnchors';
 
 import ShortcutKeys from './ShortcutKeys';
 
@@ -115,6 +118,20 @@ const EDIT_ACTIONS: ActionDef[] = [
   },
 ];
 
+/**
+ * Help entry that relaunches the product tour (F4,
+ * docs/product-tour-driverjs-plan.md §4). Kept in its own group instead of
+ * `EDIT_ACTIONS` — it's not an editing action, and a dedicated "Help" group
+ * reads clearly even with a single entry today.
+ */
+const HELP_ACTIONS: ActionDef[] = [
+  {
+    value: 'tour:restart',
+    icon: <HelpOutlineOutlined />,
+    labelKey: 'commandPalette.action.tour',
+  },
+];
+
 /** Parse and dispatch a selected command's `data-value`. */
 function runCommand(value: string) {
   if (value.startsWith('insert:')) {
@@ -152,6 +169,9 @@ function runCommand(value: string) {
     case 'redo':
       redoChange();
       break;
+    case 'tour:restart':
+      requestTourRestart();
+      break;
   }
 }
 
@@ -162,6 +182,40 @@ export default function CommandPalette() {
   const handleSelect = useCallback((detail: unknown) => {
     const value = (detail as { value?: string })?.value;
     if (typeof value === 'string') runCommand(value);
+  }, []);
+
+  /**
+   * The host Astro shell (`src/components/react/AppShell.tsx`, out of this
+   * package's scope) also binds its own, unrelated "Search or jump to…"
+   * command palette to the very same Ctrl/Cmd+K hotkey, on a plain bubble-phase
+   * `window` keydown listener. `@josecortez1/c42-react`'s controller (mounted
+   * by `<C42CommandPalette>` below) already wins the race to actually *open*
+   * (it listens on `document` in the CAPTURE phase, which always runs before
+   * any `window` bubble-phase listener — capture descends window → document →
+   * … before bubbling back up), and it synchronously focuses its own
+   * `[data-c42-command-input]`. But nothing stops the event from continuing on
+   * to reach the shell's handler afterwards: the shell then also opens *its*
+   * palette, whose `<input autoFocus>` mounts a beat later and steals focus
+   * right back — a real keyboard user landing on Ctrl+K would find focus
+   * bounced onto the wrong palette, unable to type into or arrow through this
+   * one. Since this package cannot touch `AppShell.tsx`, the fix has to be a
+   * capture-phase `document` listener of our own that runs the moment this
+   * component is mounted: React flushes child effects before parent effects on
+   * mount, so this `useEffect` (in the `CommandPalette` parent) registers
+   * after `<C42CommandPalette>`'s own listener already has — meaning ours
+   * fires second on the SAME node/phase, which does not stop the controller's
+   * own handler (`stopPropagation` never un-invokes listeners that already ran
+   * on the same node) but does stop the event before it ever reaches `window`'s
+   * bubble phase, where the shell's competing palette lives.
+   */
+  useEffect(() => {
+    function onHotkeyCapture(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.stopPropagation();
+      }
+    }
+    document.addEventListener('keydown', onHotkeyCapture, true);
+    return () => document.removeEventListener('keydown', onHotkeyCapture, true);
   }, []);
 
   return (
@@ -263,7 +317,7 @@ export default function CommandPalette() {
     >
       <C42CommandPalette hotkey="k" onSelect={handleSelect}>
         <div data-c42-command-overlay />
-        <div data-c42-command-dialog>
+        <div data-c42-command-dialog {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.commandPalette)}>
           <input
             data-c42-command-input
             placeholder={t('commandPalette.placeholder', 'Type a command or search…')}
@@ -330,6 +384,15 @@ export default function CommandPalette() {
                       <ShortcutKeys shortcut={a.shortcut} />
                     </span>
                   )}
+                </button>
+              ))}
+            </div>
+
+            <div data-c42-command-group data-label={t('commandPalette.group.help', 'Help')}>
+              {HELP_ACTIONS.map((a) => (
+                <button key={a.value} type="button" data-c42-command-item data-value={a.value}>
+                  {a.icon}
+                  <span>{t(a.labelKey)}</span>
                 </button>
               ))}
             </div>

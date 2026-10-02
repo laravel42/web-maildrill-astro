@@ -1,6 +1,7 @@
 import type { ChangeEvent, CSSProperties, ReactNode } from 'react';
 import type { ChannelType } from '@/types/app';
 import Icon from '../Icon';
+import ToastHost from './ToastHost';
 import { CHANNEL } from './channels';
 import {
   templateCategoriesForChannel,
@@ -11,7 +12,7 @@ import {
   TEMPLATE_LANGUAGE_OPTIONS,
   templateLanguageFlagSrc,
 } from '@/lib/app/template-language';
-import ChannelEditorShell, { shellStyles } from './ChannelEditorShell';
+import ChannelEditorShell from './ChannelEditorShell';
 import EmojiPickerButton from './EmojiPickerButton';
 import { useEscapeClose } from './useEscapeClose';
 import type { MessageDraft } from './useMessageDraft';
@@ -72,20 +73,7 @@ export function ComposerShell({
       onBack={onClose}
       onSaveDraft={() => void draft.handleSaveDraft()}
       className={styles.overlayFade}
-      toast={
-        draft.toast ? (
-          <div
-            className={shellStyles.toast}
-            role="status"
-            style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-          >
-            <span className={shellStyles.toastIcon}>
-              <Icon name="check" size={13} stroke={3} />
-            </span>
-            {draft.toast}
-          </div>
-        ) : null
-      }
+      toast={<ToastHost toast={draft.toast} />}
     >
       <div className={styles.grid}>{children}</div>
     </ChannelEditorShell>

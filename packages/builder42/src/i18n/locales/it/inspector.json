@@ -116,6 +116,8 @@
     "notAvailable": "Questo elemento non supporta animazioni o effetti.",
     "remove": "Rimuovi comportamento",
     "add": "Aggiungi",
+    "none": "Nessuno",
+    "hasMoreWarning": "Questo elemento ha anche altri comportamenti applicati che questo controllo non mostra. Scegliendone uno qui, li sostituisci tutti.",
     "categories": {
       "content": "Contenuto",
       "motion": "Animazione allo scroll",
@@ -130,6 +132,7 @@
       "theme-toggle": "Pulsante per alternare tema chiaro e scuro.",
       "form-validation": "Valida i campi in tempo reale con messaggi di errore (richiede JS).",
       "sticky": "Fissa l'elemento durante lo scroll; aggiunge un indicatore visivo dopo lo scroll.",
+      "sticker-drag": "Permette al visitatore di trascinare l'adesivo; si può limitare a un asse o al contenitore.",
       "count-up": "Anima il numero da 0 al valore finale quando entra nello schermo.",
       "marquee": "Scorre i loghi in un ciclo continuo (richiede JS per la pausa al passaggio del mouse).",
       "expandable": "Comprime il blocco a un'altezza data e aggiunge un pulsante \"Vedi altro\" (senza JS è visibile per intero).",
@@ -148,6 +151,7 @@
       "tabs": "Schede (animate)",
       "form-validation": "Validazione in tempo reale (Alpine)",
       "sticky": "Fisso allo scroll (sticky)",
+      "sticker-drag": "Adesivo trascinabile",
       "count-up": "Contatore animato",
       "marquee": "Scorrimento continuo (marquee)",
       "expandable": "Vedi altro (espandibile)",
@@ -157,6 +161,16 @@
       "lightbox": "Lightbox (schermo intero)"
     },
     "fields": {
+      "sticker-drag": {
+        "axis": "Assi",
+        "axisOptions": {
+          "both": "Entrambi",
+          "x": "Solo orizzontale",
+          "y": "Solo verticale"
+        },
+        "bounded": "Limita al contenitore",
+        "boundedHelp": "Se attivo, l'adesivo non può essere trascinato oltre i bordi della sezione che lo contiene, così il visitatore non può perderlo di vista."
+      },
       "theme-toggle": {
         "light": "Tema chiaro",
         "dark": "Tema scuro",
@@ -263,6 +277,20 @@
       "configureThemes": "Configura temi",
       "storageKeyHelp": "Nome con cui il sito pubblicato ricorda il tema scelto da ogni visitatore e lo riapplica alla visita successiva (ha priorità sul tema di sistema ed è salvato nel browser tramite localStorage). Cambialo solo se vuoi che questo interruttore ricordi la preferenza separatamente da un altro sullo stesso dominio. Predefinita: «pb-theme»."
     }
+  },
+  "stylePresets": {
+    "title": "Preset di stile",
+    "hint": "Applica una combinazione pronta e poi modifica ogni proprietà a mano.",
+    "chipOutline": "Chip (contorno)",
+    "chipSolid": "Chip (pieno)",
+    "eyebrowOnLight": "Etichetta superiore (su chiaro)",
+    "eyebrowOnDark": "Etichetta superiore (su scuro)",
+    "sectionTitleOnLight": "Titolo di sezione (su chiaro)",
+    "sectionTitleOnDark": "Titolo di sezione (su scuro)",
+    "bodyText": "Testo del corpo",
+    "stickerBadge": "Adesivo (distintivo rotondo)",
+    "stickerRibbonOutline": "Nastro adesivo (contorno)",
+    "stickerRibbonSolid": "Nastro adesivo (pieno)"
   },
   "fieldHelp": {
     "label": "Maggiori informazioni"
@@ -603,13 +631,18 @@
       "fontWeight": "Peso",
       "fontFamily": "Carattere",
       "lineHeight": "Interlinea",
+      "letterSpacing": "Tracking",
+      "textTransform": "Maiuscole",
       "textDecoration": "Decorazione",
       "background": "Sfondo",
       "borderRadius": "Raggio",
       "border": "Bordo",
       "boxShadow": "Ombra",
       "cursor": "Cursore",
-      "outline": "Outline"
+      "outline": "Outline",
+      "rotate": "Rotazione",
+      "scale": "Scala",
+      "transition": "Transizione"
     },
     "custom": "Personalizzato",
     "origin": {
@@ -636,6 +669,7 @@
     },
     "visibility": {
       "fieldLabel": "Visibilità",
+      "help": "L'occhio nasconde l'elemento nel breakpoint attivo e in tutti quelli più larghi, a meno che tu non lo sovrascriva in uno di essi. Per renderlo di nuovo visibile a partire da una certa dimensione, passa a quel breakpoint con i pulsanti sotto e premi \"Sovrascrivi qui\" (o l'occhio, se è già visibile).",
       "overrideHere": "Sovrascrivi qui",
       "toggleShow": "Mostra a {{bp}}",
       "toggleHide": "Nascondi a {{bp}}",

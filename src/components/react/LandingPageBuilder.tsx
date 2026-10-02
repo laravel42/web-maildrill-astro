@@ -1,14 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Builder42EditorHandle, Builder42EditorProps, BuilderSite } from 'builder42';
+import type {
+  Builder42EditorHandle,
+  Builder42EditorProps,
+  BuilderSite,
+  TourAnalyticsEvent,
+} from 'builder42';
 import { retryDynamicImport } from '@/lib/app/retry-dynamic-import';
 import { landingBuilderAdapters } from '@/lib/app/builder42-adapters';
-import Icon from './Icon';
+import ToastHost from './shared/ToastHost';
 import ChannelEditorShell, { shellStyles } from './shared/ChannelEditorShell';
 import ConfirmDialog from './shared/ConfirmDialog';
 import { LANDING_IDENTITY } from './shared/channels';
 import { useAutosave } from './shared/useAutosave';
 import { useToast } from './shared/useToast';
-import styles from './LandingPageBuilder.module.css';
+import { useHostTheme } from './hooks/useHostTheme';
+// Global z-index fix for Builder42's own modals nested inside this shell —
+// see LandingPageBuilder.module.css. No local classes are used from it.
+import './LandingPageBuilder.module.css';
 
 /**
  * Full-screen wrapper around Builder42 (vendored `packages/builder42/`) — the
@@ -42,13 +50,50 @@ type Props = {
   siteName?: string | null;
   onClose: () => void;
   onSave: (site: BuilderSite) => Promise<void> | void;
+  /**
+   * Forces or silences the guided product tour (F4,
+   * docs/product-tour-driverjs-plan.md §4). Optional — omitting it keeps the
+   * current behavior (tour enabled, auto-starts once per browser, after
+   * `OnboardingExperienceModal`/its embedded equivalent resolves).
+   */
+  tourEnabled?: boolean;
+  /**
+   * Receives the tour's analytics events. The mapping to
+   * `window.posthog?.capture(...)` lives HERE, in the host — never inside
+   * `packages/builder42` (§0.2/§0.7 of the plan). Optional: omitting it means
+   * tour events aren't tracked, matching current behavior.
+   */
+  onTourEvent?: (event: TourAnalyticsEvent) => void;
 };
 
-export default function LandingPageBuilder({ initialSite, siteName, onClose, onSave }: Props) {
+export default function LandingPageBuilder({
+  initialSite,
+  siteName,
+  onClose,
+  onSave,
+  tourEnabled,
+  onTourEvent,
+}: Props) {
   const editorRef = useRef<Builder42EditorHandle>(null);
   const [Builder, setBuilder] = useState<BuilderComponent | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { toast, tone, show } = useToast();
+  // VENDOR #45 — the theme control the package's toolbar renders for us. D30:
+  // the host owns both the `data-theme` attribute and the `md-theme` storage
+  // key; the package only receives the effective value and an action.
+  // `useHostTheme` already observes the attribute, so writing it here is what
+  // re-renders this component with the new value — same pair `AppShell.tsx`'s
+  // own `toggleTheme` owns, and the same hook `VisualEmailBuilder.tsx` uses.
+  const hostTheme = useHostTheme();
+  const toggleHostTheme = useCallback(() => {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try {
+      localStorage.setItem('md-theme', next);
+    } catch {
+      /* no-op — a blocked storage write must not stop the visible toggle */
+    }
+  }, []);
   // Editable copy of the site's display name, shown in the shell's own name
   // field — the vendored editor has no UI of its own for this (`meta.name` is
   // only ever read internally, for the publish slug/export title). Seeded from
@@ -78,6 +123,25 @@ export default function LandingPageBuilder({ initialSite, siteName, onClose, onS
   const { status, isDirty, markDirty, flush } = useAutosave(persist);
   const [leaveBlocked, setLeaveBlocked] = useState(false);
   const pendingClose = useRef(false);
+
+  // F4 (docs/product-tour-driverjs-plan.md §4/§0.2/§0.7): the ONLY place in this
+  // codebase that maps `@md/product-tour`'s domain-agnostic analytics events to
+  // PostHog. `packages/builder42` never imports PostHog itself — it only calls
+  // this callback. The optional `onTourEvent` host prop is forwarded on top of
+  // that mapping, so a caller can observe the same events without losing the
+  // standard telemetry.
+  const handleTourEvent = useCallback(
+    (event: TourAnalyticsEvent) => {
+      window.posthog?.capture(event.event, {
+        tour_id: event.tourId,
+        step_index: event.stepIndex,
+        total_steps: event.totalSteps,
+        editor: 'landing',
+      });
+      onTourEvent?.(event);
+    },
+    [onTourEvent]
+  );
 
   // Client-only load of the editor + its stylesheet (kept out of SSR) — same
   // reasoning as VisualEmailBuilder's own effect.
@@ -195,20 +259,7 @@ export default function LandingPageBuilder({ initialSite, siteName, onClose, onS
         isDirty={isDirty}
         onBack={() => void requestClose()}
         onSaveDraft={() => void handleSaveDraft()}
-        toast={
-          toast ? (
-            <div
-              className={`${shellStyles.toast}${tone === 'alert' ? ` ${shellStyles.toastAlert}` : ''}`}
-              role={tone === 'alert' ? 'alert' : 'status'}
-              style={{ animation: 'toastin .22s cubic-bezier(.2,.8,.2,1)' }}
-            >
-              <span className={shellStyles.toastIcon}>
-                <Icon name={tone === 'alert' ? 'x' : 'check'} size={13} stroke={3} />
-              </span>
-              {toast}
-            </div>
-          ) : null
-        }
+        toast={<ToastHost toast={toast} tone={tone} />}
       >
         {loadError ? (
           <div className={shellStyles.state}>
@@ -234,6 +285,22 @@ export default function LandingPageBuilder({ initialSite, siteName, onClose, onS
             // — pinning the chrome locale keeps the two consistent.
             locale="en"
             adapters={landingBuilderAdapters}
+            tourEnabled={tourEnabled}
+            onTourEvent={handleTourEvent}
+            // VENDOR #45 — the package's own chrome carries no theme control
+            // under `themeMode="host"` (`useThemeMode`'s `hostControlled` flag
+            // hides `EditorPreferences`'s 3-state `ThemeToggle`), so the editor
+            // used to be the one place in the workspace with no way to flip
+            // dark mode. This host lends one: `useHostTheme()` reads the
+            // effective theme off `<html data-theme>` (D30 — the package never
+            // reads the attribute itself), and `toggleHostTheme` writes the
+            // attribute plus the `md-theme` storage key, the same pair
+            // `AppShell.tsx`'s own `toggleTheme` owns. Rendered inside the
+            // package's canvas toolbar, next to undo/redo: unlike
+            // builder42-landing, this host's editor chrome is the shared
+            // `ChannelEditorShell`, which has no header slot of its own to put
+            // a control in.
+            hostThemeControl={{ effective: hostTheme, onToggle: toggleHostTheme }}
           />
         ) : (
           <div className={shellStyles.state}>
@@ -243,17 +310,15 @@ export default function LandingPageBuilder({ initialSite, siteName, onClose, onS
         )}
       </ChannelEditorShell>
       {leaveBlocked ? (
-        <div className={styles.leaveGuard}>
-          <ConfirmDialog
-            title="Couldn’t save this landing"
-            message="Leave anyway? The latest edits on the canvas will be lost."
-            confirmLabel="Leave"
-            cancelLabel="Stay"
-            tone="danger"
-            onConfirm={onClose}
-            onCancel={() => setLeaveBlocked(false)}
-          />
-        </div>
+        <ConfirmDialog
+          title="Couldn’t save this landing"
+          message="Leave anyway? The latest edits on the canvas will be lost."
+          confirmLabel="Leave"
+          cancelLabel="Stay"
+          tone="danger"
+          onConfirm={onClose}
+          onCancel={() => setLeaveBlocked(false)}
+        />
       ) : null}
     </>
   );

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import Icon from '../Icon';
-import { useEscapeClose } from '../shared/useEscapeClose';
+import Modal from '../shared/Modal';
 import styles from '../AppProfile.module.css';
 
 /**
@@ -24,42 +24,25 @@ export default function SecurityModal({
   cancelLabel?: string;
   locked?: boolean;
 }) {
-  useEscapeClose(() => {
-    if (!locked) onClose();
-  });
-
   return (
-    <div
-      className={styles.modalOverlay}
-      onClick={locked ? undefined : onClose}
-      style={{ animation: 'ovfade .18s var(--ease-out)' }}
-    >
-      <div
-        className={styles.modal}
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        style={{ animation: 'pop .18s ease' }}
-      >
-        <div className={styles.modalHead}>
-          <span className={styles.modalTitle}>{title}</span>
-          {!locked && (
-            <button type="button" className={styles.modalX} onClick={onClose} aria-label="Close">
-              <Icon name="x" size={16} />
-            </button>
-          )}
-        </div>
-        <div className={styles.modalBody}>{children}</div>
-        <div className={styles.modalFoot}>
-          {!locked && (
-            <button type="button" className={styles.btn} onClick={onClose}>
-              {cancelLabel}
-            </button>
-          )}
-          {foot}
-        </div>
+    <Modal open onClose={locked ? () => undefined : onClose} title={title} panelClassName={styles.modal}>
+      <div className={styles.modalHead}>
+        <span className={styles.modalTitle}>{title}</span>
+        {!locked && (
+          <button type="button" className={styles.modalX} onClick={onClose} aria-label="Close">
+            <Icon name="x" size={16} />
+          </button>
+        )}
       </div>
-    </div>
+      <div className={styles.modalBody}>{children}</div>
+      <div className={styles.modalFoot}>
+        {!locked && (
+          <button type="button" className={styles.btn} onClick={onClose}>
+            {cancelLabel}
+          </button>
+        )}
+        {foot}
+      </div>
+    </Modal>
   );
 }

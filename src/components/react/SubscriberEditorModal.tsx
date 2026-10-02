@@ -2,7 +2,7 @@ import { useMemo, useRef, useState, type ReactNode } from 'react';
 import type { SubscriberStatus } from '@/types/app';
 import Icon from './Icon';
 import PhoneField from './PhoneField';
-import { useEscapeClose } from './shared/useEscapeClose';
+import Modal from './shared/Modal';
 import {
   buildImportRows,
   guessMapping,
@@ -122,8 +122,6 @@ export default function SubscriberEditorModal({
   const [importListIds, setImportListIds] = useState<string[]>(initialImportListIds);
   const [importPhase, setImportPhase] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
   const [importResult, setImportResult] = useState<SubscriberImportOutcome | null>(null);
-
-  useEscapeClose(onClose);
 
   const canSave = /.+@.+\..+/.test(email.trim());
   const toggleIn = (setter: typeof setListIds) => (id: string) =>
@@ -585,39 +583,31 @@ export default function SubscriberEditorModal({
   };
 
   return (
-    <div
-      className={styles.overlay}
-      onClick={onClose}
-      style={{ animation: 'ovfade .18s var(--ease-out)' }}
+    <Modal
+      open
+      onClose={onClose}
+      title={isEdit ? 'Edit profile' : STEP_TITLES[step]}
+      panelClassName={`${styles.sem}${wide ? ` ${styles.semWide}` : ''}`}
     >
-      <div
-        className={`${styles.sem}${wide ? ` ${styles.semWide}` : ''}`}
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={isEdit ? 'Edit profile' : STEP_TITLES[step]}
-        style={{ animation: 'pop .18s ease' }}
-      >
-        <div className={styles.head}>
-          <span className={styles.headLead}>
-            {showBack && (
-              <button
-                type="button"
-                className={styles.back}
-                aria-label="Back"
-                onClick={() => setStep(back[step] ?? 'method')}
-              >
-                <Icon name="chevron-right" size={15} className={styles.flip} />
-              </button>
-            )}
-            <span className={styles.title}>{isEdit ? 'Edit profile' : STEP_TITLES[step]}</span>
-          </span>
-          <button type="button" className={styles.x} onClick={onClose} aria-label="Close">
-            <Icon name="x" size={16} />
-          </button>
-        </div>
-        {isEdit ? detailsStep : stepBody[step]}
+      <div className={styles.head}>
+        <span className={styles.headLead}>
+          {showBack && (
+            <button
+              type="button"
+              className={styles.back}
+              aria-label="Back"
+              onClick={() => setStep(back[step] ?? 'method')}
+            >
+              <Icon name="chevron-right" size={15} className={styles.flip} />
+            </button>
+          )}
+          <span className={styles.title}>{isEdit ? 'Edit profile' : STEP_TITLES[step]}</span>
+        </span>
+        <button type="button" className={styles.x} onClick={onClose} aria-label="Close">
+          <Icon name="x" size={16} />
+        </button>
       </div>
-    </div>
+      {isEdit ? detailsStep : stepBody[step]}
+    </Modal>
   );
 }

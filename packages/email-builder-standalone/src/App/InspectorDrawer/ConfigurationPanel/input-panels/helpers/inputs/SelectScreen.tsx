@@ -7,6 +7,7 @@ import {
   setSelectedScreenSize,
   useSelectedScreenSize,
 } from '../../../../../../documents/editor/EditorContext';
+import { dataTourAttr, EMAIL_BUILDER_TOUR_ANCHORS } from '../../../../../../tour/tourAnchors';
 
 const OPTIONS = [
   { value: 'desktop' as const, Icon: MonitorOutlined, labelKey: 'header.desktop' },
@@ -31,7 +32,7 @@ const ScreenSizeSelector = () => {
   }, [open]);
 
   return (
-    <div className="eb-viewport" ref={wrapRef}>
+    <div className="eb-viewport" ref={wrapRef} {...dataTourAttr(EMAIL_BUILDER_TOUR_ANCHORS.viewportScreenSize)}>
       <div className="eb-view-tabs">
         <button
           type="button"

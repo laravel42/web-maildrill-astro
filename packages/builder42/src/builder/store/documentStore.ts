@@ -49,6 +49,7 @@ export type { MetaFieldPath } from "./slices/pages";
 // del barrel no cambia aunque los tipos se hayan movido a la slice.
 export type { ViewMode } from "./slices/ui";
 export type { SiteTab } from "./slices/ui";
+export type { SideTab } from "./slices/ui";
 
 // ---------------------------------------------------------------------------
 // Estado + acciones

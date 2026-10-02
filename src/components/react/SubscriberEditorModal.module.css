@@ -1,21 +1,7 @@
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal);
-  background: rgba(28, 25, 23, 0.4);
-  backdrop-filter: blur(3px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
-}
+/* Overlay/panel shell now comes from shared/Modal (.amodal-overlay/.amodal);
+   .sem only overrides the width. */
 .sem {
   width: 460px;
-  max-width: 100%;
-  background: var(--surface);
-  border-radius: 20px;
-  box-shadow: 0 24px 60px rgba(28, 25, 23, 0.28);
-  overflow: hidden;
 }
 .head {
   display: flex;

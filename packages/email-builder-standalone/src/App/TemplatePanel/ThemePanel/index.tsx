@@ -153,8 +153,16 @@ export default function ThemePanel() {
                   aria-pressed={active}
                   onClick={() => setSection(id)}
                   sx={{
-                    border: (th) => `1px solid ${active ? 'transparent' : th.palette.grey[300]}`,
-                    borderRadius: 999,
+                    // Homologado con Builder42 (`.pbx-breadcrumb__btn` /
+                    // `.pbx-badge--override`, packages/builder42/src/styles/
+                    // chrome/{inspector.css,inspector-controls.css}): el
+                    // estado activo ahí nunca es un pill sólido con texto
+                    // blanco — es un fondo tenue con texto del MISMO tono
+                    // pero intenso, y un radio sobrio (--pb-chrome-radius-xs,
+                    // 8px) en vez de un pill de 999px.
+                    border: (th) =>
+                      `1px solid ${active ? 'transparent' : th.palette.grey[300]}`,
+                    borderRadius: '8px',
                     px: 1.25,
                     py: 0.5,
                     cursor: 'pointer',
@@ -162,10 +170,11 @@ export default function ThemePanel() {
                     fontSize: '12px',
                     fontWeight: 600,
                     lineHeight: 1.6,
-                    color: active ? 'primary.contrastText' : 'text.secondary',
-                    backgroundColor: active ? 'primary.main' : 'transparent',
+                    color: active ? '#4f46e5' : 'text.secondary',
+                    backgroundColor: active ? '#eef0ff' : 'transparent',
                     transition: 'background-color .15s, color .15s, border-color .15s',
                     '&:hover': {
+                      backgroundColor: active ? '#eef0ff' : (th) => th.palette.action.hover,
                       borderColor: (th) => (active ? 'transparent' : th.palette.grey[400]),
                     },
                   }}

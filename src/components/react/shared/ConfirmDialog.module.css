@@ -1,22 +1,8 @@
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-confirm, 85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
-  background: rgba(28, 25, 23, 0.4);
-  backdrop-filter: blur(3px);
-}
-
+/* Overlay/panel shell now comes from shared/Modal (.amodal-overlay/.amodal).
+   .dialog only overrides the width; everything below is bespoke content. */
 .dialog {
   width: 400px;
-  max-width: 100%;
   padding: 24px;
-  background: var(--surface);
-  border-radius: 20px;
-  box-shadow: 0 24px 60px rgba(28, 25, 23, 0.28);
 }
 
 .title {

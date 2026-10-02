@@ -2,6 +2,7 @@ import { linkTargetHasValue } from "../../model/nodeAction";
 import type { Breakpoint, NodeId, PageId, StyleGroup, StyleState } from "../../model/types";
 import { isHiddenAt, computeShowAction } from "../../model/visibility";
 import { getDefinition } from "../../registry/componentRegistry";
+import { getStylePresetDefinition, mergeStylePreset } from "../../registry/stylePresetRegistry";
 import type { SliceCreator } from "./types";
 
 export interface PropsSlice {
@@ -47,6 +48,16 @@ export interface PropsSlice {
    * panel de Capas.
    */
   toggleNodeVisibility: (nodeId: NodeId) => void;
+  /**
+   * Aplica un style preset (F27) al nodo, en UNA sola llamada de `set()` —
+   * un solo paso de `zundo` (`documentStore.ts`'s `temporal`), como cada
+   * acción de este slice. Fusiona `preset.style(node)` sobre `node.style`
+   * con `mergeStylePreset` (capa por capa: base, cada breakpoint de
+   * overrides, cada estado) y escribe el resultado entero de una vez — el
+   * preset no deja rastro propio en el nodo, así que un `undo()` restaura
+   * exactamente el `NodeStyle` anterior, byte a byte.
+   */
+  applyStylePreset: (nodeId: NodeId, presetId: string) => void;
 }
 
 export const createPropsSlice: SliceCreator<PropsSlice> = (set, get) => ({
@@ -191,4 +202,14 @@ export const createPropsSlice: SliceCreator<PropsSlice> = (set, get) => ({
       s.setStyleProp(nodeId, bp, path, "none");
     }
   },
+
+  applyStylePreset: (nodeId, presetId) =>
+    set((s) => {
+      const node = s.document.nodes[nodeId];
+      if (!node) return;
+      const preset = getStylePresetDefinition(presetId);
+      if (!preset) return;
+      if (preset.appliesTo && !preset.appliesTo(node)) return;
+      node.style = mergeStylePreset(node.style, preset.style(node));
+    }),
 });

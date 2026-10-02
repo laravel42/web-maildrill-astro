@@ -31,7 +31,7 @@
  * fuente de verdad, y el host decide cómo y cuándo se guarda).
  */
 
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { I18nextProvider } from "react-i18next";
 import { MotionConfig } from "framer-motion";
 import { Sidebar } from "@/app/layout/Sidebar";
@@ -41,12 +41,16 @@ import { TokensStyle } from "@/app/layout/TokensStyle";
 import { BehaviorsStyle } from "@/app/layout/BehaviorsStyle";
 import { ComponentsStyle } from "@/app/layout/ComponentsStyle";
 import { HostCanvasToolbar } from "@/app/layout/HostToolbar";
+import { HostPagesPortal } from "@/app/layout/HostPagesPortal";
 import { EmbeddedChromeContext } from "@/app/EmbeddedChrome";
+import { useBuilder42Tour } from "@/app/tour/useBuilder42Tour";
+import { TourChooserModal } from "@/app/tour/TourChooserModal";
 import { useUndoRedoShortcuts } from "@/builder/store/useTemporalStore";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { readConfig, useLocalConfig, writeConfig } from "@/hooks/useLocalConfig";
 import { applyTheme, setThemeHostControlled, type ThemeMode } from "@/hooks/useThemeMode";
 import { createEditorI18n } from "@/i18n";
+import { fetchHealth } from "@/services/apiClient";
 import { setApiAdapters, type ApiAdapters } from "@/services/apiAdapters";
 import { loadSiteFromValue } from "@/builder/model/persist";
 import { createEmptyDocument, createSiteFromDocument } from "@/builder/model/site";
@@ -71,6 +75,68 @@ export interface Builder42EditorProps {
   adapters?: ApiAdapters;
   /** Notifies the host that the working document (or site meta) changed. */
   onDirty?: () => void;
+  /**
+   * Forces or silences the guided product tour (F4,
+   * docs/product-tour-driverjs-plan.md §4). Optional — omitting it keeps the
+   * tour's own default (enabled). The tour never overlaps
+   * `OnboardingExperienceModal`'s equivalent embedded gate: in embed mode the
+   * experience level is auto-resolved to "simple" on first run (see the
+   * `experienceLevelChosen` `useMemo` below), so the tour is eligible to
+   * auto-start as soon as that resolves — same "never overlap" invariant as
+   * standalone, just without a modal to wait for.
+   */
+  tourEnabled?: boolean;
+  /**
+   * Receives the tour's analytics events. `packages/builder42` never imports
+   * PostHog or any analytics SDK (§0.2) — the host
+   * (`src/components/react/LandingPageBuilder.tsx`) maps these to
+   * `window.posthog?.capture(...)`.
+   */
+  onTourEvent?: (event: import("@md/product-tour").TourAnalyticsEvent) => void;
+  /**
+   * Id de un elemento que el HOST renderiza en su propio header para recibir el
+   * selector de página (y el de locale de contenido, si el sitio es
+   * multilingüe). Ver `HostPagesPortal` para por qué esto es un portal desde el
+   * paquete y no un control del host, y por qué el id viaja como prop en vez de
+   * como constante exportada del paquete.
+   *
+   * Omitirlo YA NO deja el editor sin cambio de página (D-F22.1): sin slot,
+   * `HostCanvasToolbar` — el header del propio builder en modo embebido —
+   * pinta `PageBreadcrumb` ella misma. El seam del portal sigue existiendo
+   * para el host que sí prefiera este slot (D-F22.2); nunca coexisten los
+   * dos: `Builder42EditorInner` decide `showPageBreadcrumb = !pagesSlotId`.
+   */
+  pagesSlotId?: string;
+  /**
+   * Lends a visible theme switch in the embedded canvas toolbar (next to
+   * undo/redo), for a host running with `themeMode="host"`.
+   *
+   * **Why this is a callback+value pair, not a boolean like the other host
+   * seams.** This control renders *inside* `HostCanvasToolbar`
+   * (`app/layout/HostToolbar.tsx`), but with `themeMode="host"` the package
+   * never writes `data-theme` and has no local notion of which theme is
+   * active (`useThemeMode`'s `hostControlled` flag is exactly what makes the
+   * PACKAGE'S OWN `ThemeToggle` render nothing in `EditorPreferences` — see
+   * that file) — so the chrome needs the host to hand it both the current
+   * effective theme (to pick which icon to show) and an action to flip it
+   * (to hand back to the host, which owns the storage key and the DOM
+   * attribute). Omit this prop and the toolbar renders no theme control at
+   * all, same as before this feature existed.
+   *
+   * The Settings/Preferences theme control (`EditorPreferences`'s
+   * `ThemeToggle`) is untouched and stays hidden under `themeMode="host"`
+   * for the same reason it always was: a 3-state system/light/dark control
+   * would contradict a 2-state host toggle that already resolved "system"
+   * once at load. Both controls end up reading the same `data-theme`
+   * attribute, so they can never disagree — this prop is additive, and a
+   * host that never passes it sees no behavioural change.
+   */
+  hostThemeControl?: {
+    /** The theme currently in effect, so the toolbar shows the correct icon. */
+    effective: "light" | "dark";
+    /** Invoked on click; the host flips its own stored theme and re-renders. */
+    onToggle: () => void;
+  };
 }
 
 /**
@@ -106,7 +172,10 @@ function resolveInitialSite(input: Builder42EditorProps["site"]): BuilderSite {
 }
 
 export const Builder42Editor = forwardRef<Builder42EditorHandle, Builder42EditorProps>(
-  function Builder42Editor({ site, onSave, onClose, themeMode = "host", locale, adapters, onDirty }, ref) {
+  function Builder42Editor(
+    { site, onSave, onClose, themeMode = "host", locale, adapters, onDirty, tourEnabled, onTourEvent, pagesSlotId, hostThemeControl },
+    ref,
+  ) {
     const i18nInstance = useMemo(() => createEditorI18n(locale), [locale]);
     const loadSite = useDocumentStore((s) => s.loadSite);
     const getFlushedSite = useDocumentStore((s) => s.getFlushedSite);
@@ -179,13 +248,26 @@ export const Builder42Editor = forwardRef<Builder42EditorHandle, Builder42Editor
       [onSave, getFlushedSite, setSiteName],
     );
 
-    return <Builder42EditorInner i18nInstance={i18nInstance} onClose={onClose} />;
+    return (
+      <Builder42EditorInner
+        i18nInstance={i18nInstance}
+        onClose={onClose}
+        tourEnabled={tourEnabled}
+        onTourEvent={onTourEvent}
+        pagesSlotId={pagesSlotId}
+        hostThemeControl={hostThemeControl}
+      />
+    );
   },
 );
 
 interface Builder42EditorInnerProps {
   i18nInstance: ReturnType<typeof createEditorI18n>;
   onClose?: () => void;
+  tourEnabled?: boolean;
+  onTourEvent?: (event: import("@md/product-tour").TourAnalyticsEvent) => void;
+  pagesSlotId?: string;
+  hostThemeControl?: { effective: "light" | "dark"; onToggle: () => void };
 }
 
 /**
@@ -199,13 +281,55 @@ interface Builder42EditorInnerProps {
  * undo/redo live in the 50px canvas bar (`HostCanvasToolbar`), matching the
  * email editor's `#ee-editor-header`.
  */
-function Builder42EditorInner({ i18nInstance }: Builder42EditorInnerProps) {
+function Builder42EditorInner({
+  i18nInstance,
+  tourEnabled = true,
+  onTourEvent,
+  pagesSlotId,
+  hostThemeControl,
+}: Builder42EditorInnerProps) {
   useUndoRedoShortcuts();
   const isPreview = useDocumentStore((s) => s.view === "preview");
   const view = useDocumentStore((s) => s.view);
   const setView = useDocumentStore((s) => s.setView);
-  const [sidebarCollapsed] = useLocalConfig("sidebarCollapsed");
+  const [sidebarMode] = useLocalConfig("sidebarMode");
   const [inspectorCollapsed] = useLocalConfig("inspectorCollapsed");
+  const [experienceLevelChosen] = useLocalConfig("experienceLevelChosen");
+  const [experienceLevel] = useLocalConfig("experienceLevel");
+
+  // Embed mode has no `OnboardingExperienceModal` of its own — the
+  // `experienceLevelChosen` `useMemo` above auto-resolves it to "simple" on
+  // first run, synchronously during render, before this component ever
+  // mounts. Reading the SAME flag here as the "never overlap the onboarding
+  // step" gate (§4 F4 acceptance) means the tour is eligible to auto-start
+  // as soon as that resolution has happened — which, by construction, is
+  // always true by the time this component renders in embed mode. It's
+  // still read reactively (not hardcoded `true`) so a future embed flow that
+  // reintroduces its own onboarding step keeps working without touching
+  // this file.
+  const [publishAvailable, setPublishAvailable] = useState(false);
+  useEffect(() => {
+    fetchHealth()
+      .then((h) => setPublishAvailable(h.publish.enabled))
+      .catch(() => setPublishAvailable(false));
+  }, []);
+
+  useBuilder42Tour({
+    config: {
+      experienceLevel,
+      publishAvailable,
+      standaloneChrome: false,
+      // D-F22.4: con este cambio el breadcrumb SIEMPRE existe en modo
+      // embebido — portado al slot del host cuando `pagesSlotId` está
+      // presente (D-F22.2, como antes), o pintado dentro de
+      // `HostCanvasToolbar` cuando no lo está (D-F22.1). Por eso el flag ya
+      // no depende de `pagesSlotId`.
+      pagesBreadcrumbAvailable: true,
+    },
+    onboardingResolved: tourEnabled && experienceLevelChosen,
+    onTourEvent,
+    i18nInstance,
+  });
 
   // Code/JSON are standalone export surfaces; the embed never offers them.
   useEffect(() => {
@@ -214,7 +338,7 @@ function Builder42EditorInner({ i18nInstance }: Builder42EditorInnerProps) {
 
   const bodyClasses = ["pbx-body"];
   if (isPreview) bodyClasses.push("pbx-body--preview");
-  if (sidebarCollapsed) bodyClasses.push("pbx-body--sidebar-collapsed");
+  if (sidebarMode === "compact") bodyClasses.push("pbx-body--sidebar-compact");
   if (inspectorCollapsed) bodyClasses.push("pbx-body--inspector-collapsed");
 
   return (
@@ -225,10 +349,19 @@ function Builder42EditorInner({ i18nInstance }: Builder42EditorInnerProps) {
             <TokensStyle />
             <BehaviorsStyle />
             <ComponentsStyle />
+            {/* Fuera de `pbx-body` a propósito: su DOM final es el header del
+                host, no este árbol. Aquí solo necesita estar dentro del
+                `I18nextProvider` de arriba. */}
+            <HostPagesPortal slotId={pagesSlotId} />
+            <TourChooserModal />
             <div className={bodyClasses.join(" ")}>
               {isPreview ? null : <Sidebar />}
               <div className="pbx-canvas-col">
-                <HostCanvasToolbar />
+                {/* D-F22.2: nunca las dos ubicaciones a la vez — si el host
+                    prestó su slot (`pagesSlotId`), el portal de arriba ya
+                    puso el breadcrumb en SU header; si no, esta barra (el
+                    header del propio builder, D-F22.1) lo pinta ella misma. */}
+                <HostCanvasToolbar showPageBreadcrumb={!pagesSlotId} hostThemeControl={hostThemeControl} />
                 <Canvas />
               </div>
               {isPreview ? null : <Inspector />}

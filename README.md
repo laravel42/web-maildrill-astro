@@ -184,14 +184,15 @@ pnpm build           # production build (compiles vendored editor)
 pnpm check           # astro check (authoritative type gate)
 pnpm typecheck       # astro check && tsc --noEmit
 pnpm lint            # eslint (+ jsx-a11y)
-pnpm test            # vitest
+pnpm test            # vitest (app: tests/unit + tests/integration)
+pnpm test:packages   # vitest de packages/ (wa-template-studio, builder42, product-tour)
 pnpm test:e2e        # playwright
 ```
 
 Recommended validation order:
 
 ```bash
-npm run typecheck && npm run lint && npm run test && npm run build
+npm run typecheck && npm run lint && npm run test && npm run test:packages && npm run build
 npx playwright install chromium   # once
 npm run test:e2e
 ```
