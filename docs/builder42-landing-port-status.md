@@ -2,10 +2,85 @@
 
 Companion to [`../packages/VENDOR.md`](../packages/VENDOR.md) (which only documents the two seams
 this host wires) and to `../builder42-landing/packages/VENDOR.md` (the authoritative list of *what*
-diverges, over there — 44 numbered divergences, #16–#45, #28 withdrawn). This file is the port log
-**on this side**: what has been replayed into `packages/builder42/` here, what is in progress, and
-exactly where the next agent should pick up. Read this before touching `packages/builder42/` for
-any reason resembling "bring over a fix from builder42-landing".
+diverges, over there — **46** numbered divergences, **numbered to #47**, #28 withdrawn). This file is
+the port log **on this side**: what has been replayed into `packages/builder42/` here, what is in
+progress, and exactly where the next agent should pick up. Read this before touching
+`packages/builder42/` for any reason resembling "bring over a fix from builder42-landing".
+
+> **Re-measured 2026-10-02.** Bundles A–D are **all done and committed** here (bundle D is no longer
+> uncommitted — it landed as `b1308ab` and came into `feat/ui-polish-p1` through the merge
+> `0bf320e`). A file-level comparison of the two `packages/builder42/src` trees on that date:
+> **49 files differ, 2 exist only in builder42-landing, 0 only here, 396 are byte-identical.** The
+> two extra files over there are `app/layout/JsonView.tsx` and `app/layout/viewModes.ts` — that is
+> divergence **#21**, excluded on purpose by user decision, so their absence here is correct and
+> not a gap.
+>
+> **What is genuinely left to replay: exactly two entries, #46 and #47.** Both were created in
+> builder42-landing after this file was last written, and both were verified absent here on
+> 2026-10-02 by grepping this tree:
+>
+> - **#46** — the `headerAutosave` tour anchor, its step and its en/es/it copy, plus the overview
+>   tour's first step pointing at the host's autosave chip instead of the logo
+>   (`app/tour/tourAnchors.ts` has no `headerAutosave` key here). **Judgement call this host has to
+>   make, not a mechanical port:** that anchor exists because that host has no backend and shows a
+>   browser-storage autosave chip in its own header. This host persists through its own server, so
+>   the right move may be the same decision already taken for #9/#12 — exclude it — or to anchor an
+>   equivalent step on this host's own save affordance. Decide, then record the decision here.
+> - **#47** — `src/index.ts` re-exporting `parseSiteJson` and `ValidationResult` so a host can
+>   validate a persisted site before handing it to `Builder42Editor`'s `site` prop (this tree's
+>   `index.ts` exports `createBaseSite` but not `parseSiteJson`). The package-side half is two
+>   additive export lines and is safe to replay as-is. The **host** half over there (clearing a
+>   corrupt `localStorage` key and falling back to the first-run seed) is static-host-specific and
+>   should **not** be ported blind — but the underlying lesson applies to any host: never pass an
+>   unvalidated stored document into the `site` prop.
+>
+> The remaining delta inside those 49 files was **not** audited entry-by-entry in that session.
+> Much of it is known-deliberate (the #21 exclusion threads through `Canvas.tsx`,
+> `EmbeddedChrome.tsx` and the view-mode files; #9/#12, #35 and #42 are excluded or
+> reference-only). Do not read "49 differ" as "49 things to port".
+
+## Incoming: chain F31 (canvas render cost) is PAIRED work, planned 2026-10-02
+
+**A performance chain is coming from `builder42-landing` and it is explicitly coordinated with this
+repo, not a divergence that will accumulate.** The user's decision (recorded verbatim as D-F31.7 in
+`../builder42-landing/.orquestacion/bitacora.md`): that repo is the **test bed** — smaller, static,
+no backend, so a browser pass over a built `dist/` takes minutes — and **the changes land here as
+soon as they are verified there**, not "eventually".
+
+What it changes, both inside `packages/builder42`:
+
+- **Phase 1 — `builder/canvas/NodeRenderer.tsx`, subscription reduction.** That component opens
+  **29** separate `useDocumentStore` subscriptions per node (lines 82–148), and the canvas renders
+  every node of the document with no windowing (unconditional recursion at lines 399–405), so a
+  9 377-node site evaluates ~272 000 selectors on **every store write**. The refactor: hoist the 11
+  stable action references out of the reactive path (store actions are created once in the `immer`
+  initializer, so subscribing to them returns the same function forever), move the 11 tree-global
+  values into one context mounted at `Canvas`, and narrow `selectedId` / `editingTextNodeId` /
+  `pickInsert` to per-node booleans so selecting a node re-renders 2 components instead of all of
+  them. **Mechanical, no behavioural intent, no model change — the easiest kind of diff to replay.**
+- **Phase 2 — `styles/chrome/canvas-nodes.css` + one class from `NodeRenderer.tsx`.**
+  `content-visibility: auto` on section-level nodes, so the browser skips layout and paint for
+  off-screen bands **without React unmounting anything**. Carries a known hazard this repo shares:
+  `content-visibility: auto` implies `contain: layout style paint`, and `styles/chrome/canvas.css`
+  already documents that `contain: layout` broke the Modal component's `showModal()` by creating a
+  containing block for `position: fixed` descendants. The plan requires a browser proof for that
+  case before the rule is kept.
+
+What this side has to do when the port arrives:
+
+1. **Verify with this repo's own gates, not theirs** — `tsc --noEmit`, `astro check`, and a browser
+   pass. This host's editor is embedded in a different page with different surrounding CSS and a
+   real backend.
+2. **Re-run the baseline measurement here.** The chain's T0 builds a harness
+   (`.cache/f31-canvas-cost.mjs` over there) measuring time-to-interactive-canvas, long tasks during
+   mount, long tasks during a typing burst, long tasks during a selection sweep, and scroll cost, at
+   1x/8x/32x synthetic site sizes. **A number measured on a static landing does not transfer to this
+   host.** Record what this repo measures in this file, next to the entry for the port.
+3. **The hardest gate travels with the change:** exported output must be byte-identical before and
+   after. `builder/export/exportToHtml.ts` walks `doc.nodes`, never the React tree, so this should
+   hold by construction — which is why it is cheap to prove and must not be skipped.
+4. **Clear #46 and #47 first, or alongside**, so both trees are at a known-equal baseline when a
+   performance change lands on them.
 
 ## Why this exists
 
@@ -21,14 +96,14 @@ fixes that never made it back here. This file tracks replaying them.
 | A (23 files, VENDOR #2,#4-#8,#13,#14) | Defect fixes, no host coupling | **Done.** Commit `e8ecfb4`. |
 | B (partial, VENDOR #10,#11,#15) | Embed seams + tour i18n fix | **Done, partial.** Commit `7aa894d`. #9/#12 excluded on purpose (this host persists through its own backend — no `.zip`-download flow to anchor a tour step to). |
 | C (18 entries, VENDOR #16-#20,#22-#26,#36-#41,#43,#44) | Structural bugs + additive model/UI, no host decision | **Done — 18/18.** Commit `fb259c1`. See below. |
-| D (7 entries, VENDOR #29-#34,#45) | Tour rework + first-run seed + theme seam — needs host decisions | **Done — 7/7.** Uncommitted. See below. |
+| D (7 entries, VENDOR #29-#34,#45) | Tour rework + first-run seed + theme seam — needs host decisions | **Done — 7/7. Committed** (`b1308ab`, merged via `0bf320e`). |
+| **Left to replay** | VENDOR **#46** (headerAutosave anchor — needs a host decision) and **#47** (`parseSiteJson` re-export — safe to replay) | **Not started.** Verified absent 2026-10-02. |
 | Excluded | VENDOR #21 (JSON preview) | **Explicit user decision — do not port.** |
 | Reference only | VENDOR #35 (header dropdown width), #42 (canvas padding) | **Do not port** — host-specific visual preferences on that repo's own header/canvas, not structural. |
 
-No commit has been made in this repo for bundle D yet. Bundle C landed as `fb259c1`; everything
-below about bundle D is still unwritten. Run `git status` before anything else in a new session to
-confirm what's actually there; do not trust this file's file list over the real diff if they
-disagree.
+Bundle C landed as `fb259c1` and bundle D as `b1308ab`; both are in `feat/ui-polish-p1` through the
+merge `0bf320e`. Run `git status` before anything else in a new session to confirm what's actually
+there; do not trust this file's file list over the real diff if they disagree.
 
 ## Bundle C — done (18 of 18)
 
