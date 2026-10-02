@@ -39,9 +39,8 @@ import { nodeActions } from "../model/nodeAction";
 // import { usePreviewUIRuntime } from "./usePreviewUIRuntime";
 import { isDescendant, findParentId } from "../model/tree";
 import { resolveStyle } from "../model/style";
-import { resolveImageSrc } from "../model/assets";
-import { localizedRoute, withBasePath, buildPathMap } from "../export/links";
-import { resolveMetaForLocale, resolvePropsForLocale } from "../model/i18nContent";
+import { resolvePropsForLocale } from "../model/i18nContent";
+import { useCanvasDoc } from "./CanvasDocContext";
 import { useDraggable } from "../dnd/useDraggable";
 import { GhostNode } from "../dnd/ghost";
 import { useDropTarget, type UseDropTargetOptions } from "../dnd/useDropTarget";
@@ -50,10 +49,23 @@ import { DropIndicatorOverlay } from "./DropIndicatorOverlay";
 import type { DragData, DropData } from "../dnd/contract";
 import { nextFreeCell, computeDropTargetAtPoint, type LayoutDirection } from "../dnd/geometry";
 import type { BuilderNode, NodeId } from "../model/types";
+import type { PickInsertSource } from "../store/slices/pickInsert";
 import type { SlotChild } from "../registry/types";
 import { dataTourAttr, BUILDER42_TOUR_ANCHORS } from "@/app/tour/tourAnchors";
 
 const EMPTY_SLOT_NODES: (BuilderNode | undefined)[] = [];
+
+/**
+ * chain F31, T2 — valor estable para los nodos que NO son el destino del
+ * "pick & insert" en curso (y para cuando no hay ninguno). Const de módulo, el
+ * mismo truco que `EMPTY_SLOT_NODES`: la suscripción de abajo usa `useShallow`,
+ * así que devolver siempre esta misma forma evita que los ~9 000 nodos que no
+ * participan re-rendericen cada vez que el candidate se mueve.
+ */
+const NO_PICK_CANDIDATE: { index: number | null; source: PickInsertSource | null } = {
+  index: null,
+  source: null,
+};
 
 interface NodeRendererProps {
   id: NodeId;
@@ -79,20 +91,60 @@ function resolveDirection(id: NodeId): LayoutDirection {
 }
 
 export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps) {
+  // chain F31, T1 — las ACCIONES del store NO se suscriben.
+  //
+  // `documentStore.ts` las construye una sola vez dentro del inicializador de
+  // `immer` (`temporal(immer((set, get, api) => ({…})))`), así que su
+  // referencia nunca cambia: suscribirse a ellas hacía correr el selector, y
+  // comparar su resultado, en CADA escritura del store, para siempre, con el
+  // único fin de devolver la misma función. Con un `NodeRenderer` por nodo eso
+  // eran 11 de las 29 suscripciones por nodo — ~103 000 de 271 933 a 9 377
+  // nodos — todas devolviendo constantes.
+  //
+  // Se leen con `useDocumentStore.getState()` EN EL PUNTO DE LLAMADA, que es la
+  // regla que este archivo ya seguía para `resolveDirection`, `getChildIds`,
+  // `getExplicit` y `canDrop`. Leerlas en el handler (y no capturarlas al
+  // renderizar) también deja vacíos los arrays de dependencias, lo que quita
+  // además una recreación de callback por render.
+  //
+  // `canPickInsertInto` es una acción tipo selector: lee el estado con `get()`
+  // en el momento de invocarse (`slices/pickInsert.ts`), así que llamarla desde
+  // `getState()` es correcto y no queda atada a un closure obsoleto.
   const node = useDocumentStore((s) => s.document.nodes[id]);
-  const rootId = useDocumentStore((s) => s.document.rootId);
-  const activeBreakpoint = useDocumentStore((s) => s.activeBreakpoint);
-  const selectedId = useDocumentStore((s) => s.selectedId);
-  const select = useDocumentStore((s) => s.select);
+  // chain F31, T3 — los once valores IGUALES para todo el árbol vienen de un
+  // solo contexto, suscrito una vez en `CanvasDocProvider` en vez de una vez
+  // por nodo. `useContext` no se suscribe al store: solo re-renderiza cuando el
+  // valor del contexto cambia de verdad (y el proveedor lo memoiza). Lee el
+  // comentario de cabecera de `CanvasDocContext.tsx` antes de añadir nada ahí:
+  // `s.site` está deliberadamente FUERA, porque immer le da identidad nueva en
+  // cada pulsación de tecla.
+  const {
+    rootId,
+    activeBreakpoint,
+    editingLocale,
+    defaultLang,
+    activePageTranslations,
+    resolveImageSrc: resolveImgSrc,
+    localeInfo,
+    pagesInfo,
+  } = useCanvasDoc();
+  // chain F31, T2 — booleanos POR NODO, no el id global.
+  //
+  // Suscribirse a `s.selectedId` hacía que seleccionar un nodo re-renderizara
+  // los ~9 000 `NodeRenderer` del árbol, porque el valor cambiaba para todos.
+  // Con la comparación DENTRO del selector el valor solo cambia en los dos
+  // nodos cuyo booleano se voltea (el que se deselecciona y el que se
+  // selecciona), así que solo esos dos re-renderizan. Los tres sitios que
+  // leían `selectedId` ya comparaban contra `id` (la clase
+  // `pbx-node--selected`, el ancla de tour `canvasInlineText` y la guarda
+  // `editableInline` del onClick), así que esto no cambia ninguna condición.
+  const isSelected = useDocumentStore((s) => s.selectedId === id);
   // Edición inline de texto (docs/12 §B.11): un segundo click sobre un nodo
   // `editableInline` ya seleccionado entra en modo edición en vez de solo
   // re-seleccionar. Mientras este nodo está en edición, su `draggable` se
   // desactiva (abajo) para no interceptar la selección de texto nativa.
-  const editingTextNodeId = useDocumentStore((s) => s.editingTextNodeId);
-  const startEditingText = useDocumentStore((s) => s.startEditingText);
-  const addComponent = useDocumentStore((s) => s.addComponent);
-  const addSlot = useDocumentStore((s) => s.addSlot);
-  const setActiveSlot = useDocumentStore((s) => s.setActiveSlot);
+  // Misma estrechez que `isSelected`: el único uso era `=== id`.
+  const isEditingThis = useDocumentStore((s) => s.editingTextNodeId === id);
   // Slot activa en edición de ESTE nodo si es un composite `splitRender`
   // (docs/23 §5, T11). Suscripción reactiva: al cambiar de pestaña activa,
   // re-renderiza para mostrar el panel elegido. `undefined` si no hay ninguna
@@ -105,38 +157,26 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
   // seleccionado (modo Edit) para que la regla CSS del estado (T9) aplique en
   // vivo. UI-state del Inspector (no entra a zundo, no toca el documento — P1).
   const previewState = useDocumentStore((s) => s.previewStateBySelectedId[id]);
-  const moveExistingNode = useDocumentStore((s) => s.moveExistingNode);
-  const insertFragment = useDocumentStore((s) => s.insertFragment);
   // Pick & insert (Vía B, docs/24 §3): mientras hay uno en curso, un tap sobre
   // un nodo VÁLIDO como destino coloca ahí en vez de seleccionar (§3.2 paso 2).
-  const pickInsert = useDocumentStore((s) => s.pickInsert);
-  const canPickInsertInto = useDocumentStore((s) => s.canPickInsertInto);
-  const confirmPickInsertTarget = useDocumentStore((s) => s.confirmPickInsertTarget);
-  const setPickInsertCandidate = useDocumentStore((s) => s.setPickInsertCandidate);
-  const setStyleProp = useDocumentStore((s) => s.setStyleProp);
-  const assets = useDocumentStore((s) => s.site.assets);
-  // Contenido multilingüe (docs/12 §B.6-7): el canvas muestra el idioma de
-  // edición activo, igual que el Inspector. Referencias estables (no objetos
-  // derivados) para no romper el snapshot de Zustand.
-  const editingLocale = useDocumentStore((s) => s.editingLocale);
-  const defaultLang = useDocumentStore((s) => s.site.meta.defaultLang);
-  const activePageTranslations = useDocumentStore(
-    (s) => s.site.pages[s.activePageId]?.translations,
+  //
+  // chain F31, T2 — se suscribe SOLO a lo que este nodo necesita para pintar:
+  // el índice del candidate SI apunta aquí, y el `source` con el que construir
+  // el fantasma. Antes se suscribía al objeto `pickInsert` completo, así que
+  // cualquier movimiento del candidate re-renderizaba todo el árbol. Con
+  // `useShallow` + `NO_PICK_CANDIDATE` los nodos que no son el destino ven
+  // siempre la misma forma y no re-renderizan.
+  //
+  // El `onClick` NO usa esta suscripción: lee `pickInsert` del `getState()` en
+  // el momento del click (chain F31, T1), que además es más correcto que leer
+  // el valor capturado al renderizar.
+  const pickCandidate = useDocumentStore(
+    useShallow((s) => {
+      const p = s.pickInsert;
+      if (!p || !p.candidate || p.candidate.parentId !== id) return NO_PICK_CANDIDATE;
+      return { index: p.candidate.index, source: p.source };
+    }),
   );
-
-  // Localización para `language-nav` (docs/14 §2.5): en el canvas el "locale
-  // actual" es `editingLocale` (análogo al breakpoint activo). Referencias
-  // primitivas/estables del store; el objeto derivado se memoiza abajo.
-  const siteI18n = useDocumentStore((s) => s.site.meta.i18n);
-  const basePath = useDocumentStore((s) => s.site.meta.basePath);
-  const activePageSlug = useDocumentStore((s) => s.site.pages[s.activePageId]?.meta.slug);
-
-  // Sistema de páginas para `navbar` (docs/16 §12.4, rework): referencia
-  // estable al `site` completo (nunca un objeto nuevo por llamada — P1/P2);
-  // el array derivado se memoiza abajo con `buildPathMap` (mismo helper puro
-  // que usa el export, para que canvas y output coincidan, P3).
-  const site = useDocumentStore((s) => s.site);
-  const activePageId = useDocumentStore((s) => s.activePageId);
   const { t } = useTranslation("inspector");
 
   // Composite con slots partidas (docs/23 §3.2): suscripción REACTIVA a los
@@ -155,12 +195,6 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
     }),
   );
 
-  const resolveImgSrc = useCallback(
-    (source: import("../model/types").ImageSource) =>
-      resolveImageSrc(source, { assets, forExport: false }),
-    [assets],
-  );
-
   const ref = useRef<HTMLElement>(null);
   const def = node ? getDefinition(node.type) : undefined;
   const acceptsChildren = def?.acceptsChildren ?? false;
@@ -174,7 +208,6 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
     () => def?.label ?? node?.type ?? "nodo",
     [def?.label, node?.type],
   );
-  const isEditingThis = editingTextNodeId === id;
   const { dragging } = useDraggable(
     ref,
     getDrag,
@@ -196,13 +229,10 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
   // 2, ajustado por feedback de usuario — §3.4): en vez de solo la línea/celda
   // del indicador, se pinta el ELEMENTO REAL que caería aquí (`GhostNode`, más
   // abajo en `childList`, EN FLUJO como el hueco del DnD) — más informativo,
-  // sobre todo en touch/mobile con menos espacio. `pickCandidateHere` es el
-  // candidate SOLO si apunta a este nodo (booleano puro, sin medir DOM: el
-  // ghost en flujo no necesita rects, el propio layout lo posiciona).
-  const pickCandidateHere =
-    pickInsert && pickInsert.candidate && pickInsert.candidate.parentId === id
-      ? pickInsert.candidate
-      : null;
+  // sobre todo en touch/mobile con menos espacio. `pickCandidate.index` es no
+  // nulo SOLO si el candidate apunta a este nodo (sin medir DOM: el ghost en
+  // flujo no necesita rects, el propio layout lo posiciona).
+  const pickCandidateHere = pickCandidate.index !== null;
 
   const canDrop = useCallback((drag: DragData) => {
     const doc = useDocumentStore.getState().document;
@@ -229,14 +259,18 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
 
   const onDrop = useCallback(
     (drag: DragData, drop: DropData) => {
+      // Acciones leídas en el punto de llamada (chain F31, T1): referencias
+      // estables, así que esto es equivalente a capturarlas al renderizar pero
+      // sin suscripción ni dependencias.
+      const actions = useDocumentStore.getState();
       let childId: NodeId | null;
       if (drag.kind === "new-component") {
-        addComponent(drag.componentType, drop);
+        actions.addComponent(drag.componentType, drop);
         childId = useDocumentStore.getState().selectedId; // addComponent selecciona el nuevo
       } else if (drag.kind === "fragment") {
         const layout = getSectionLayout(drag.layoutId);
         if (!layout) return;
-        insertFragment(layout.build(), drop);
+        actions.insertFragment(layout.build(), drop);
         childId = useDocumentStore.getState().selectedId; // insertFragment selecciona la raíz insertada
       } else {
         // No-op guard (docs/02 §6): soltar en el mismo slot no ensucia el historial.
@@ -250,7 +284,7 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
           curParent === drop.parentId &&
           (drop.index === curIndex || drop.index === curIndex + 1);
         childId = drag.nodeId;
-        if (!sameSlot) moveExistingNode(drag.nodeId, drop);
+        if (!sameSlot) actions.moveExistingNode(drag.nodeId, drop);
       }
 
       // Colocación explícita en grid: fija la celda del hijo soltado (docs/02 §10.4).
@@ -278,11 +312,11 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
           { column: drop.cell.column, row: drop.cell.row },
           drop.cell.columns,
         );
-        setStyleProp(childId, bp, ["layout", "gridColumn"], String(free.column));
-        setStyleProp(childId, bp, ["layout", "gridRow"], String(free.row));
+        actions.setStyleProp(childId, bp, ["layout", "gridColumn"], String(free.column));
+        actions.setStyleProp(childId, bp, ["layout", "gridRow"], String(free.row));
       }
     },
-    [id, addComponent, moveExistingNode, insertFragment, setStyleProp],
+    [id],
   );
 
   const dropOptions = useMemo<UseDropTargetOptions>(
@@ -327,48 +361,13 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
     [node, editingLocale, defaultLang, activePageTranslations],
   );
 
-  // localeInfo para `language-nav` (docs/14 §2.5): memoizado para no crear un
-  // objeto nuevo en cada render. `undefined` en sitios monolingües. El
-  // "locale actual" del canvas es `editingLocale`. Usa los mismos helpers puros
-  // de rutas que el export (`localizedRoute`/`withBasePath`) → WYSIWYG fiel.
-  const localeInfo = useMemo(() => {
-    if (!siteI18n) return undefined;
-    const slug = activePageSlug ?? "";
-    return {
-      locales: siteI18n.locales,
-      currentLocale: editingLocale,
-      defaultLocale: siteI18n.defaultLocale,
-      localizedHref: (target: string) =>
-        withBasePath(basePath, localizedRoute(slug, target, siteI18n.defaultLocale, siteI18n.routeStrategy)),
-    };
-  }, [siteI18n, activePageSlug, editingLocale, basePath]);
-
-  // pagesInfo para `navbar`/`nav-menu` (docs/16 §12.4, rework): todas las
-  // páginas del sitio, en `pageOrder`, con su ruta resuelta por `buildPathMap`
-  // (mismo helper puro que el export) — el componente no vuelve a inventar
-  // rutas. Siempre presente (a diferencia de `localeInfo`): todo sitio tiene
-  // home. `title` se resuelve con `resolveMetaForLocale` en `editingLocale`
-  // (docs/12 §B.9): si el usuario tradujo el título de la página, el menú
-  // cambia de idioma junto con el resto del contenido — mismo criterio que
-  // `SeoSettings`/`renderHead`, bug real corregido (título quedaba fijo en
-  // el idioma default sin importar `editingLocale`).
-  const pagesInfo = useMemo(() => {
-    const pathMap = buildPathMap(site);
-    const defaultLocale = siteI18n?.defaultLocale ?? site.meta.defaultLang;
-    return site.pageOrder
-      .map((pid) => {
-        const page = site.pages[pid];
-        if (!page) return null;
-        const meta = resolveMetaForLocale(page.meta, editingLocale, defaultLocale);
-        return {
-          pageId: pid,
-          title: meta.title,
-          href: withBasePath(basePath, pathMap[pid] ?? "/"),
-          isCurrent: pid === activePageId,
-        };
-      })
-      .filter((p): p is NonNullable<typeof p> => p !== null);
-  }, [site, activePageId, basePath, siteI18n, editingLocale]);
+  // chain F31, T3 — `localeInfo` (docs/14 §2.5) y `pagesInfo` (docs/16 §12.4)
+  // ya NO se derivan aquí: son iguales para todo el árbol, así que los calcula
+  // una sola vez `CanvasDocProvider` y llegan por contexto. Antes cada nodo
+  // corría su propio `buildPathMap(site)` y su propio map sobre `pageOrder`, es
+  // decir 9 377 veces por cambio en un sitio grande. Siguen usando los MISMOS
+  // helpers puros que el export (`buildPathMap`/`localizedRoute`/`withBasePath`,
+  // P3) — solo cambió dónde se llaman.
 
   // Chrome fantasma de behaviors en Edit (docs/10 §5, feedback de usuario):
   // agrega `BehaviorRuntimeSpec.editPreviewChrome(options)` de CADA behavior
@@ -429,7 +428,7 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
       : undefined;
   const onActivateSlot =
     interactive && def.slots?.splitRender
-      ? (slotId: NodeId) => setActiveSlot(id, slotId)
+      ? (slotId: NodeId) => useDocumentStore.getState().setActiveSlot(id, slotId)
       : undefined;
 
   // Afordancia "+ añadir slot" en el canvas (docs/23 Fase 5). Chrome de Edit:
@@ -452,7 +451,7 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
         aria-label={label}
         onClick={(e) => {
           e.stopPropagation();
-          addSlot(id);
+          useDocumentStore.getState().addSlot(id);
         }}
       >
         <span aria-hidden="true">+</span>
@@ -513,13 +512,14 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
   // pick&insert a la vez — el lock de selección ya impide iniciar uno mientras
   // el otro corre).
   if (pickCandidateHere) {
+    const source = pickCandidate.source!;
     const pickDrag: DragData =
-      pickInsert!.source.kind === "new"
-        ? { kind: "new-component", componentType: pickInsert!.source.type }
-        : pickInsert!.source.kind === "fragment"
-          ? { kind: "fragment", layoutId: pickInsert!.source.layoutId }
-          : { kind: "existing-node", nodeId: pickInsert!.source.nodeId };
-    const i = Math.max(0, Math.min(pickCandidateHere.index, childElements.length));
+      source.kind === "new"
+        ? { kind: "new-component", componentType: source.type }
+        : source.kind === "fragment"
+          ? { kind: "fragment", layoutId: source.layoutId }
+          : { kind: "existing-node", nodeId: source.nodeId };
+    const i = Math.max(0, Math.min(pickCandidate.index!, childElements.length));
     childList = [...childElements];
     childList.splice(
       i,
@@ -582,11 +582,11 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
         // currently selected node — never unconditionally — so exactly one
         // element in the DOM carries it at a time, same condition already
         // computed for the `pbx-node--selected` class below.
-        ...(selectedId === id ? dataTourAttr(BUILDER42_TOUR_ANCHORS.canvasInlineText) : {}),
+        ...(isSelected ? dataTourAttr(BUILDER42_TOUR_ANCHORS.canvasInlineText) : {}),
         "data-node-id": id,
         className: [
           "pbx-node",
-          selectedId === id ? "pbx-node--selected" : "",
+          isSelected ? "pbx-node--selected" : "",
           isEditingThis ? "pbx-node--editing-text" : "",
           isOver ? "pbx-node--drop-over" : "",
           dragging ? "pbx-node--dragging" : "",
@@ -603,8 +603,16 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
           // `stopPropagation` de siempre): el nodo más profundo bajo el
           // puntero que sea un destino válido es el que previsualiza/confirma;
           // si este nodo no acepta el `source` actual, el tap no hace nada.
+          //
+          // chain F31, T2: el estado del pick & insert se lee del `getState()`
+          // en el momento del click, no de una suscripción — es un handler, así
+          // que leer el valor actual es más correcto que leer el capturado al
+          // renderizar, y deja la suscripción de arriba estrechada a lo único
+          // que este nodo necesita para PINTAR.
+          const actions = useDocumentStore.getState();
+          const pickInsert = actions.pickInsert;
           if (pickInsert) {
-            if (!canPickInsertInto(id)) return;
+            if (!actions.canPickInsertInto(id)) return;
             const container = ref.current;
             if (!container) return;
             const { index } = computeDropTargetAtPoint({
@@ -619,9 +627,9 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
             // combinado con el mini-dropdown de confirmación). Tap en otro
             // destino (u otro punto del mismo) re-previsualiza.
             if (existing && existing.parentId === id && existing.index === index) {
-              confirmPickInsertTarget(id);
+              actions.confirmPickInsertTarget(id);
             } else {
-              setPickInsertCandidate({ parentId: id, index });
+              actions.setPickInsertCandidate({ parentId: id, index });
             }
             return;
           }
@@ -631,11 +639,11 @@ export function NodeRenderer({ id, interactive, overlayRoot }: NodeRendererProps
           if (isEditingThis) return;
           // Segundo click sobre un nodo `editableInline` ya seleccionado:
           // entra en modo edición (docs/12 §B.11) en vez de solo reseleccionar.
-          if (def?.editableInline && selectedId === id) {
-            startEditingText(id);
+          if (def?.editableInline && isSelected) {
+            actions.startEditingText(id);
             return;
           }
-          select(id);
+          actions.select(id);
         },
       }
     : {};

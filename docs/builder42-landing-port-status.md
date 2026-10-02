@@ -2,7 +2,7 @@
 
 Companion to [`../packages/VENDOR.md`](../packages/VENDOR.md) (which only documents the two seams
 this host wires) and to `../builder42-landing/packages/VENDOR.md` (the authoritative list of *what*
-diverges, over there — **46** numbered divergences, **numbered to #47**, #28 withdrawn). This file is
+diverges, over there — **47** numbered divergences, **numbered to #48**, #28 withdrawn). This file is
 the port log **on this side**: what has been replayed into `packages/builder42/` here, what is in
 progress, and exactly where the next agent should pick up. Read this before touching
 `packages/builder42/` for any reason resembling "bring over a fix from builder42-landing".
@@ -15,9 +15,8 @@ progress, and exactly where the next agent should pick up. Read this before touc
 > divergence **#21**, excluded on purpose by user decision, so their absence here is correct and
 > not a gap.
 >
-> **What is genuinely left to replay: exactly two entries, #46 and #47.** Both were created in
-> builder42-landing after this file was last written, and both were verified absent here on
-> 2026-10-02 by grepping this tree:
+> **What is genuinely left to replay: one entry, #46.** (It was two until 2026-10-02; **#47 is now
+> done** — see the F31 section below, which landed it in the same change.)
 >
 > - **#46** — the `headerAutosave` tour anchor, its step and its en/es/it copy, plus the overview
 >   tour's first step pointing at the host's autosave chip instead of the logo
@@ -26,28 +25,39 @@ progress, and exactly where the next agent should pick up. Read this before touc
 >   browser-storage autosave chip in its own header. This host persists through its own server, so
 >   the right move may be the same decision already taken for #9/#12 — exclude it — or to anchor an
 >   equivalent step on this host's own save affordance. Decide, then record the decision here.
-> - **#47** — `src/index.ts` re-exporting `parseSiteJson` and `ValidationResult` so a host can
->   validate a persisted site before handing it to `Builder42Editor`'s `site` prop (this tree's
->   `index.ts` exports `createBaseSite` but not `parseSiteJson`). The package-side half is two
->   additive export lines and is safe to replay as-is. The **host** half over there (clearing a
->   corrupt `localStorage` key and falling back to the first-run seed) is static-host-specific and
->   should **not** be ported blind — but the underlying lesson applies to any host: never pass an
->   unvalidated stored document into the `site` prop.
+>   **Still open**: deliberately not decided while porting F31, because it needs a product call
+>   about this host's own header, not a diff.
+> - **#47 — DONE 2026-10-02.** `src/index.ts` now re-exports `parseSiteJson` and `ValidationResult`
+>   so a host can validate a persisted site before handing it to `Builder42Editor`'s `site` prop.
+>   Two additive export lines plus a doc comment; replayed alongside F31's port so both trees sit at
+>   a known-equal baseline for the performance change. The **host** half over there (clearing a
+>   corrupt `localStorage` key and falling back to the first-run seed) was **not** ported — it is
+>   static-host-specific, and this host persists through its own server. The underlying lesson still
+>   applies here: never pass an unvalidated stored document into the `site` prop.
 >
 > The remaining delta inside those 49 files was **not** audited entry-by-entry in that session.
 > Much of it is known-deliberate (the #21 exclusion threads through `Canvas.tsx`,
 > `EmbeddedChrome.tsx` and the view-mode files; #9/#12, #35 and #42 are excluded or
 > reference-only). Do not read "49 differ" as "49 things to port".
 
-## Incoming: chain F31 (canvas render cost) is PAIRED work, planned 2026-10-02
+## Chain F31 (canvas render cost) — phase 1 PORTED here 2026-10-02
 
-**A performance chain is coming from `builder42-landing` and it is explicitly coordinated with this
-repo, not a divergence that will accumulate.** The user's decision (recorded verbatim as D-F31.7 in
-`../builder42-landing/.orquestacion/bitacora.md`): that repo is the **test bed** — smaller, static,
-no backend, so a browser pass over a built `dist/` takes minutes — and **the changes land here as
-soon as they are verified there**, not "eventually".
+**Status: phase 1 (T1+T2+T3) is applied in this tree. Phase 2 does not exist to port.** This was
+paired work by explicit decision, not a divergence left to accumulate. The user's decision
+(recorded verbatim as D-F31.7 in `../builder42-landing/.orquestacion/bitacora.md`): that repo is the
+**test bed** — smaller, static, no backend, so a browser pass over a built `dist/` takes minutes —
+and **the changes land here as soon as they are verified there**, not "eventually". They were
+verified there (three gates per task, including three headless-Chromium passes and an export-equality
+proof over all 18 templates) and then replayed here the same day.
 
-What it changes, both inside `packages/builder42`:
+**Phase 2 (`content-visibility: auto`, T4) was never written over there, so there is nothing to
+replay.** Its own baseline refuted it: T0 measured **0 long tasks when scrolling the canvas top to
+bottom at every site size**, including 9 377 nodes, so the metric the task existed to move was
+already zero and the chain's own rule ("if the scroll is already cheap at 32x, the corresponding
+task is dropped") applied. The `contain: layout` / `showModal()` hazard described below was
+therefore never exercised. If phase 2 is ever revived, that hazard is still real here.
+
+What was ported, both inside `packages/builder42`:
 
 - **Phase 1 — `builder/canvas/NodeRenderer.tsx`, subscription reduction.** That component opens
   **29** separate `useDocumentStore` subscriptions per node (lines 82–148), and the canvas renders
@@ -58,36 +68,78 @@ What it changes, both inside `packages/builder42`:
   values into one context mounted at `Canvas`, and narrow `selectedId` / `editingTextNodeId` /
   `pickInsert` to per-node booleans so selecting a node re-renders 2 components instead of all of
   them. **Mechanical, no behavioural intent, no model change — the easiest kind of diff to replay.**
-- **Phase 2 — `styles/chrome/canvas-nodes.css` + one class from `NodeRenderer.tsx`.**
-  `content-visibility: auto` on section-level nodes, so the browser skips layout and paint for
-  off-screen bands **without React unmounting anything**. Carries a known hazard this repo shares:
-  `content-visibility: auto` implies `contain: layout style paint`, and `styles/chrome/canvas.css`
-  already documents that `contain: layout` broke the Modal component's `showModal()` by creating a
-  containing block for `position: fixed` descendants. The plan requires a browser proof for that
-  case before the rule is kept.
+- **Phase 2 — not ported because it was never written.** It would have been
+  `content-visibility: auto` on section-level nodes in `styles/chrome/canvas-nodes.css` plus one
+  class from `NodeRenderer.tsx`. Kept here only for the hazard it documents, which this repo
+  shares if it is ever revived: `content-visibility: auto` implies `contain: layout style paint`,
+  and `styles/chrome/canvas.css` already records that `contain: layout` broke the Modal component's
+  `showModal()` by creating a containing block for `position: fixed` descendants.
 
-What this side has to do when the port arrives:
+### What actually landed here, file by file
 
-1. **Verify with this repo's own gates, not theirs** — `tsc --noEmit`, `astro check`, and a browser
-   pass. This host's editor is embedded in a different page with different surrounding CSS and a
-   real backend.
-2. **Re-run the baseline measurement here.** The chain's T0 builds a harness
-   (`.cache/f31-canvas-cost.mjs` over there) measuring time-to-interactive-canvas, long tasks during
-   mount, long tasks during a typing burst, long tasks during a selection sweep, and scroll cost, at
-   1x/8x/32x synthetic site sizes. **A number measured on a static landing does not transfer to this
-   host.** Record what this repo measures in this file, next to the entry for the port.
-3. **The hardest gate travels with the change:** exported output must be byte-identical before and
-   after. `builder/export/exportToHtml.ts` walks `doc.nodes`, never the React tree, so this should
-   hold by construction — which is why it is cheap to prove and must not be skipped.
-4. **Clear #46 and #47 first, or alongside**, so both trees are at a known-equal baseline when a
-   performance change lands on them.
+| file | change |
+| --- | --- |
+| `packages/builder42/src/builder/canvas/NodeRenderer.tsx` | T1 + T2 + T3. 18 hunks from the upstream diff; 17 applied byte-for-byte, 1 by hand (see below). |
+| `packages/builder42/src/builder/canvas/CanvasDocContext.tsx` | **new file**, applied verbatim — the provider that subscribes once for the whole canvas. |
+| `packages/builder42/src/app/layout/Canvas.tsx` | wraps `<main className="pbx-canvas">` in `<CanvasDocProvider>`. Applied cleanly at offsets −1 and −12 lines (this file carries the #21 exclusion, so its line numbers differ from that repo's). |
+| `packages/builder42/src/index.ts` | divergence #47, the `parseSiteJson` / `ValidationResult` re-export. |
+
+**The one hunk that needed hand-work, recorded so it is not mistaken for a conflict in the code.**
+It failed on a *context* line, not on a change: a comment in this tree reads "computed for the
+`pbx-node--selected` class **below**" where that repo's reads "**above**". This tree's wording is
+the accurate one (the class is built further down the file), so **this tree's comment was kept** and
+the hunk's two real edits — `selectedId === id` → `isSelected` on the `canvasInlineText` tour anchor
+and on the `pbx-node--selected` class — were applied by hand. The two trees' `NodeRenderer.tsx` were
+otherwise identical before this port, which is why the rest replayed verbatim.
+
+**`CanvasDocProvider` must enclose every `NodeRenderer` mount point, and it does.** `useCanvasDoc()`
+throws outside the provider on purpose — a missing provider is a mounting bug and a loud failure
+beats a canvas silently rendering stale values. Verified in this tree: there are exactly three
+`<NodeRenderer` call sites (`Canvas.tsx:205`, `ModalEditorOverlay.tsx:99`, and `NodeRenderer.tsx:402`
+recursing into its own children), and the first two are both inside `.pbx-canvas__frame`, which is
+inside the provider.
+
+### Gates run here, with results
+
+| gate | result |
+| --- | --- |
+| `tsc -p packages/builder42 --noEmit` | **clean**, exit 0. Run twice: after the three phase-1 files and again after #47. |
+| `npm run check` (`astro check`) | **0 errors, 0 warnings, 3 hints** over 339 files. The 3 hints are pre-existing and unrelated (`LandingPageBuilder.tsx:229` `returnValue` deprecation, two unused `useState` bindings in `automations/AutomationBuilder.tsx`). |
+| `npm run build` | **green**, exit 0, 1m 39s — so the editor island still bundles with the new context module in the graph. |
+| Export-equality scope proof | `git diff` over `packages/builder42/src/builder/{export,model,registry}` and `src/runtime` is **empty**. Nothing `exportSite()` reads, walks or emits was touched, which is the "by construction" half of D-F31.3 — checked here, not assumed from the other repo. |
+
+### What is owed and was NOT done — do not read this port as fully verified
+
+1. **T0's measurement was not re-run on this host, and no number from that repo is reproduced here
+   as if it were.** The blocker is structural, not laziness: this host's editor route is
+   `src/pages/dashboard/landings/editor.astro`, which is `prerender = false`, redirects to `/login`
+   without `Astro.locals.session`, and calls `loadLandingBuilder(session, url)` before it renders.
+   A measurement needs a built server, a live session and a way to seed a 9 377-node site through
+   the landings backend — which is exactly the asymmetry that made the other repo the test bed.
+   **The numbers in `../builder42-landing/.orquestacion/bitacora.md` (chain F31, T0–T3) describe a
+   static host, a different page and different surrounding CSS. They do not transfer.** What *does*
+   transfer is the subscription arithmetic, which is arithmetic and not a speedup: 29 subscriptions
+   per node → 7, plus 13 in the provider for the whole canvas.
+2. **Nothing was opened in a browser on this side.** The behavioural evidence for phase 1 is that
+   repo's three headless-Chromium passes (20/20 on the eleven hoisted actions, 10/10 on the per-node
+   boolean *transitions*, 18/18 on the eleven context values including a slug rename proving the
+   path map is sensitive to a slug change and blind to a keystroke). Those ran against a static host.
+3. **No test suite was run** — the standing user rule is that suites run only on request. T2 narrows
+   the subscription behind the `pbx.canvas.inlineText` anchor, so `tests/tour-anchors-coverage.test.ts`
+   and `tests/tourSteps.i18n-parity.test.ts` are the ones worth asking for here. The condition is
+   unchanged (`selectedId === id` moved inside the selector), but that is an argument, not a run.
+4. **The empirical export-equality proof was not reproduced here.** Over there it was 18 template
+   sites re-derived through the real `exportSite()`, all byte-identical. This host's landings live in
+   its backend, so the equivalent is a saved landing exported before and after. The scope proof above
+   is what this side has.
+5. **#46 is still open** (above), by choice.
 
 ## Why this exists
 
 `builder42-landing` is a sibling repo (`../builder42-landing`) that copied `packages/builder42` and
 `packages/product-tour` from this repo at commit `b62c20b843009b039c4a761ec2230915d09beb92`
-(2026-09-17, branch `feat/ui-polish-p1`). Since then it has accumulated 44 documented improvements/
-fixes that never made it back here. This file tracks replaying them.
+(2026-09-17, branch `feat/ui-polish-p1`). Since then it has accumulated **47** documented
+improvements/fixes, numbered to #48 with #28 withdrawn. This file tracks replaying them.
 
 ## Status at a glance
 
@@ -97,7 +149,8 @@ fixes that never made it back here. This file tracks replaying them.
 | B (partial, VENDOR #10,#11,#15) | Embed seams + tour i18n fix | **Done, partial.** Commit `7aa894d`. #9/#12 excluded on purpose (this host persists through its own backend — no `.zip`-download flow to anchor a tour step to). |
 | C (18 entries, VENDOR #16-#20,#22-#26,#36-#41,#43,#44) | Structural bugs + additive model/UI, no host decision | **Done — 18/18.** Commit `fb259c1`. See below. |
 | D (7 entries, VENDOR #29-#34,#45) | Tour rework + first-run seed + theme seam — needs host decisions | **Done — 7/7. Committed** (`b1308ab`, merged via `0bf320e`). |
-| **Left to replay** | VENDOR **#46** (headerAutosave anchor — needs a host decision) and **#47** (`parseSiteJson` re-export — safe to replay) | **Not started.** Verified absent 2026-10-02. |
+| **F31 phase 1** (VENDOR #48) | Canvas subscription reduction — T1 (11 actions hoisted), T2 (3 per-node booleans), T3 (one context for 11 tree-global values) | **Done — ported 2026-10-02.** Paired work (D-F31.7), not a divergence. Type gates + build green here; **measurement and browser pass owed** — see the F31 section. |
+| **Left to replay** | VENDOR **#46** (headerAutosave anchor — needs a host decision) | **Not started, open by choice.** #47 was cleared 2026-10-02. |
 | Excluded | VENDOR #21 (JSON preview) | **Explicit user decision — do not port.** |
 | Reference only | VENDOR #35 (header dropdown width), #42 (canvas padding) | **Do not port** — host-specific visual preferences on that repo's own header/canvas, not structural. |
 

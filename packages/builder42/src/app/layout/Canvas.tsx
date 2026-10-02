@@ -14,6 +14,7 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import { useTranslation } from "react-i18next";
 import { useDocumentStore } from "@/builder/store/documentStore";
 import { NodeRenderer } from "@/builder/canvas/NodeRenderer";
+import { CanvasDocProvider } from "@/builder/canvas/CanvasDocContext";
 import { KeyboardReorder } from "@/builder/canvas/KeyboardReorder";
 import { exportPage, exportSite, type ExportedFile } from "@/builder/export/site";
 import { zipSite } from "@/builder/export/zip";
@@ -177,37 +178,44 @@ export function Canvas() {
     );
   }
 
+  // chain F31, T3: el proveedor envuelve TODO lo que monta un `NodeRenderer`
+  // (el árbol de abajo y el `ModalEditorOverlay`). Es un componente aparte a
+  // propósito: cuando uno de sus valores cambia re-renderiza solo él, y sus
+  // `children` llegan como la misma referencia de elemento, así que React salta
+  // el subárbol salvo los consumidores del contexto.
   return (
-    <main
-      className="pbx-canvas"
-      ref={canvasRef}
-      onClickCapture={() => notifyTourZoneClick("canvas")}
-      onClick={() => {
-        if (interactive) select(null);
-      }}
-    >
-      <div
-        className="pbx-canvas__frame"
-        ref={frameRef}
-        style={{ width: viewportWidth(activeBreakpoint) }}
-        data-breakpoint={activeBreakpoint}
-        data-theme={activeThemeId ?? undefined}
-        {...dataTourAttr(BUILDER42_TOUR_ANCHORS.canvasFrame)}
+    <CanvasDocProvider>
+      <main
+        className="pbx-canvas"
+        ref={canvasRef}
+        onClickCapture={() => notifyTourZoneClick("canvas")}
+        onClick={() => {
+          if (interactive) select(null);
+        }}
       >
-        <ErrorBoundary key={view} nodeId={rootId}>
-          <NodeRenderer id={rootId} interactive={interactive} />
-        </ErrorBoundary>
-        {interactive ? <CanvasEmptyStart /> : null}
-        {interactive ? <SelectionHandle frameRef={frameRef} /> : null}
-        {interactive ? <NodeActionsRail frameRef={frameRef} /> : null}
-        {interactive ? <HoverHandle frameRef={frameRef} /> : null}
-        {interactive ? <TextToolbar frameRef={frameRef} /> : null}
-        {interactive ? <ModalEditorOverlay /> : null}
-      </div>
-      {interactive ? <KeyboardReorder /> : null}
-      {interactive ? <InvisibleElementsBubble /> : null}
-      {interactive ? <PickInsertBar /> : null}
-    </main>
+        <div
+          className="pbx-canvas__frame"
+          ref={frameRef}
+          style={{ width: viewportWidth(activeBreakpoint) }}
+          data-breakpoint={activeBreakpoint}
+          data-theme={activeThemeId ?? undefined}
+          {...dataTourAttr(BUILDER42_TOUR_ANCHORS.canvasFrame)}
+        >
+          <ErrorBoundary key={view} nodeId={rootId}>
+            <NodeRenderer id={rootId} interactive={interactive} />
+          </ErrorBoundary>
+          {interactive ? <CanvasEmptyStart /> : null}
+          {interactive ? <SelectionHandle frameRef={frameRef} /> : null}
+          {interactive ? <NodeActionsRail frameRef={frameRef} /> : null}
+          {interactive ? <HoverHandle frameRef={frameRef} /> : null}
+          {interactive ? <TextToolbar frameRef={frameRef} /> : null}
+          {interactive ? <ModalEditorOverlay /> : null}
+        </div>
+        {interactive ? <KeyboardReorder /> : null}
+        {interactive ? <InvisibleElementsBubble /> : null}
+        {interactive ? <PickInsertBar /> : null}
+      </main>
+    </CanvasDocProvider>
   );
 }
 

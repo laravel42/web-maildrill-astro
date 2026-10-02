@@ -35,6 +35,22 @@ export type { BuilderSite } from "./builder/model/types";
  * the first-run CONDITION is always the host's to evaluate.
  */
 export { createBaseSite } from "./builder/baseSite";
+/**
+ * Re-exported so a host can validate whatever it reads back out of its own
+ * persistence before handing it to `Builder42Editor`'s `site` prop
+ * (builder42-landing divergence #47, replayed here 2026-10-02 alongside chain
+ * F31's port). `parseSiteJson` never throws — malformed JSON and a
+ * structurally invalid document both come back as `{ ok: false, errors }` —
+ * which is exactly what a host needs in order to fall back to a fresh
+ * document instead of handing the editor something it cannot render.
+ *
+ * Only the PACKAGE half is ported. That host's own recovery path (clearing a
+ * corrupt `localStorage` key and reseeding) is specific to a static host with
+ * no backend; this host persists through its own server. The rule generalises
+ * even so: never pass an unvalidated stored document into the `site` prop.
+ */
+export { parseSiteJson } from "./builder/model/persist";
+export type { ValidationResult } from "./builder/model/validate";
 
 // ---------------------------------------------------------------------------
 // Product tour (F4, docs/product-tour-driverjs-plan.md §4) — re-exported so
